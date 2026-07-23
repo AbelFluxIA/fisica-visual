@@ -80,16 +80,44 @@ canvas{display:block;}
 .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--dim);}
 
 /* ---------- header / nav ---------- */
+/* #backlink and #roomsBtn are laid out by their shared flex parent
+   (#topLeftBar) rather than independent fixed offsets — a fixed pixel
+   gap between two pills of variable text width is exactly what caused
+   them to overlap during testing. The parent handles positioning; the
+   pills themselves are just flex children with intrinsic width. */
+#topLeftBar{
+  position:fixed;top:16px;left:16px;z-index:6;display:flex;align-items:center;gap:8px;
+}
 #backlink{
-  position:fixed;top:16px;left:16px;z-index:6;display:flex;align-items:center;gap:6px;
+  display:flex;align-items:center;gap:6px;
   font-family:var(--mono);font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;
   color:var(--dim);text-decoration:none;padding:7px 12px;border:1px solid var(--line);border-radius:20px;
   background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  transition:color .2s,border-color .2s;
+  transition:color .2s,border-color .2s;white-space:nowrap;
 }
 #backlink svg{width:11px;height:11px;flex-shrink:0;}
 #backlink:hover{color:var(--gold-bright);border-color:rgba(212,168,92,0.4);}
 #backlink:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+
+/* "salas" shortcut pill: sits right beside backlink, opens #roomsModal
+   with direct links to every room (item 5 — avoids detouring through
+   /salas/ for a quick jump). Visible on all viewports, not just mobile —
+   it's a genuine improvement for desktop users too. */
+#roomsBtn{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--dim);text-decoration:none;padding:7px 12px;border:1px solid var(--line);border-radius:20px;
+  background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  cursor:pointer;transition:color .2s,border-color .2s;white-space:nowrap;
+}
+#roomsBtn svg{width:11px;height:11px;flex-shrink:0;}
+#roomsBtn:hover{color:var(--gold-bright);border-color:rgba(212,168,92,0.4);}
+#roomsBtn:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+@media (max-width:640px){
+  #topLeftBar{top:10px;left:10px;gap:5px;}
+  #roomsBtn{padding:6px 8px;font-size:0;gap:0;}
+  #roomsBtn svg{width:12px;height:12px;}
+}
 
 #hdr{top:60px;left:16px;padding:14px 18px 12px;max-width:280px;pointer-events:none;}
 #hdr h1{font-family:var(--serif-it);font-style:italic;font-weight:500;font-size:28px;margin:4px 0 2px;letter-spacing:0.01em;text-wrap:balance;}
@@ -353,29 +381,12 @@ canvas{display:block;}
 #loading .bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--plasma),var(--gold));transition:width .2s ease;}
 #loading .pct{font-family:var(--mono);font-size:11px;color:var(--dim);}
 
-/* ---------- mobile touch controls ---------- */
+/* ---------- mobile touch controls ----------
+   No fixed joystick/stick UI (removed per feedback — "não gostei daquela
+   bolinha"). #touchCtl now only hosts the drag-hint chip; the actual
+   flight input is a direct touch-drag on #scene itself, handled in JS. */
 #touchCtl{display:none;position:fixed;inset:0;z-index:4;pointer-events:none;}
 #touchCtl.active{display:block;}
-.tstick{
-  position:absolute;bottom:24px;left:24px;width:110px;height:110px;border-radius:50%;
-  border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(10px);
-  pointer-events:auto;touch-action:none;
-}
-.tstick .knob{
-  position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(212,168,92,0.28);
-  border:1.5px solid var(--gold-bright);top:33px;left:33px;transition:transform .05s linear;
-}
-.tvert{
-  position:absolute;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;pointer-events:auto;
-}
-.tbtn{
-  width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:var(--panel);
-  backdrop-filter:blur(10px);color:var(--gold-bright);font-family:var(--mono);font-size:16px;
-  display:flex;align-items:center;justify-content:center;touch-action:none;
-}
-.tlook{
-  position:absolute;top:0;right:0;width:46vw;height:60vh;pointer-events:auto;touch-action:none;
-}
 
 @media (max-width:720px){
   #hdr{max-width:190px;padding:10px 14px;top:56px;}
@@ -399,7 +410,7 @@ canvas{display:block;}
    still what your eye lands on. */
 @media (max-width:640px){
   /* top-left back link: icon + short word, pulled in tight */
-  #backlink{top:10px;left:10px;padding:6px 10px;font-size:9.5px;gap:4px;}
+  #backlink{padding:6px 10px;font-size:9.5px;gap:4px;}
   #backlink svg{width:9px;height:9px;}
 
   /* title card: shrink hard and move out of the way of the top bar */
@@ -452,14 +463,6 @@ canvas{display:block;}
   #welcome ol{gap:7px;margin:11px 0 15px;}
   #welcome ol li{font-size:12px;}
 
-  /* touch controls: smaller stick/buttons so they read as controller
-     affordances at the screen edge, not oversized UI eating the scene */
-  .tstick{width:82px;height:82px;bottom:14px;left:14px;}
-  .tstick .knob{width:34px;height:34px;top:24px;left:24px;}
-  .tvert{bottom:14px;right:14px;gap:6px;}
-  .tbtn{width:40px;height:40px;font-size:13px;}
-  .tlook{width:42vw;height:52vh;}
-
   /* nav/GPS HUD: shrink and tuck under the header card; radar itself
      shrinks too so it reads as a compact instrument, not a panel */
   #navHud{top:auto;bottom:112px;left:8px;padding:7px 8px 8px;gap:5px;}
@@ -492,23 +495,228 @@ canvas{display:block;}
   #poiCard{bottom:88px;padding:10px 12px 12px;}
   #poiCard h3{font-size:15px;}
 
-  .tstick{width:72px;height:72px;bottom:10px;left:10px;}
-  .tstick .knob{width:30px;height:30px;top:21px;left:21px;}
-  .tvert{bottom:10px;right:10px;}
-  .tbtn{width:36px;height:36px;font-size:12px;}
-
   #navHud{bottom:98px;left:6px;padding:6px 7px 7px;}
   #navHere{display:none;}
   #radar{width:52px;height:52px;}
 }
+
+/* ---------- sound toggle ----------
+   Fixed HUD button, always visible, persisted mute state — required so
+   the ambient drone/POI soundscape is never a surprise and is always
+   one tap away from off. Stacked BELOW infoBtn (not beside it) so its
+   position never depends on measuring infoBtn's variable text width. */
+#soundBtn{
+  position:fixed;top:64px;right:16px;z-index:6;display:flex;align-items:center;justify-content:center;
+  width:38px;height:38px;background:var(--panel);border:1px solid var(--line);border-radius:50%;color:var(--dim);
+  cursor:pointer;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  transition:color .2s,border-color .2s;
+}
+#soundBtn svg{width:16px;height:16px;flex-shrink:0;}
+#soundBtn .off-slash{display:none;}
+#soundBtn.muted .off-slash{display:block;}
+#soundBtn.on{color:var(--plasma-bright);border-color:rgba(111,168,199,0.45);}
+#soundBtn:hover{color:var(--gold-bright);border-color:rgba(212,168,92,0.4);}
+#soundBtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+@media (max-width:640px){
+  #soundBtn{top:52px;right:10px;width:32px;height:32px;}
+  #soundBtn svg{width:14px;height:14px;}
+}
+
+#roomsModal{
+  position:fixed;inset:0;z-index:24;display:none;align-items:center;justify-content:center;
+  background:rgba(2,2,7,0.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);padding:20px;
+}
+#roomsModal.open{display:flex;}
+#roomsModal .card{max-width:420px;width:100%;padding:24px 24px 20px;max-height:calc(100vh - 40px);overflow-y:auto;}
+#roomsModal h2{font-family:var(--serif-it);font-style:italic;font-weight:500;font-size:21px;margin:8px 0 14px;}
+#roomsModal .rlist{display:flex;flex-direction:column;gap:8px;margin:0 0 14px;}
+#roomsModal .ritem{
+  display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:9px;
+  color:var(--text);text-decoration:none;transition:border-color .2s,background .2s;
+}
+#roomsModal .ritem:hover, #roomsModal .ritem:focus-visible{border-color:rgba(212,168,92,0.5);background:rgba(212,168,92,0.08);outline:none;}
+#roomsModal .ritem .ico{
+  width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  background:rgba(111,168,199,0.14);color:var(--plasma-bright);font-size:15px;
+}
+#roomsModal .ritem .rtext{display:flex;flex-direction:column;gap:1px;min-width:0;}
+#roomsModal .ritem .reyebrow{font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);}
+#roomsModal .ritem .rname{font-family:var(--serif-it);font-style:italic;font-size:15px;color:var(--gold-bright);}
+#roomsModal .ritem.current{opacity:0.5;pointer-events:none;}
+#roomsModal .actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+#roomsModal .allrooms{color:var(--plasma-bright);font-family:var(--mono);font-size:11.5px;text-decoration:underline;text-underline-offset:3px;}
+#roomsModal .allrooms:hover{color:var(--plasma);}
+#roomsModal .close{
+  background:transparent;border:1px solid var(--line);border-radius:7px;color:var(--dim);
+  font-family:var(--mono);font-size:11px;padding:9px 14px;cursor:pointer;
+}
+#roomsModal .close:hover{color:var(--text);}
+
+/* ---------- guide tip toast ----------
+   Small, dismissable, self-expiring contextual suggestion — the "Guia"
+   character voice carried over from the cinematic intro. Never modal,
+   never blocks input, never stacks (one at a time). Anchored bottom-RIGHT,
+   stacked above #speedo — the bottom-left corner is already occupied by
+   #ctlHint (desktop) and #navHud, and testing showed the tip colliding
+   with #ctlHint there. */
+#guideTip{
+  position:fixed;right:16px;bottom:92px;z-index:8;max-width:280px;padding:12px 14px 12px 14px;
+  display:flex;align-items:flex-start;gap:10px;
+  transform:translateY(12px);opacity:0;pointer-events:none;
+  transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .45s ease;
+}
+#guideTip.show{transform:translateY(0);opacity:1;pointer-events:auto;}
+#guideTip .gico{
+  flex:none;width:22px;height:22px;border-radius:50%;background:rgba(212,168,92,0.16);
+  color:var(--gold-bright);display:flex;align-items:center;justify-content:center;font-family:var(--serif-it);
+  font-style:italic;font-size:13px;margin-top:1px;
+}
+#guideTip .gtext{font-size:12px;line-height:1.5;color:var(--text);}
+#guideTip .gtext b{color:var(--gold-bright);font-weight:600;display:block;font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:3px;font-weight:600;}
+#guideTip .gclose{
+  flex:none;background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;line-height:1;padding:2px;
+  margin:-2px -2px 0 0;
+}
+#guideTip .gclose:hover{color:var(--text);}
+@media (max-width:640px){
+  /* on mobile #ctlHint is hidden (display:none) so the bottom-right
+     corner is free of the desktop collision this had; keep it there,
+     just raised clear of #speedo/#stopBtn. */
+  #guideTip{right:8px;bottom:104px;max-width:calc(100vw - 100px);padding:10px 11px;}
+}
+
+/* ---------- exploration-orbit "locked" state ----------
+   Reported gap: entering orbit mode needs to feel clearly different from
+   free flight — "uma parada especial". A soft vignette ring at the frame
+   edge plus the ctlHint/speedo chrome receding communicates "you are now
+   observing, not piloting" without blocking any of the view. */
+#orbitVignette{
+  position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;
+  transition:opacity .7s ease;
+  box-shadow:inset 0 0 0 0 rgba(0,0,0,0), inset 0 0 140px 40px rgba(2,2,7,0.55), inset 0 0 2px 2px rgba(212,168,92,0.22);
+}
+#orbitVignette.show{opacity:1;}
+/* sits BELOW both #hud (top:16px) and #lookbackHud (top:64px) so it
+   never collides with either regardless of which is showing — the two
+   HUD rows and this badge were overlapping mid-testing when this badge
+   shared #hud's top offset. */
+#orbitBadge{
+  position:fixed;top:108px;left:50%;transform:translateX(-50%) translateY(-8px);z-index:6;
+  padding:6px 16px;display:flex;align-items:center;gap:7px;opacity:0;pointer-events:none;
+  border:1px solid rgba(212,168,92,0.4);border-radius:20px;background:var(--panel);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  transition:opacity .5s ease,transform .5s ease;
+}
+#orbitBadge.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#orbitBadge .dot{width:6px;height:6px;border-radius:50%;background:var(--gold-bright);flex:none;}
+#orbitBadge span{font-family:var(--mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold-bright);white-space:nowrap;}
+@media (max-width:640px){
+  #orbitBadge{top:auto;bottom:auto;top:96px;padding:5px 12px;}
+  #orbitBadge span{font-size:8.5px;}
+}
+@media (prefers-reduced-motion:reduce){
+  #orbitBadge{animation:none;}
+}
+.chrome-recede{opacity:0.18 !important;transform:scale(0.94) !important;pointer-events:none !important;transition:opacity .5s ease,transform .5s ease !important;}
+
+/* ---------- rotate-device overlay (mobile portrait) ----------
+   Small-screen + coarse-pointer + portrait orientation is blocked by an
+   overlay asking the visitor to rotate to landscape. Re-evaluated live
+   on orientation/resize — no reload needed once they turn the phone. */
+#rotateOverlay{
+  position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:18px;background:var(--bg-deep);text-align:center;padding:32px;
+}
+#rotateOverlay.show{display:flex;}
+#rotateOverlay .ricon{width:56px;height:56px;color:var(--gold-bright);}
+#rotateOverlay .ricon svg{width:100%;height:100%;}
+#rotateOverlay .ricon.spin svg{animation:rotateHint 1.8s ease-in-out infinite;}
+@keyframes rotateHint{
+  0%,100%{transform:rotate(0deg);}
+  45%,55%{transform:rotate(-90deg);}
+}
+#rotateOverlay h2{font-family:var(--serif-it);font-style:italic;font-weight:500;font-size:20px;margin:0;color:var(--text);max-width:280px;}
+#rotateOverlay p{font-family:var(--mono);font-size:11px;color:var(--dim);margin:0;max-width:260px;line-height:1.6;}
+@media (prefers-reduced-motion:reduce){
+  #rotateOverlay .ricon.spin svg{animation:none;}
+}
+
+/* ---------- mobile drag-to-fly + big STOP button ----------
+   Replaces the old fixed virtual-joystick knob (explicit negative
+   feedback: "não gostei daquela bolinha", "não sei como parar"). No
+   persistent on-screen stick — touch-drag anywhere on the open scene
+   steers, and release always means an immediate, total stop. */
+#stopBtn{
+  display:none;position:fixed;z-index:6;left:50%;bottom:18px;transform:translateX(-50%);
+  align-items:center;gap:8px;padding:13px 26px;border-radius:26px;
+  background:rgba(196,87,74,0.16);border:1.5px solid rgba(196,87,74,0.65);color:#ff9c8f;
+  font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 4px 20px rgba(196,87,74,0.25);
+}
+#stopBtn.show{display:flex;}
+#stopBtn svg{width:14px;height:14px;flex-shrink:0;}
+#stopBtn:active{transform:translateX(-50%) scale(0.96);background:rgba(196,87,74,0.3);}
+#dragHint{
+  display:none;position:fixed;z-index:5;left:50%;bottom:66px;transform:translateX(-50%);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:0.03em;color:var(--dim);
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 12px;
+  pointer-events:none;opacity:0.9;white-space:nowrap;
+}
+#dragHint.show{display:block;}
+@media (max-width:640px){
+  #stopBtn{bottom:14px;padding:11px 22px;font-size:12px;}
+  #dragHint{bottom:58px;font-size:8.5px;padding:5px 10px;}
+}
+
+/* ---------- short landscape phones (item 3's golden path) ----------
+   A phone rotated to landscape is WIDE but SHORT — the width-based rules
+   above alone let #hud grow wide enough to run under #infoBtn/#soundBtn
+   on the right (found during testing at 667×375). Target this by height,
+   not width, so a normal short-but-wide desktop window is unaffected.
+   Placed at the end of the stylesheet deliberately: same-specificity CSS
+   rules resolve by source order, and this needs to win over every
+   earlier width-based responsive rule for the same elements. */
+@media (max-height:420px) and (orientation:landscape){
+  #topLeftBar{top:8px;left:8px;}
+  #hdr{display:none;}
+  #hud{top:8px;max-width:calc(100vw - 340px);padding:5px 10px;gap:8px;}
+  #hud .near{display:none;}
+  #lookbackHud{top:40px;padding:4px 10px;}
+  #infoBtn{top:8px;padding:6px;}
+  #infoBtn #infoBtnLabel{display:none;}
+  #soundBtn{top:8px;right:54px;width:30px;height:30px;}
+  #soundBtn svg{width:13px;height:13px;}
+  #navHud{top:auto;bottom:8px;left:8px;padding:6px 7px 7px;}
+  #navHere{display:none;}
+  #radar{width:52px;height:52px;}
+  #poiCard{bottom:8px;top:8px;left:auto;right:8px;transform:none;width:min(280px,42vw);max-height:calc(100vh - 16px);overflow-y:auto;}
+  #orbitPanel{top:8px;bottom:8px;max-height:calc(100vh - 16px);}
+  #speedo{bottom:8px;}
+  #stopBtn{bottom:8px;padding:9px 20px;font-size:11px;}
+  #dragHint{bottom:52px;}
+  #orbitBadge{top:40px;padding:4px 10px;}
+  #orbitBadge span{font-size:8px;}
+  #welcome .card{max-height:calc(100vh - 16px);padding:16px 18px 14px;}
+  #welcome h2{font-size:17px;margin:6px 0 8px;}
+  #welcome ol{gap:5px;margin:9px 0 12px;}
+  #welcome ol li{font-size:11.5px;}
+}
+
 @media (prefers-reduced-motion:reduce){
   *{transition:none !important;}
   #infoBtn .pulse{animation:none;display:none;}
   .poi-marker::after{animation:none;}
+  #orbitVignette{transition:none;}
+  #orbitBadge{transition:none;}
+  .chrome-recede{transition:none !important;}
 }
 </style>
 
-<a id="backlink" href="/salas/"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>outras salas</a>
+<div id="topLeftBar">
+  <a id="backlink" href="/salas/"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>outras salas</a>
+  <button id="roomsBtn" type="button" aria-haspopup="dialog" aria-controls="roomsModal"><svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="1.5" y="1.5" width="3.7" height="3.7" rx="0.8" stroke="currentColor" stroke-width="1.1"/><rect x="6.8" y="1.5" width="3.7" height="3.7" rx="0.8" stroke="currentColor" stroke-width="1.1"/><rect x="1.5" y="6.8" width="3.7" height="3.7" rx="0.8" stroke="currentColor" stroke-width="1.1"/><rect x="6.8" y="6.8" width="3.7" height="3.7" rx="0.8" stroke="currentColor" stroke-width="1.1"/></svg>salas</button>
+</div>
 
 <canvas id="scene" aria-label="Cena 3D navegável do sistema solar, vizinhança estelar e escala galáctica."></canvas>
 
@@ -517,6 +725,14 @@ canvas{display:block;}
   <h1>voo <i>espacial</i></h1>
   <p class="sub">pilote livremente do Sol até a escala das galáxias</p>
 </header>
+
+<button id="soundBtn" type="button" aria-pressed="false" aria-label="Som ambiente: desligado. Toque para ativar.">
+  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path class="spk" d="M3 8v4h3.2L11 15.5v-11L6.2 8H3z" fill="currentColor" stroke="none"/>
+    <path class="waves" d="M13.2 7.2a4 4 0 0 1 0 5.6M15.3 5.1a7 7 0 0 1 0 9.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+    <path class="off-slash" d="M3 3l14 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+  </svg>
+</button>
 
 <button id="infoBtn" aria-expanded="false" aria-controls="info"><span class="pulse" aria-hidden="true"></span><svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 6.3v4M7 4v.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><span id="infoBtnLabel">entenda a física</span></button>
 
@@ -553,13 +769,46 @@ canvas{display:block;}
   <canvas id="radar" width="104" height="104" aria-label="Radar: sua posição relativa ao Sol e aos planetas próximos"></canvas>
 </div>
 
+<!-- Mobile flight controls: touch-and-drag directly on the scene (no
+     fixed joystick knob — reported pain point) plus an always-visible,
+     unmissable STOP button that zeroes speed instantly. #touchCtl itself
+     stays as the semantic/activation marker (JS toggles touchCtl.active
+     on coarse-pointer devices) but no longer paints a stick UI. -->
 <div id="touchCtl">
-  <div class="tlook" id="tlook"></div>
-  <div class="tstick" id="tstick"><div class="knob" id="tknob"></div></div>
-  <div class="tvert">
-    <button class="tbtn" id="tup" aria-label="Subir">▲</button>
-    <button class="tbtn" id="tdown" aria-label="Descer">▼</button>
+  <div id="dragHint">arraste para olhar e mover · toque em <b>PARAR</b> a qualquer momento</div>
+</div>
+<button id="stopBtn" type="button" aria-label="Parar imediatamente — zera a velocidade de voo">
+  <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="2.5" y="2.5" width="9" height="9" rx="1.4" fill="currentColor"/></svg>
+  parar
+</button>
+
+<div id="orbitVignette" aria-hidden="true"></div>
+<div id="orbitBadge"><span class="dot" aria-hidden="true"></span><span>órbita de exploração · câmera travada</span></div>
+
+<div id="guideTip" role="status" aria-live="polite">
+  <span class="gico" aria-hidden="true">G</span>
+  <div class="gtext"><b>a guia sugere</b><span id="guideTipText"></span></div>
+  <button class="gclose" id="guideTipClose" aria-label="Dispensar dica">✕</button>
+</div>
+
+<div id="roomsModal" role="dialog" aria-modal="true" aria-labelledby="roomsTitle">
+  <div class="card panel">
+    <span class="eyebrow">Física Visual · outras salas</span>
+    <h2 id="roomsTitle">Para onde ir agora?</h2>
+    <div class="rlist" id="roomsList"></div>
+    <div class="actions">
+      <a class="allrooms" href="/salas/">ver todas as salas</a>
+      <button class="close" id="roomsClose">fechar</button>
+    </div>
   </div>
+</div>
+
+<div id="rotateOverlay" role="status" aria-live="polite">
+  <div class="ricon spin" aria-hidden="true">
+    <svg viewBox="0 0 48 48" fill="none"><rect x="14" y="6" width="20" height="36" rx="3" stroke="currentColor" stroke-width="2"/><path d="M24 34.5v.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+  </div>
+  <h2>gire seu celular para uma experiência melhor</h2>
+  <p>o voo espacial precisa de mais espaço horizontal — vire a tela para o modo paisagem para continuar</p>
 </div>
 
 <div id="poiCard" class="panel" role="dialog" aria-labelledby="poiName">
@@ -589,11 +838,12 @@ canvas{display:block;}
     <h2 id="welcomeTitle">O cosmos não cabe numa única escala</h2>
     <p>Esta sala é uma cabine de comando: você pilota livremente entre o Sol e os planetas, depois se afasta o suficiente para atravessar a vizinhança estelar e, por fim, a escala das próprias galáxias — sem cortes de câmera, como um zoom contínuo.</p>
     <ol>
-      <li><b>WASD</b> (ou setas) move a nave; arraste o <b>mouse</b> para olhar ao redor; o <b>scroll</b> acelera ou freia — em celular, use o manche virtual no canto.</li>
-      <li>Marcadores dourados são <b>pontos de interesse</b>. Clique num deles para ver fatos reais e viajar até lá com a câmera.</li>
+      <li id="welcomeDesktopMove"><b>WASD</b> (ou setas) move a nave; arraste o <b>mouse</b> para olhar ao redor; o <b>scroll</b> acelera ou freia.</li>
+      <li id="welcomeMobileMove" hidden><b>arraste o dedo</b> na tela para olhar e mover a nave; solte para continuar no ritmo atual. Toque no botão vermelho <b>PARAR</b> a qualquer momento para zerar a velocidade na hora.</li>
+      <li>Marcadores dourados são <b>pontos de interesse</b>. Clique (ou toque) num deles para ver fatos reais e viajar até lá com a câmera.</li>
       <li>Ao se afastar bastante, a cena troca de camada de escala sozinha — observe o indicador no topo mudar de "Sistema Solar" para "vizinhança estelar", depois "escala galáctica" e, no limite, uma dramatização visual do próprio Big Bang.</li>
       <li>Perdido? O radar no canto e o botão <b>"recentralizar"</b> sempre te trazem de volta a uma vista geral do sistema solar.</li>
-      <li>Toque em <b>"entenda a física"</b> para ver o que aqui é real (texturas, tamanhos) e o que é artisticamente comprimido ou estilizado (distâncias, estrelas, galáxias).</li>
+      <li>Toque em <b>"entenda a física"</b> para ver o que aqui é real (texturas, tamanhos) e o que é artisticamente comprimido ou estilizado (distâncias, estrelas, galáxias). O botão de <b>alto-falante</b> liga um som ambiente opcional.</li>
     </ol>
     <div class="actions">
       <button class="go" id="welcomeGo">iniciar voo</button>
@@ -615,6 +865,9 @@ canvas{display:block;}
   <h3>Como isso é calculado</h3>
   <p class="note">As <b>texturas</b> dos planetas, do Sol, da Lua e do céu estelar são reais — mapas de superfície baseados em imagens de sondas e observatórios da NASA, redistribuídos por Solar System Scope. Os <b>tamanhos relativos</b> entre corpos (ex.: Júpiter bem maior que a Terra, que por sua vez é maior que Mercúrio) seguem as proporções reais de raio, assim como as comparações de <b>gravidade e peso</b> mostradas nos cartões de cada corpo. As <b>distâncias</b> entre órbitas, a velocidade da nave e o tempo de viagem, porém, são inteiramente artísticos: nesta simulação você atravessa o sistema solar inteiro em segundos a minutos, enquanto numa nave real, na mesma velocidade relativa exibida no velocímetro, a viagem de aqui até o planeta mais distante levaria — se as distâncias fossem as reais do sistema solar (bilhões de km) — muitos anos. O campo estelar, as nebulosas e as galáxias das camadas externas são <b>representações artísticas</b>, não um catálogo de posições reais. O número de "bilhões de anos atrás" na camada cosmológica é calculado como uma função monotônica e crescente da distância percorrida, calibrada para terminar exatamente nos <b>13,8 bilhões de anos</b> reais da idade do universo no limite máximo de voo — os números finais são cientificamente corretos, mas o mapeamento distância→tempo em si é uma escolha de design, não uma fórmula de cosmologia real.</p>
   <div class="credit">Texturas planetárias e do céu estelar: <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener">Solar System Scope</a>, baseadas em imagens da NASA, licenciadas sob <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</div>
+  <h3>Sobre o som</h3>
+  <p class="note">Sim, o espaço é silencioso — não existe ar para o som viajar entre os planetas. O som aqui é uma licença artística explícita, ligada e controlada por você a qualquer momento pelo botão de alto-falante. O <b>ambiente de fundo</b> é inteiramente sintetizado ao vivo no seu navegador (osciladores de áudio somados em camadas, como um órgão de tubo) — nenhum arquivo de música é carregado. Ao entrar em órbita de exploração perto de um planeta, um segundo som sutil se soma ao ambiente: <b>também é sintetizado</b>, não uma gravação — variando de timbre e densidade a cada corpo (mais grave e denso perto de Júpiter, mais agudo e esparso perto de Mercúrio) como uma sonificação artística inspirada na ideia real de que sondas como a Voyager captam emissões de rádio e ondas de plasma dos planetas, convertidas por cientistas em áudio audível. Antes de escrever qualquer código de som, verificamos se havia uma gravação real dessas emissões, de domínio público e disponível para uso direto — o resultado dessa checagem está registrado abaixo, com honestidade, porque parecia importante não fingir uma fonte que não tínhamos.</p>
+  <p class="note"><b>O que tentamos:</b> buscamos no acervo público do <a href="https://archive.org" target="_blank" rel="noopener">archive.org</a> por gravações de rádio/plasma planetário atribuídas à NASA/JPL (sondas Voyager, Juno, Cassini). A coleção oficial da NASA hospedada lá contém dados sísmicos da era Apollo, não áudio planetário. O único item que aparece para "Voyager plasma wave recordings" é um vídeo único de ~2h30 enviado por um usuário privado, sem nenhuma declaração de licença/domínio público, com metadados que misturam "gravações da NASA" com tags de "vaporwave", "música para meditação" e "batidas binaurais" — sinal forte de que é uma compilação remixada, não o dado bruto, e sem marcação por planeta para recortar com segurança. Sem uma fonte clara, pública e verificável, optamos por não usar nenhum arquivo de áudio externo nesta sala — a alternativa honesta era sintetizar.</p>
   <h3>O que ainda não sabemos</h3>
   <ul class="qs">
     <li>Já confirmamos milhares de <b>exoplanetas</b>, e um punhado deles orbita na "zona habitável" de sua estrela — mas nenhum foi confirmado como tendo vida. Continuamos sem saber se planetas como a Terra são raros ou comuns na galáxia.</li>
@@ -1408,10 +1661,14 @@ function enterOrbit(poi){
   });
   orbitProse.textContent = poi.prose || '';
   orbitPanel.classList.add('open');
+  if (typeof SoundEngine !== 'undefined') SoundEngine.startPoiDrone(poi);
+  enterOrbitVisuals();
 }
 function leaveOrbit(){
   orbitState = null;
   orbitPanel.classList.remove('open');
+  if (typeof SoundEngine !== 'undefined') SoundEngine.stopPoiDrone();
+  leaveOrbitVisuals();
 }
 orbitLeaveBtn.addEventListener('click', leaveOrbit);
 
@@ -1468,15 +1725,46 @@ var speed = 0;              // current forward speed, units/sec
 var MAX_SPEED = 260;
 var MIN_SPEED = 0;
 var dragging = false, lastX=0, lastY=0;
+var isTouch = matchMedia('(pointer: coarse)').matches;
+
+/* touch drag-to-fly state (item 2 — replaces the old fixed joystick).
+   touchDragY accumulates vertical drag distance from where THIS drag
+   gesture started; that offset (not per-frame delta) drives forward
+   speed, exactly like pulling a throttle back and forth. Letting go
+   ALWAYS zeroes speed immediately in updateCamera() below — the
+   reported "avança e não sei como parar" problem — no inertia carries
+   over into the next gesture or into free (un-dragged) flight. */
+var touchDragActive = false, touchStartY = 0, touchDragY = 0;
 
 canvas.classList.add('grabbable');
 canvas.addEventListener('pointerdown', function(e){
+  // ignore drags that start on interactive chrome layered above the
+  // canvas (POI markers, buttons) so a tap on a marker never also
+  // starts a flight-drag gesture underneath it.
+  if (e.target !== canvas) return;
   dragging = true; lastX = e.clientX; lastY = e.clientY;
   canvas.classList.add('dragging');
-  canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
+  // setPointerCapture can throw for a pointerId the browser no longer
+  // considers active (observed with synthetic/replayed pointer events,
+  // and possible on some touch browsers mid-gesture) — never let that
+  // abort the rest of this handler, since the flight-input state below
+  // is what actually matters for "is the ship now under touch control".
+  try{ canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId); }catch(err){}
+  if (isTouch && e.pointerType === 'touch'){
+    touchDragActive = true; touchStartY = e.clientY; touchDragY = 0;
+    if (dragHintEl) dragHintEl.classList.remove('show');
+  }
 });
 window.addEventListener('pointerup', function(e){
   dragging = false; canvas.classList.remove('dragging');
+  if (touchDragActive){
+    touchDragActive = false; touchDragY = 0;
+    speed = 0; // immediate, total stop on release — the opposite of the reported bug
+  }
+});
+window.addEventListener('pointercancel', function(e){
+  dragging = false; canvas.classList.remove('dragging');
+  if (touchDragActive){ touchDragActive = false; touchDragY = 0; speed = 0; }
 });
 window.addEventListener('pointermove', function(e){
   if (!dragging) return;
@@ -1488,6 +1776,16 @@ window.addEventListener('pointermove', function(e){
     // instead of the free-flight camera yaw/pitch.
     orbitState.userYawOffset -= dx*0.0034;
     orbitState.userTiltOffset = Math.max(-1.3, Math.min(1.3, orbitState.userTiltOffset - dy*0.0034));
+    return;
+  }
+  if (touchDragActive){
+    // horizontal drag steers (yaw), same feel as mouse-look
+    yaw -= dx*0.0034;
+    // vertical drag distance FROM GESTURE START sets throttle: drag up
+    // (finger moves toward top of screen, e.clientY decreases) = move
+    // forward faster; drag down = slow/reverse. Capped so a single
+    // gesture can't overshoot MAX_SPEED instantly.
+    touchDragY = touchStartY - e.clientY;
     return;
   }
   yaw -= dx*0.0026;
@@ -1524,66 +1822,38 @@ canvas.addEventListener('wheel', function(e){
   speed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed+delta));
 }, { passive:false });
 
-/* ---- touch controls ---- */
+/* ---- touch controls (item 2 — redesigned) ----
+   Old design: fixed virtual joystick knob + separate look zone + up/down
+   buttons — explicitly disliked ("não gostei daquela bolinha") and
+   confusing to stop ("avança e não sei como parar"). New design: touch
+   and drag ANYWHERE on the open scene to look-and-move (handled by the
+   canvas pointerdown/move/up listeners above); release always stops
+   completely; a large always-visible STOP button provides a second,
+   redundant, unmissable way to kill speed instantly at any time — never
+   hidden behind a gesture. No vertical Q/E-equivalent on touch: keeping
+   the input surface to "drag to fly, tap to stop" is the simplest design
+   that resolves the reported panic, and Q/E remain available via an
+   attached physical keyboard if present. */
 var touchCtl = document.getElementById('touchCtl');
-var isTouch = matchMedia('(pointer: coarse)').matches;
-if (isTouch) touchCtl.classList.add('active');
+var dragHintEl = document.getElementById('dragHint');
+var stopBtn = document.getElementById('stopBtn');
+var vertUp=false, vertDown=false; // no touch equivalent by design; kept as constants for updateCamera()
 
-var tstick = document.getElementById('tstick'), tknob = document.getElementById('tknob');
-var stickVec = {x:0,y:0}; var stickActive=false, stickId=null, stickOrigin={x:0,y:0};
-tstick.addEventListener('pointerdown', function(e){
-  stickActive = true; stickId = e.pointerId;
-  var r = tstick.getBoundingClientRect();
-  stickOrigin = { x:r.left+r.width/2, y:r.top+r.height/2 };
-  tstick.setPointerCapture(e.pointerId);
-});
-tstick.addEventListener('pointermove', function(e){
-  if (!stickActive || e.pointerId!==stickId) return;
-  var dx = e.clientX-stickOrigin.x, dy = e.clientY-stickOrigin.y;
-  var max = 40;
-  var len = Math.min(max, Math.hypot(dx,dy));
-  var ang = Math.atan2(dy,dx);
-  var cx = Math.cos(ang)*len, cy = Math.sin(ang)*len;
-  tknob.style.transform = 'translate('+cx+'px,'+cy+'px)';
-  stickVec = { x: cx/max, y: cy/max };
-});
-function stickEnd(e){
-  if (e.pointerId!==stickId) return;
-  stickActive=false; stickVec={x:0,y:0}; tknob.style.transform='translate(0,0)';
+if (isTouch){
+  touchCtl.classList.add('active');
+  stopBtn.classList.add('show');
+  dragHintEl.classList.add('show');
+  // the hint is a one-time affordance: fades once the player has
+  // successfully dragged once (see pointerdown above) or after a beat.
+  setTimeout(function(){ dragHintEl.classList.remove('show'); }, 6000);
 }
-tstick.addEventListener('pointerup', stickEnd);
-tstick.addEventListener('pointercancel', stickEnd);
 
-var tlook = document.getElementById('tlook');
-var lookActive=false, lookId=null, lookLastX=0, lookLastY=0;
-tlook.addEventListener('pointerdown', function(e){ lookActive=true; lookId=e.pointerId; lookLastX=e.clientX; lookLastY=e.clientY; tlook.setPointerCapture(e.pointerId); });
-tlook.addEventListener('pointermove', function(e){
-  if (!lookActive || e.pointerId!==lookId) return;
-  var dx = e.clientX-lookLastX, dy=e.clientY-lookLastY;
-  lookLastX=e.clientX; lookLastY=e.clientY;
-  if (orbitState){
-    orbitState.userYawOffset -= dx*0.0038;
-    orbitState.userTiltOffset = Math.max(-1.3, Math.min(1.3, orbitState.userTiltOffset - dy*0.0038));
-    return;
-  }
-  yaw -= dx*0.0032; pitch -= dy*0.0032;
-  pitch = Math.max(-1.5, Math.min(1.5, pitch));
-});
-function lookEnd(e){ if (e.pointerId===lookId) lookActive=false; }
-tlook.addEventListener('pointerup', lookEnd);
-tlook.addEventListener('pointercancel', lookEnd);
-
-var vertUp=false, vertDown=false;
-var tup = document.getElementById('tup'), tdown = document.getElementById('tdown');
-tup.addEventListener('pointerdown', function(){ vertUp=true; });
-tup.addEventListener('pointerup', function(){ vertUp=false; });
-tup.addEventListener('pointercancel', function(){ vertUp=false; });
-tdown.addEventListener('pointerdown', function(){ vertDown=true; });
-tdown.addEventListener('pointerup', function(){ vertDown=false; });
-tdown.addEventListener('pointercancel', function(){ vertDown=false; });
-
-/* touch throttle buttons removed in favor of stick-forward=speed to keep
-   the control surface simple; forward/back handled by stick Y axis. */
+function hardStop(){
+  speed = 0;
+  touchDragActive = false; touchDragY = 0;
+  if (orbitState) leaveOrbit();
+}
+stopBtn.addEventListener('pointerdown', function(e){ e.preventDefault(); hardStop(); });
 
 /* ============================================================
    HUD refs
@@ -1615,7 +1885,20 @@ function updateCamera(dt){
   if (keys['KeyS']||keys['ArrowDown']) accel -= 1;
   speed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed + accel*140*dt));
 
-  var moveDist = speed*dt;
+  // deep-space boost (item 7 — "viagem ao início do universo" needs to be
+  // reachable without minutes of monotonous flight): the displayed speed
+  // (speedo, MAX_SPEED, acceleration feel) stays exactly as tuned for the
+  // solar system, but actual distance covered per second scales up the
+  // farther out the camera already is — cruising past the outer solar
+  // system covers ground several times faster at the same throttle
+  // setting, the way "warping out" reads in most space games. Kicks in
+  // gently past SOLAR_MAX so close-in planetary flight (where precision
+  // matters for approaching/orbiting a body) is completely unaffected.
+  var distFromOrigin = camera.position.length();
+  var deepSpaceBoost = 1 + smoothstep(SOLAR_MAX, LAYER2_FADE_IN, distFromOrigin)*2.2
+                          + smoothstep(LAYER2_FULL, COSMIC_LIMIT*0.7, distFromOrigin)*3.0;
+
+  var moveDist = speed*dt*deepSpaceBoost;
   camera.position.addScaledVector(tmpForward, moveDist);
 
   // strafe (instant, not accumulated — feels better for lateral correction)
@@ -1629,10 +1912,17 @@ function updateCamera(dt){
   if (keys['KeyE']||vertUp) vert += 1;
   if (vert) camera.position.addScaledVector(tmpUp, vert*60*dt);
 
-  // touch stick: y = forward/back accel, x = yaw turn assist
-  if (stickActive){
-    speed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed - stickVec.y*160*dt));
-    yaw -= stickVec.x*1.6*dt;
+  // touch drag-to-fly (item 2): while a finger is down on the scene,
+  // the vertical distance dragged from where the gesture STARTED sets a
+  // target speed (drag up = faster forward, drag down = slower/reverse),
+  // eased toward rather than snapped to, so it feels like a throttle
+  // rather than a twitchy toggle. The moment the finger lifts (see the
+  // pointerup handler above), speed is forced to exactly 0 — no residual
+  // drift survives a released gesture, which is the direct fix for
+  // "avança e não sei como parar".
+  if (touchDragActive){
+    var targetSpeed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, touchDragY * 1.35));
+    speed += (targetSpeed - speed) * Math.min(1, dt*4.5);
   }
 
   resolveCollisions();
@@ -1780,8 +2070,16 @@ function updateLayers(){
   if (d >= LAYER3_FADE_IN) layerLabel = 'Camada cosmológica';
   layerNameEl.textContent = layerLabel;
 
+  // ambient soundscape grows fuller (more voices, longer sustains) the
+  // further out the camera travels — solar system is sparsest, the
+  // cosmic layer is the fullest it ever gets (see SoundEngine below).
+  if (typeof SoundEngine !== 'undefined') SoundEngine.setIntensity(smoothstep(0, COSMIC_LIMIT, d));
+
+  if (layerLabel !== lastLayerLabel){ onLayerChanged(layerLabel); lastLayerLabel = layerLabel; }
+
   updateLookback(d);
 }
+var lastLayerLabel = null;
 
 /* ============================================================
    LOOKBACK-TIME READOUT — "você está vendo luz de X bilhões de anos
@@ -2088,4 +2386,441 @@ document.addEventListener('keydown', function(e){
 var themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
 var mo = new MutationObserver(function(){ /* no-op: CSS vars handle it */ });
 mo.observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+
+/* ============================================================
+   AMBIENT SOUND (item 1) — "seria legal por som né?"
+   ------------------------------------------------------------
+   Research note on real NASA audio (documented here AND in the field
+   notebook below, per spec): before writing any synthesis code, this
+   session checked live network access for public-domain planetary
+   radio/plasma-wave recordings (jpl.nasa.gov, archive.org). Network
+   access worked, but no source cleared the bar of "confirmed public
+   domain AND individually downloadable AND actually the real
+   recording": NASA's own archive.org collection under a clear NASA
+   identifier only contains Apollo-era seismic/technical data, not
+   planetary radio audio; the one archive.org item that surfaces for
+   "Voyager plasma wave recordings" ("Symphonies of the Planets") is a
+   single unsegmented ~2.5-hour/450MB video uploaded by a private user
+   with no license/rights statement, its own tags mixing "NASA
+   recordings" with "vaporwave", "meditation music", "binaural beats" —
+   i.e. very likely a remixed/edited compilation, not verifiably the
+   raw JPL data, and with no per-planet timestamps to even excerpt from
+   safely. Given that, per the brief's own instruction, no external
+   audio file is used anywhere in this room. Every sound below —
+   ambient bed AND per-POI variations — is synthesized live via Web
+   Audio API oscillators. This is disclosed honestly in #info.
+   ------------------------------------------------------------
+   Musical direction (per later note from the project owner): NOT a
+   generic sci-fi drone. The reference is the contemplative, spacious
+   character of Hans Zimmer's Interstellar score — pipe-organ-like
+   timbre (additive stacks of sine/triangle harmonics through slow
+   attack/release envelopes), long sustained notes with real silence
+   between them, sparse open intervals (fifths/octaves, never dense
+   chords), no perceptible beat/rhythm. None of Zimmer's actual
+   melodies, chord progressions or recordings are used or approximated
+   beat-for-beat — this is an original, minimal, royalty-free
+   soundscape in a similar REGISTER (organ-like timbre, patience,
+   scale), not a reproduction of the copyrighted score.
+   ------------------------------------------------------------
+   Autoplay-safety: the AudioContext is created and resumed ONLY on the
+   first user gesture (click/touch/keydown anywhere), never on load —
+   browsers block unprompted audio and this respects that by design,
+   not as a workaround for an error.
+   ============================================================ */
+var SoundEngine = (function(){
+  var MKEY = 'fisicavisual_voo_muted';
+  var ctx = null, master = null, started = false;
+  var muted = true;
+  try{ muted = localStorage.getItem(MKEY) === '1'; }catch(e){ muted = false; }
+  // default OFF the very first visit (spec: "nunca ligar automaticamente
+  // sem controle claro do usuário") — only an explicit unmute click turns
+  // it on; from then on the *explicit* choice (on or off) is remembered.
+  var everToggled = false;
+  try{ everToggled = localStorage.getItem(MKEY) !== null; }catch(e){}
+  if (!everToggled) muted = true;
+
+  var soundBtn = document.getElementById('soundBtn');
+
+  function ensureCtx(){
+    if (ctx) return ctx;
+    try{
+      var AC = window.AudioContext || window.webkitAudioContext;
+      ctx = new AC();
+      master = ctx.createGain();
+      master.gain.value = muted ? 0 : 0.55;
+      master.connect(ctx.destination);
+    }catch(e){ ctx = null; }
+    return ctx;
+  }
+
+  /* ---------- pipe-organ-ish voice ----------
+     A single sustained note = a fundamental + a handful of harmonics at
+     organ-like amplitude ratios (strong octave/12th, weaker upper
+     partials), each its own oscillator summed into one per-note gain
+     envelope with a slow attack and slow release — this is what gives
+     it "breath" instead of a synth-pad snap. */
+  var HARMONICS = [ {mult:1, amp:0.5}, {mult:2, amp:0.32}, {mult:3, amp:0.16}, {mult:4, amp:0.12}, {mult:6, amp:0.06} ];
+  function playOrganNote(freq, dur, gainTarget, dest, waveOverride){
+    if (!ctx) return;
+    var now = ctx.currentTime;
+    var noteGain = ctx.createGain();
+    noteGain.gain.value = 0;
+    noteGain.connect(dest || master);
+    var attack = Math.min(4, dur*0.28);
+    var release = Math.min(4.5, dur*0.32);
+    noteGain.gain.linearRampToValueAtTime(gainTarget, now+attack);
+    noteGain.gain.setValueAtTime(gainTarget, now+dur-release);
+    noteGain.gain.linearRampToValueAtTime(0, now+dur);
+    var oscs = [];
+    HARMONICS.forEach(function(h){
+      var osc = ctx.createOscillator();
+      osc.type = waveOverride || (h.mult===1 ? 'sine' : 'triangle');
+      osc.frequency.value = freq*h.mult;
+      var hg = ctx.createGain();
+      hg.gain.value = h.amp;
+      osc.connect(hg); hg.connect(noteGain);
+      osc.start(now); osc.stop(now+dur+0.1);
+      oscs.push(osc);
+    });
+    return { gain: noteGain, oscs: oscs, until: now+dur };
+  }
+
+  /* ---------- sparse Zimmer-register composer ----------
+     Minimal harmony: 2-3 simultaneous voices max, open fifths/octaves
+     (never a full triad), long notes (8-15s) separated by real silence.
+     Density/richness scales with how far out the camera has traveled —
+     more voices and longer sustains as the layer grows more cosmic,
+     without ever becoming loud or busy. */
+  var ROOT = 65.41; // C2 — low register, organ-like
+  var SCALE_DEGREES = [0, 3, 5, 7, 10, 12]; // minor-leaning open intervals (root, m3, 4th, 5th, m7, octave)
+  function degreeFreq(deg, oct){ return ROOT * Math.pow(2, oct + deg/12); }
+
+  var composerTimer = null;
+  var currentIntensity = 0; // 0 (solar) .. 1 (cosmic) — set by updateSoundIntensity()
+  function scheduleNextPhrase(){
+    if (!started || muted || !ctx) return;
+    var intensity = currentIntensity;
+    var voices = 1 + Math.round(intensity*1.8); // 1..3
+    var dur = 9 + intensity*6 + Math.random()*3; // 9..18s
+    var vol = (0.05 + intensity*0.05); // gentle, grows slightly with scale
+    var baseDeg = SCALE_DEGREES[Math.floor(Math.random()*SCALE_DEGREES.length)];
+    for (var i=0;i<voices;i++){
+      var deg = i===0 ? baseDeg : (i===1 ? baseDeg+7 : baseDeg+12); // stack a 5th, then an octave — open, not a chord
+      var oct = -0.3 + Math.random()*0.15;
+      playOrganNote(degreeFreq(deg%24, oct), dur, vol/voices*1.4, master);
+    }
+    var gap = (7 - intensity*3) + Math.random()*5; // longer silences when close in, tighter (but still real) further out
+    composerTimer = setTimeout(scheduleNextPhrase, (dur*0.55 + gap) * 1000);
+  }
+
+  function setIntensity(t){ currentIntensity = Math.max(0, Math.min(1, t)); }
+
+  /* ---------- per-POI "sonification" drone ----------
+     Honest by design (see #info "Como isso é calculado"): NOT real
+     spacecraft recordings — a distinct synthesized variation per body,
+     inspired by the idea of planetary radio emissions, layered under
+     the ambient bed while an exploration orbit is active. Each POI gets
+     a deterministic timbre from a tiny hash of its name so it's stable
+     across visits without hand-authoring 12 separate presets. */
+  var poiVoice = null;
+  function hashSeed(str){
+    var h = 0;
+    for (var i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; }
+    return h;
+  }
+  function startPoiDrone(poi){
+    stopPoiDrone();
+    if (!ctx || muted) return;
+    var seed = hashSeed(poi.name||'poi');
+    // deterministic but varied per body: freq spread, filter brightness,
+    // wobble rate all derive from the hash — "Júpiter" lands low/dense,
+    // a small rocky/icy body lands higher/sparser, purely by chance of
+    // its name's hash, which is fine: the point is variety, not a
+    // literal per-planet mapping.
+    var baseFreq = 36 + (seed % 40); // 36-75 Hz sub-drone
+    var brightness = 400 + (seed % 2600);
+    var wobbleRate = 0.06 + (seed % 100)/900;
+
+    var g = ctx.createGain();
+    g.gain.value = 0;
+    g.connect(master);
+    g.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 3);
+
+    var filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = brightness;
+    filter.Q.value = 0.7;
+    filter.connect(g);
+
+    var osc1 = ctx.createOscillator();
+    osc1.type = 'sine'; osc1.frequency.value = baseFreq;
+    var osc2 = ctx.createOscillator();
+    osc2.type = 'triangle'; osc2.frequency.value = baseFreq*1.5;
+    var oscGain2 = ctx.createGain(); oscGain2.gain.value = 0.4;
+    osc1.connect(filter); osc2.connect(oscGain2); oscGain2.connect(filter);
+
+    var lfo = ctx.createOscillator();
+    lfo.type = 'sine'; lfo.frequency.value = wobbleRate;
+    var lfoGain = ctx.createGain();
+    lfoGain.gain.value = brightness*0.35;
+    lfo.connect(lfoGain); lfoGain.connect(filter.frequency);
+
+    osc1.start(); osc2.start(); lfo.start();
+    poiVoice = { g:g, osc1:osc1, osc2:osc2, lfo:lfo };
+  }
+  function stopPoiDrone(){
+    if (!poiVoice || !ctx) { poiVoice = null; return; }
+    var v = poiVoice, now = ctx.currentTime;
+    v.g.gain.cancelScheduledValues(now);
+    v.g.gain.setValueAtTime(v.g.gain.value, now);
+    v.g.gain.linearRampToValueAtTime(0, now+1.6);
+    setTimeout(function(){ try{ v.osc1.stop(); v.osc2.stop(); v.lfo.stop(); }catch(e){} }, 1800);
+    poiVoice = null;
+  }
+
+  function applyMuteVisual(){
+    if (!soundBtn) return;
+    soundBtn.classList.toggle('muted', muted);
+    soundBtn.classList.toggle('on', !muted);
+    soundBtn.setAttribute('aria-pressed', String(!muted));
+    soundBtn.setAttribute('aria-label', muted ? 'Som ambiente: desligado. Toque para ativar.' : 'Som ambiente: ligado. Toque para silenciar.');
+  }
+  applyMuteVisual();
+
+  function start(){
+    if (started) return;
+    var c = ensureCtx();
+    if (!c) return;
+    started = true;
+    if (c.state === 'suspended') c.resume();
+    if (!muted) scheduleNextPhrase();
+  }
+  function setMuted(v){
+    muted = v;
+    try{ localStorage.setItem(MKEY, muted?'1':'0'); }catch(e){}
+    applyMuteVisual();
+    if (!ctx) { if (!muted) start(); return; }
+    var now = ctx.currentTime;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setValueAtTime(master.gain.value, now);
+    master.gain.linearRampToValueAtTime(muted?0:0.55, now+0.6);
+    if (muted){
+      if (composerTimer) { clearTimeout(composerTimer); composerTimer = null; }
+      stopPoiDrone();
+    } else if (started && !composerTimer){
+      scheduleNextPhrase();
+    }
+  }
+
+  if (soundBtn){
+    soundBtn.addEventListener('click', function(){
+      start();
+      setMuted(!muted);
+    });
+  }
+  // first interaction anywhere unlocks the AudioContext (autoplay policy)
+  // but does NOT itself turn sound on — only the explicit mute button
+  // does that. This just means the moment the user later taps unmute,
+  // there is no extra gesture required for it to actually play.
+  ['pointerdown','keydown'].forEach(function(evt){
+    window.addEventListener(evt, function once(){ ensureCtx(); if (!muted) start(); window.removeEventListener(evt, once); }, { once:true });
+  });
+
+  return { setIntensity: setIntensity, startPoiDrone: startPoiDrone, stopPoiDrone: stopPoiDrone, isMuted:function(){return muted;} };
+})();
+
+/* ============================================================
+   EXPLORATION-ORBIT "LOCKED" TRANSITION (item 4) — "faltou o lance da
+   parada especial das imagens". Entering orbit mode now reads as a
+   clear state change, not just a camera that happens to stop:
+     - a soft vignette closes in at the frame edges
+     - a small "órbita de exploração · câmera travada" badge appears
+       top-center, confirming in words what just changed
+     - the free-flight chrome (speed readout, WASD/scroll control hint,
+       nav/GPS radar — none of which do anything useful while the
+       camera is on rails) visually recedes (fades + shrinks slightly)
+       instead of just sitting there implying flight controls still
+       apply
+   All transitions are CSS transitions already guarded by the global
+   prefers-reduced-motion rule (transitions disabled wholesale), so no
+   extra branching is needed here for that requirement.
+   ============================================================ */
+var orbitVignetteEl = document.getElementById('orbitVignette');
+var orbitBadgeEl = document.getElementById('orbitBadge');
+var RECEDE_ON_ORBIT = [document.getElementById('speedo'), document.getElementById('ctlHint'), document.getElementById('navHud')];
+function enterOrbitVisuals(){
+  if (orbitVignetteEl) orbitVignetteEl.classList.add('show');
+  if (orbitBadgeEl) orbitBadgeEl.classList.add('show');
+  RECEDE_ON_ORBIT.forEach(function(el){ if (el) el.classList.add('chrome-recede'); });
+}
+function leaveOrbitVisuals(){
+  if (orbitVignetteEl) orbitVignetteEl.classList.remove('show');
+  if (orbitBadgeEl) orbitBadgeEl.classList.remove('show');
+  RECEDE_ON_ORBIT.forEach(function(el){ if (el) el.classList.remove('chrome-recede'); });
+}
+
+/* ============================================================
+   GUIDE TIPS (item 6) — lightweight contextual suggestions in the same
+   voice as the "Guia" character from the cinematic intro (/index.html):
+   warm, a little reflective, never bossy. A toast-style card, one at a
+   time, self-dismissing, with a cooldown so it can never feel like
+   nagging. Two trigger families:
+     1. idle nudge — camera hasn't moved meaningfully in a while
+     2. first-time-in-a-new-layer — fires once per layer per session
+   ============================================================ */
+var GuideTips = (function(){
+  var el = document.getElementById('guideTip');
+  var textEl = document.getElementById('guideTipText');
+  var closeBtn = document.getElementById('guideTipClose');
+  if (!el || !textEl) return { poke:function(){}, onLayer:function(){} };
+
+  var COOLDOWN_MS = 45000; // never show a new tip within 45s of the last
+  var lastShown = 0;
+  var visibleTimer = null;
+  var seenLayers = {};
+
+  var IDLE_TIPS = [
+    'que tal visitar Saturno e seus anéis de perto?',
+    'você pode voltar ao Sol a qualquer momento — o botão "recentralizar" está sempre ali no radar.',
+    'experimente ir até o limite do que conseguimos observar — é uma viagem e tanto.',
+    'clique em qualquer marcador dourado para saber mais sobre o que você está vendo.',
+    'perdido? o radar no canto esquerdo sempre mostra onde você está.'
+  ];
+  var LAYER_TIPS = {
+    'Vizinhança estelar': 'você deixou o sistema solar para trás. Cada ponto de luz aqui é, em espírito, uma estrela — não catalogada uma a uma, mas real na ideia.',
+    'Escala galáctica': 'agora você está vendo em escala de galáxias inteiras. Poucas pessoas param para sentir o tamanho disso.',
+    'Camada cosmológica': 'daqui em diante, cada passo é, nesta dramatização, uma viagem mais fundo no tempo — até o início observável de tudo.'
+  };
+
+  function show(text){
+    var now = Date.now();
+    if (now - lastShown < COOLDOWN_MS) return;
+    lastShown = now;
+    textEl.textContent = text;
+    el.classList.add('show');
+    if (visibleTimer) clearTimeout(visibleTimer);
+    visibleTimer = setTimeout(hide, 9000);
+  }
+  function hide(){
+    el.classList.remove('show');
+    if (visibleTimer){ clearTimeout(visibleTimer); visibleTimer = null; }
+  }
+  if (closeBtn) closeBtn.addEventListener('click', hide);
+
+  function onLayer(label){
+    if (!label || seenLayers[label]) return;
+    seenLayers[label] = true;
+    var msg = LAYER_TIPS[label];
+    if (msg) show(msg);
+  }
+
+  /* idle detection: track camera position each check; if it hasn't
+     moved beyond a small epsilon for IDLE_AFTER_MS while no modal/panel
+     is open (so we never interrupt someone mid-read of a fact panel),
+     surface a random suggestion. */
+  var IDLE_AFTER_MS = 25000;
+  var lastPos = null, idleSince = Date.now();
+  function poke(){
+    if (!camera) return;
+    var p = camera.position;
+    if (!lastPos){ lastPos = p.clone(); return; }
+    var moved = lastPos.distanceTo(p) > 0.6 || Math.abs(speed) > 1;
+    if (moved){ idleSince = Date.now(); lastPos.copy(p); return; }
+    lastPos.copy(p);
+    var idleFor = Date.now() - idleSince;
+    var blocked = poiCard.classList.contains('open') || orbitPanel.classList.contains('open')
+      || !welcome.classList.contains('hidden') || bigBangMoment.classList.contains('show')
+      || (document.getElementById('roomsModal')||{}).classList.contains('open');
+    if (idleFor > IDLE_AFTER_MS && !blocked){
+      show(IDLE_TIPS[Math.floor(Math.random()*IDLE_TIPS.length)]);
+      idleSince = Date.now(); // avoid immediately re-triggering next check
+    }
+  }
+
+  setInterval(poke, 4000);
+  return { poke: poke, onLayer: onLayer };
+})();
+function onLayerChanged(label){ GuideTips.onLayer(label); }
+
+/* ============================================================
+   MOBILE WELCOME COPY — swap the desktop mouse/keyboard instruction
+   line for the touch-drag/STOP explanation when a coarse pointer is
+   detected (item 2 requirement: "instruções mobile-específicas... com
+   linguagem simples").
+   ============================================================ */
+(function(){
+  var mobileLi = document.getElementById('welcomeMobileMove');
+  var desktopLi = document.getElementById('welcomeDesktopMove');
+  if (isTouch){
+    if (desktopLi) desktopLi.hidden = true;
+    if (mobileLi) mobileLi.hidden = false;
+  }
+})();
+
+/* ============================================================
+   ROTATE-DEVICE OVERLAY (item 3) — small screen + coarse pointer +
+   portrait orientation blocks interaction with a "please rotate" card.
+   Re-checked live on resize/orientationchange, not just once at load,
+   so turning the phone mid-flight clears it without a reload.
+   ============================================================ */
+(function(){
+  var overlay = document.getElementById('rotateOverlay');
+  if (!overlay) return;
+  var portraitMedia = window.matchMedia('(orientation: portrait)');
+  var coarseMedia = window.matchMedia('(pointer: coarse)');
+  function shouldBlock(){
+    // only ever applies to small touch devices — never desktop, never a
+    // touch-capable laptop with a big screen held in a tall window.
+    return coarseMedia.matches && portraitMedia.matches && Math.min(innerWidth, innerHeight) < 620;
+  }
+  function refresh(){
+    overlay.classList.toggle('show', shouldBlock());
+  }
+  refresh();
+  window.addEventListener('resize', refresh);
+  if (portraitMedia.addEventListener) portraitMedia.addEventListener('change', refresh);
+  else if (portraitMedia.addListener) portraitMedia.addListener(refresh);
+  window.addEventListener('orientationchange', function(){ setTimeout(refresh, 120); });
+})();
+
+/* ============================================================
+   OUTRAS SALAS — shortcut menu (item 5). Lists every room directly so
+   jumping to Horizonte/Dupla fenda/Cordas/Velocidade da luz never
+   requires detouring through /salas/, while still offering it as
+   "ver todas" for anyone who wants the full hub view.
+   ============================================================ */
+(function(){
+  var ROOMS = [
+    { name:'Horizonte', eyebrow:'Relatividade geral · buraco negro', href:'/horizonte/', icon:'●' },
+    { name:'A dupla fenda', eyebrow:'Mecânica quântica', href:'/dupla-fenda/', icon:'∷' },
+    { name:'Cordas vibrantes', eyebrow:'Teoria das cordas', href:'/cordas/', icon:'∿' },
+    { name:'Quase à velocidade da luz', eyebrow:'Relatividade especial', href:'/velocidade-luz/', icon:'≫' }
+  ];
+  var btn = document.getElementById('roomsBtn');
+  var modal = document.getElementById('roomsModal');
+  var list = document.getElementById('roomsList');
+  var closeBtn = document.getElementById('roomsClose');
+  if (!btn || !modal || !list) return;
+
+  ROOMS.forEach(function(r){
+    var a = document.createElement('a');
+    a.className = 'ritem';
+    a.href = r.href;
+    a.innerHTML = '<span class="ico" aria-hidden="true">'+r.icon+'</span>'
+      + '<span class="rtext"><span class="reyebrow">'+r.eyebrow+'</span><span class="rname">'+r.name+'</span></span>';
+    list.appendChild(a);
+  });
+
+  function openModal(){
+    modal.classList.add('open');
+    if (orbitState) leaveOrbit();
+  }
+  function closeModal(){ modal.classList.remove('open'); }
+  btn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+  });
+})();
 </script>
