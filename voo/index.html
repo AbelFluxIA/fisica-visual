@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>Dupla Fenda — a experiência mais estranha da física</title>
+<title>Voo espacial — o observatório</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
 @font-face{
@@ -30,7 +30,6 @@
   font-style:normal;
   font-display:swap;
 }
-
 :root{
   --bg:#07080D;
   --bg-deep:#020207;
@@ -67,9 +66,11 @@
 }
 
 *{box-sizing:border-box;}
-html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;}
+html,body{height:100%;margin:0;background:var(--bg-deep);color:var(--text);font-family:var(--sans);overflow:hidden;overscroll-behavior:none;}
 canvas{display:block;}
-#scene{position:fixed;inset:0;width:100%;height:100%;}
+#scene{position:fixed;inset:0;width:100%;height:100%;touch-action:none;}
+#scene.dragging{cursor:grabbing;}
+#scene.grabbable{cursor:grab;}
 
 .panel{
   position:fixed;background:var(--panel);border:1px solid var(--line);border-radius:10px;
@@ -90,67 +91,11 @@ canvas{display:block;}
 #backlink:hover{color:var(--gold-bright);border-color:rgba(212,168,92,0.4);}
 #backlink:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
 
-#hdr{top:60px;left:16px;padding:14px 18px 12px;max-width:290px;}
+#hdr{top:60px;left:16px;padding:14px 18px 12px;max-width:280px;pointer-events:none;}
 #hdr h1{font-family:var(--serif-it);font-style:italic;font-weight:500;font-size:28px;margin:4px 0 2px;letter-spacing:0.01em;text-wrap:balance;}
-#hdr .sub{font-size:12.5px;color:var(--dim);margin:0 0 10px;line-height:1.4;}
+#hdr .sub{font-size:12.5px;color:var(--dim);margin:0;line-height:1.4;}
 
-.seg{display:flex;gap:0;border:1px solid var(--line);border-radius:7px;overflow:hidden;}
-.seg button{
-  flex:1;background:transparent;border:none;color:var(--dim);font-family:var(--mono);
-  font-size:10.5px;padding:7px 6px;cursor:pointer;letter-spacing:0.03em;white-space:nowrap;
-}
-.seg button+button{border-left:1px solid var(--line);}
-.seg button.on{background:rgba(212,168,92,0.14);color:var(--gold);}
-.seg button:hover:not(.on){color:var(--text);}
-.seg button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;}
-
-/* which-path toggle gets a plasma tint when armed (defined below, near .btn.on,
-   so it wins over the generic gold .on state used by the fire button) */
-
-/* ---------- control deck ---------- */
-#deck{
-  left:50%;bottom:16px;transform:translateX(-50%);
-  width:min(720px,calc(100vw - 24px));
-  padding:14px 18px 16px;
-  display:flex;flex-direction:column;gap:11px;
-  max-height:min(320px, calc(100vh - 220px));
-  overflow-y:auto;
-}
-#deck .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-#deck label.pname{white-space:nowrap;min-width:118px;}
-input[type=range]{
-  flex:1;min-width:120px;appearance:none;-webkit-appearance:none;height:22px;background:transparent;cursor:pointer;
-}
-input[type=range]::-webkit-slider-runnable-track{height:3px;background:linear-gradient(90deg,var(--plasma),var(--gold) 60%,rgba(255,255,255,0.22));border-radius:2px;}
-input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;
-  background:var(--gold);border:2px solid var(--bg);margin-top:-6.5px;box-shadow:0 0 8px rgba(212,168,92,0.6);
-}
-input[type=range]::-moz-range-track{height:3px;background:linear-gradient(90deg,var(--plasma),var(--gold) 60%,rgba(255,255,255,0.22));border-radius:2px;}
-input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);}
-input[type=range]:focus-visible{outline:2px solid var(--gold);outline-offset:4px;border-radius:4px;}
-
-.readout{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--gold);min-width:88px;text-align:right;}
-
-.btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-.btn{
-  background:transparent;border:1px solid var(--line);border-radius:7px;color:var(--text);
-  font-family:var(--mono);font-size:11px;padding:8px 14px;cursor:pointer;letter-spacing:0.03em;
-  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
-}
-.btn:hover{border-color:rgba(212,168,92,0.5);}
-.btn:focus-visible{outline:2px solid var(--gold);outline-offset:1px;}
-.btn.primary{background:rgba(212,168,92,0.14);border-color:rgba(212,168,92,0.4);color:var(--gold-bright);}
-.btn.on{background:rgba(212,168,92,0.14);border-color:rgba(212,168,92,0.4);color:var(--gold-bright);}
-#pathToggle.on{background:rgba(111,168,199,0.16);border-color:rgba(111,168,199,0.5);color:var(--plasma-bright);}
-.btn .dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex:none;}
-.btn.on .dot{background:var(--plasma-bright);box-shadow:0 0 6px var(--plasma-bright);}
-.btn:disabled{opacity:0.4;cursor:not-allowed;}
-
-#counter{font-family:var(--mono);font-size:11px;color:var(--dim);white-space:nowrap;font-variant-numeric:tabular-nums;}
-#counter b{color:var(--text);font-weight:600;}
-
-/* ---------- info button + panel ---------- */
+/* ---------- info button + panel (identical pattern to other rooms) ---------- */
 #infoBtn{
   position:fixed;top:16px;right:16px;z-index:6;display:flex;align-items:center;gap:8px;
   background:rgba(212,168,92,0.14);border:1px solid rgba(212,168,92,0.4);border-radius:20px;color:var(--gold-bright);
@@ -179,15 +124,16 @@ input[type=range]:focus-visible{outline:2px solid var(--gold);outline-offset:4px
 }
 #welcome.hidden{display:none;}
 #welcome .card{
-  max-width:440px;width:100%;padding:30px 32px 26px;text-align:left;
+  max-width:460px;width:100%;padding:30px 32px 26px;text-align:left;
   animation:welcomeIn .5s cubic-bezier(.2,.8,.2,1);
+  max-height:calc(100vh - 48px);overflow-y:auto;
 }
 @keyframes welcomeIn{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:none;}}
 #welcome .eyebrow{color:var(--plasma);}
 #welcome h2{font-family:var(--serif-it);font-style:italic;font-weight:500;font-size:26px;margin:10px 0 12px;letter-spacing:0.005em;text-wrap:balance;}
 #welcome p{font-size:14px;line-height:1.6;color:var(--text);margin:0 0 10px;}
 #welcome p.dim{color:var(--dim);font-size:13px;}
-#welcome ol{margin:14px 0 18px;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;}
+#welcome ol{margin:14px 0 18px;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;counter-reset:step;}
 #welcome ol li{font-size:13px;line-height:1.5;color:var(--text);padding-left:26px;position:relative;}
 #welcome ol li b{color:var(--gold-bright);}
 #welcome ol li::before{
@@ -195,8 +141,7 @@ input[type=range]:focus-visible{outline:2px solid var(--gold);outline-offset:4px
   font-family:var(--mono);font-size:11px;color:var(--plasma);border:1px solid var(--line);
   width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;
 }
-#welcome ol{counter-reset:step;}
-#welcome .actions{display:flex;align-items:center;gap:14px;margin-top:6px;}
+#welcome .actions{display:flex;align-items:center;gap:14px;margin-top:6px;flex-wrap:wrap;}
 #welcome .go{
   background:var(--plasma);border:none;border-radius:8px;color:var(--bg);font-family:var(--mono);
   font-size:12.5px;font-weight:600;letter-spacing:0.03em;padding:11px 20px;cursor:pointer;
@@ -209,8 +154,10 @@ input[type=range]:focus-visible{outline:2px solid var(--gold);outline-offset:4px
 }
 #welcome .skip:hover{color:var(--text);}
 #welcome .skip:focus-visible{outline:2px solid var(--gold);}
+
+/* ---------- field notebook ---------- */
 #info{
-  top:60px;right:16px;bottom:230px;width:min(400px,calc(100vw - 32px));
+  top:60px;right:16px;bottom:16px;width:min(400px,calc(100vw - 32px));
   padding:4px 20px 20px;overflow-y:auto;display:none;z-index:5;
 }
 #info.open{display:block;}
@@ -225,833 +172,1093 @@ input[type=range]:focus-visible{outline:2px solid var(--gold);outline-offset:4px
 #info ul.qs li b{color:var(--gold-bright);font-weight:600;}
 #info code{font-family:var(--mono);font-size:12px;color:var(--plasma-bright);background:rgba(111,168,199,0.10);padding:1px 5px;border-radius:4px;}
 #info b{color:var(--text);font-weight:600;}
+#info .credit{font-size:11.5px;color:var(--dim);border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin:6px 0 4px;}
+#info .credit a{color:var(--plasma-bright);}
 
-/* ---------- side readout (probability strip) ---------- */
-#sideread{
-  top:16px;right:16px;
+/* ---------- HUD: scale layer + nearest object + speed ---------- */
+#hud{
+  top:16px;left:50%;transform:translateX(-50%);
+  padding:9px 18px;display:flex;align-items:center;gap:14px;
+  font-family:var(--mono);z-index:5;pointer-events:none;
+}
+#hud .layer{font-size:12px;letter-spacing:0.04em;color:var(--gold-bright);white-space:nowrap;}
+#hud .layer b{font-weight:600;}
+#hud .sep{width:1px;height:14px;background:var(--line);flex:none;}
+#hud .near{font-size:11px;color:var(--dim);white-space:nowrap;max-width:34vw;overflow:hidden;text-overflow:ellipsis;}
+#hud .near b{color:var(--plasma-bright);}
+
+#speedo{
+  bottom:16px;right:16px;padding:11px 15px;z-index:5;
+  font-family:var(--mono);text-align:right;min-width:150px;pointer-events:none;
+}
+#speedo .lbl{font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--dim);}
+#speedo .val{font-size:17px;color:var(--gold-bright);font-variant-numeric:tabular-nums;margin-top:2px;}
+#speedo .bar{margin-top:7px;height:3px;border-radius:2px;background:var(--line-soft);overflow:hidden;}
+#speedo .bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--plasma),var(--gold));transition:width .15s linear;}
+
+/* ---------- controls hint (desktop) ---------- */
+#ctlHint{
+  bottom:16px;left:16px;padding:10px 14px;z-index:5;
+  font-family:var(--mono);font-size:10.5px;line-height:1.9;color:var(--dim);
+}
+#ctlHint b{color:var(--gold-bright);font-weight:600;}
+#ctlHint.hidden{display:none;}
+
+/* ---------- POI marker + card ---------- */
+.poi-marker{
+  position:fixed;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;
+  border:1.5px solid var(--gold-bright);background:rgba(212,168,92,0.18);
+  pointer-events:auto;cursor:pointer;z-index:4;transition:transform .15s;
+}
+.poi-marker:hover{transform:scale(1.35);}
+.poi-marker::after{
+  content:'';position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(212,168,92,0.35);
+  animation:pulseRing 2.6s ease-out infinite;
+}
+.poi-label{
+  position:fixed;transform:translate(10px,-50%);font-family:var(--mono);font-size:10.5px;
+  color:var(--gold-bright);letter-spacing:0.03em;pointer-events:none;white-space:nowrap;
+  text-shadow:0 1px 4px rgba(0,0,0,0.8);z-index:4;
 }
 
-@media (max-width:640px){
-  #hdr{max-width:220px;padding:10px 14px;top:56px;}
-  #hdr h1{font-size:22px;}
+#poiCard{
+  left:50%;bottom:100px;transform:translateX(-50%);
+  width:min(360px,calc(100vw - 32px));padding:16px 20px 18px;z-index:7;display:none;
+}
+#poiCard.open{display:block;}
+#poiCard .eyebrow{color:var(--plasma);}
+#poiCard h3{font-family:var(--serif-it);font-style:italic;font-weight:500;font-size:21px;margin:6px 0 8px;color:var(--gold-bright);}
+#poiCard .facts{display:flex;flex-direction:column;gap:5px;margin:0 0 12px;}
+#poiCard .facts div{font-size:12px;line-height:1.5;color:var(--text);}
+#poiCard .facts b{color:var(--plasma-bright);font-family:var(--mono);font-weight:600;}
+#poiCard .prose{font-size:12.5px;line-height:1.55;color:var(--dim);margin:0 0 12px;}
+#poiCard .actions{display:flex;gap:8px;align-items:center;}
+#poiCard .go{
+  background:var(--plasma);border:none;border-radius:7px;color:var(--bg);font-family:var(--mono);
+  font-size:11.5px;font-weight:600;letter-spacing:0.02em;padding:9px 15px;cursor:pointer;
+}
+#poiCard .go:hover{background:var(--plasma-bright);}
+#poiCard .close{
+  background:transparent;border:1px solid var(--line);border-radius:7px;color:var(--dim);
+  font-family:var(--mono);font-size:11px;padding:9px 12px;cursor:pointer;
+}
+#poiCard .close:hover{color:var(--text);}
+
+/* ---------- loading ---------- */
+#loading{
+  position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--bg-deep);gap:16px;
+}
+#loading.hidden{display:none;}
+#loading .eyebrow{color:var(--plasma);}
+#loading h2{font-family:var(--serif-it);font-style:italic;font-weight:500;font-size:22px;margin:8px 0 4px;}
+#loading .bar{width:min(280px,70vw);height:4px;border-radius:3px;background:var(--line-soft);overflow:hidden;}
+#loading .bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--plasma),var(--gold));transition:width .2s ease;}
+#loading .pct{font-family:var(--mono);font-size:11px;color:var(--dim);}
+
+/* ---------- mobile touch controls ---------- */
+#touchCtl{display:none;position:fixed;inset:0;z-index:4;pointer-events:none;}
+#touchCtl.active{display:block;}
+.tstick{
+  position:absolute;bottom:24px;left:24px;width:110px;height:110px;border-radius:50%;
+  border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(10px);
+  pointer-events:auto;touch-action:none;
+}
+.tstick .knob{
+  position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(212,168,92,0.28);
+  border:1.5px solid var(--gold-bright);top:33px;left:33px;transition:transform .05s linear;
+}
+.tvert{
+  position:absolute;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;pointer-events:auto;
+}
+.tbtn{
+  width:52px;height:52px;border-radius:50%;border:1px solid var(--line);background:var(--panel);
+  backdrop-filter:blur(10px);color:var(--gold-bright);font-family:var(--mono);font-size:16px;
+  display:flex;align-items:center;justify-content:center;touch-action:none;
+}
+.tlook{
+  position:absolute;top:0;right:0;width:46vw;height:60vh;pointer-events:auto;touch-action:none;
+}
+
+@media (max-width:720px){
+  #hdr{max-width:190px;padding:10px 14px;top:56px;}
+  #hdr h1{font-size:21px;}
   #hdr .sub{display:none;}
-  #deck{padding:12px 14px;gap:8px;max-height:min(360px, calc(100vh - 190px));}
-  #deck label.pname{min-width:96px;font-size:10.5px;}
-  #info{bottom:290px;}
-  #welcome .card{padding:24px 22px 22px;}
-  #welcome h2{font-size:22px;}
+  #hud{padding:7px 12px;gap:10px;max-width:calc(100vw - 24px);}
+  #hud .near{max-width:38vw;}
+  #ctlHint{display:none;}
+  #info{bottom:0;border-radius:10px 10px 0 0;top:auto;height:62vh;}
+  #welcome .card{padding:22px 20px 20px;}
+  #welcome h2{font-size:21px;}
+  #poiCard{bottom:150px;width:calc(100vw - 24px);}
+  #speedo{bottom:160px;}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition:none !important;}
   #infoBtn .pulse{animation:none;display:none;}
+  .poi-marker::after{animation:none;}
 }
 </style>
 
-<a id="backlink" href="/"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>observatório</a>
+<a id="backlink" href="../"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>observatório</a>
 
-<canvas id="scene" aria-label="Simulação de dupla fenda quântica: elétrons emitidos à esquerda atravessam duas fendas e se acumulam em um anteparo de detecção à direita, formando um padrão de interferência ponto a ponto."></canvas>
+<canvas id="scene" aria-label="Cena 3D navegável do sistema solar, vizinhança estelar e escala galáctica."></canvas>
 
 <header id="hdr" class="panel">
-  <div class="eyebrow">Mecânica quântica · Sala 02</div>
-  <h1>a <i>dupla fenda</i></h1>
-  <p class="sub">um elétron de cada vez, e ainda assim interfere consigo mesmo</p>
-  <div class="seg" role="group" aria-label="Modo de disparo">
-    <button data-mode="single" class="on">um a um</button>
-    <button data-mode="stream">feixe contínuo</button>
-  </div>
+  <div class="eyebrow">Exploração livre · Voo espacial</div>
+  <h1>voo <i>espacial</i></h1>
+  <p class="sub">pilote livremente do Sol até a escala das galáxias</p>
 </header>
 
 <button id="infoBtn" aria-expanded="false" aria-controls="info"><span class="pulse" aria-hidden="true"></span><svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 6.3v4M7 4v.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><span id="infoBtnLabel">entenda a física</span></button>
 
+<div id="hud" class="panel" aria-live="polite">
+  <span class="layer">escala: <b id="layerName">Sistema Solar</b></span>
+  <span class="sep" aria-hidden="true"></span>
+  <span class="near">mais próximo: <b id="nearName">Sol</b></span>
+</div>
+
+<div id="speedo" class="panel">
+  <div class="lbl">velocidade de voo</div>
+  <div class="val" id="speedVal">0 un/s</div>
+  <div class="bar"><i id="speedBar"></i></div>
+</div>
+
+<div id="ctlHint" class="panel">
+  <b>WASD/setas</b> mover · <b>mouse</b> (arraste) olhar · <b>scroll</b> acelerar/desacelerar<br>
+  <b>Q/E</b> subir/descer · <b>espaço</b> parar · clique num marcador para saber mais
+</div>
+
+<div id="touchCtl">
+  <div class="tlook" id="tlook"></div>
+  <div class="tstick" id="tstick"><div class="knob" id="tknob"></div></div>
+  <div class="tvert">
+    <button class="tbtn" id="tup" aria-label="Subir">▲</button>
+    <button class="tbtn" id="tdown" aria-label="Descer">▼</button>
+  </div>
+</div>
+
+<div id="poiCard" class="panel" role="dialog" aria-labelledby="poiName">
+  <span class="eyebrow" id="poiEyebrow">Objeto selecionado</span>
+  <h3 id="poiName">—</h3>
+  <div class="facts" id="poiFacts"></div>
+  <p class="prose" id="poiProse"></p>
+  <div class="actions">
+    <button class="go" id="poiGo">viajar até aqui</button>
+    <button class="close" id="poiClose">fechar</button>
+  </div>
+</div>
+
 <div id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
   <div class="card panel">
-    <span class="eyebrow">Mecânica quântica · Sala 02</span>
-    <h2 id="welcomeTitle">Um elétron sozinho ainda interfere consigo mesmo</h2>
-    <p>Cada ponto que cai no anteparo é um único elétron, indivisível — mas milhares deles juntos desenham um padrão de onda. É o experimento mais estranho da física, calculado de verdade aqui.</p>
+    <span class="eyebrow">Exploração livre · Voo espacial</span>
+    <h2 id="welcomeTitle">O cosmos não cabe numa única escala</h2>
+    <p>Esta sala é uma cabine de comando: você pilota livremente entre o Sol e os planetas, depois se afasta o suficiente para atravessar a vizinhança estelar e, por fim, a escala das próprias galáxias — sem cortes de câmera, como um zoom contínuo.</p>
     <ol>
-      <li>Clique em <b>"disparar elétron"</b> várias vezes e veja os pontos se acumularem até formar franjas.</li>
-      <li>Ligue o <b>detector "qual caminho"</b> e observe o padrão de interferência desmoronar na hora.</li>
-      <li>Toque em <b>"entenda a física"</b> a qualquer momento — é lá que fica o porquê, incluindo o que ainda nem os físicos sabem responder.</li>
+      <li><b>WASD</b> (ou setas) move a nave; arraste o <b>mouse</b> para olhar ao redor; o <b>scroll</b> acelera ou freia — em celular, use o manche virtual no canto.</li>
+      <li>Marcadores dourados são <b>pontos de interesse</b>. Clique num deles para ver fatos reais e viajar até lá com a câmera.</li>
+      <li>Ao se afastar bastante, a cena troca de camada de escala sozinha — observe o indicador no topo mudar de "Sistema Solar" para "vizinhança estelar" e depois "escala galáctica".</li>
+      <li>Toque em <b>"entenda a física"</b> para ver o que aqui é real (texturas, tamanhos) e o que é artisticamente comprimido ou estilizado (distâncias, estrelas, galáxias).</li>
     </ol>
     <div class="actions">
-      <button class="go" id="welcomeGo">começar</button>
+      <button class="go" id="welcomeGo">iniciar voo</button>
       <button class="skip" id="welcomeSkip">não mostrar de novo</button>
     </div>
   </div>
 </div>
 
 <aside id="info" class="panel" aria-hidden="true">
-  <h2>Uma partícula, duas fendas, uma pergunta impossível</h2>
-  <p>Cada elétron sai do emissor sozinho e chega ao anteparo como <b>um ponto único</b> — nunca espalhado, nunca fracionado. Isso é comportamento de partícula. Mas repita milhares de vezes e os pontos se organizam em <b>franjas claras e escuras</b> — isso é comportamento de onda. Nenhum elétron individual "sabe" onde os outros caíram, e ainda assim juntos desenham o padrão previsto por uma equação de onda. É a <i>dualidade onda-partícula</i> no seu experimento mais nu.</p>
-  <h2>A função de onda</h2>
-  <p>Antes de chegar ao anteparo, o elétron não tem uma trajetória definida. Ele é descrito por uma <b>função de onda</b> ψ que se espalha por todos os caminhos possíveis simultaneamente — inclusive pelas duas fendas ao mesmo tempo. A intensidade que você vê se acumular é <code>|ψ|²</code>: a probabilidade de detecção em cada ponto, não uma força que empurra a partícula ali.</p>
-  <h2>Por que o detector destrói as franjas</h2>
-  <p>Ligue o <b>"qual caminho"</b> nos controles: um detector é colocado em uma das fendas para registrar por onde o elétron passou. No instante em que essa informação existe — mesmo sem ninguém olhar — a função de onda <b>colapsa</b>. As duas possibilidades deixam de se somar (interferir) e passam a se somar como probabilidades separadas. O padrão de franjas vira duas manchas simples, a soma de duas fendas isoladas. Medir <i>qual caminho</i> e ver <i>interferência</i> são mutuamente exclusivos — não por limitação do aparelho, mas por princípio.</p>
+  <h2>Três camadas, um único voo contínuo</h2>
+  <p>O sistema solar, as estrelas vizinhas e as galáxias distantes existem em escalas cuja diferença chega a <b>trilhões de vezes</b>. Não dá para desenhar isso tudo num só espaço com unidades reais — ou os planetas somem quando você se afasta, ou os erros de arredondamento do computador quebram a cena em distâncias grandes. A solução usada aqui, inspirada em documentários como <i>Cosmic Eye</i> e no <i>Eyes on the Solar System</i> da NASA/JPL: três "camadas" independentes, cada uma centrada na mesma origem, que aparecem e desaparecem em transição suave conforme você se afasta — nunca um corte abrupto, sempre a sensação de que o mesmo voo continua.</p>
+  <h2>O Sistema Solar: brinquedo fiel nas proporções, livre nas distâncias</h2>
+  <p>Os tamanhos relativos entre o Sol, os planetas e a Lua são <b>proporcionais de verdade</b> (numa escala comprimida para caber na tela, mas a razão entre eles é real). As <b>distâncias</b>, porém, foram artisticamente encurtadas — se fossem reais, a Terra estaria a milhares de raios solares do Sol e a viagem entre planetas seria, na prática, horas de vazio absoluto. Comprimimos o espaço vazio para que voar de um planeta a outro seja interessante, não tedioso.</p>
+  <h2>Vizinhança estelar e escala galáctica: arte que comunica escala</h2>
+  <p>Ao se afastar do sistema solar, você entra num campo de estrelas distribuídas proceduralmente (não são constelações reais) coloridas por classe espectral simplificada — azuis e brancas quentes, amarelas como o Sol, vermelhas frias — e nebulosas de gradiente que existem para dar sensação de profundidade e cor, não para representar uma nebulosa específica. Mais além, a camada galáctica mostra uma Via Láctea estilizada e outras "galáxias" simplificadas como manchas espirais distantes. Nada disso é um catálogo astronômico: é uma metáfora visual da imensidão.</p>
   <h3>Como isso é calculado</h3>
-  <p class="note">Cada impacto é amostrado por inversão numérica da CDF a partir da intensidade teórica de Fraunhofer para dupla fenda: <code>I(θ) = I₀·cos²(πd·sinθ/λ)·sinc²(πa·sinθ/λ)</code>, onde <code>d</code> é a separação entre fendas, <code>a</code> a largura de cada fenda e <code>λ</code> o comprimento de onda de de Broglie associado à energia escolhida. Com "qual caminho" ativo, o termo de interferência <code>cos²</code> é substituído pela soma incoerente das duas envoltórias de fenda única deslocadas por ±d/2 — fisicamente correto para decoerência total, mas sem modelar o mecanismo quântico do detector em si (não é uma simulação de QED ou de emaranhamento completo).</p>
+  <p class="note">As <b>texturas</b> dos planetas, do Sol, da Lua e do céu estelar são reais — mapas de superfície baseados em imagens de sondas e observatórios da NASA, redistribuídos por Solar System Scope. Os <b>tamanhos relativos</b> entre corpos (ex.: Júpiter bem maior que a Terra, que por sua vez é maior que Mercúrio) seguem as proporções reais de raio. As <b>distâncias</b> entre órbitas, a velocidade da nave e o tempo de viagem, porém, são inteiramente artísticos: nesta simulação você atravessa o sistema solar inteiro em segundos a minutos, enquanto numa nave real, na mesma velocidade relativa exibida no velocímetro, a viagem de aqui até o planeta mais distante levaria — se as distâncias fossem as reais do sistema solar (bilhões de km) — muitos anos. O campo estelar, as nebulosas e as galáxias das camadas externas são <b>representações artísticas</b>, não um catálogo de posições reais.</p>
+  <div class="credit">Texturas planetárias e do céu estelar: <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener">Solar System Scope</a>, baseadas em imagens da NASA, licenciadas sob <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</div>
   <h3>O que ainda não sabemos</h3>
   <ul class="qs">
-    <li>O que <b>fisicamente</b> é o colapso da função de onda? É um processo físico real e instantâneo, ou apenas uma atualização da nossa informação — o chamado <b>problema da medição</b>, ainda sem consenso um século depois.</li>
-    <li><b>Copenhague, Muitos Mundos ou mecânica Bohmiana?</b> Todas reproduzem exatamente os mesmos números deste experimento e discordam radicalmente sobre o que está "realmente" acontecendo por trás das franjas. Não há, hoje, experimento capaz de distinguir entre elas.</li>
-    <li>Onde exatamente fica a fronteira entre o mundo quântico (que soma amplitudes) e o clássico (que soma probabilidades)? A <b>decoerência</b> explica por que objetos grandes parecem clássicos, mas não explica por que um resultado específico "acontece" e não outro.</li>
-    <li>Já se fez dupla fenda com moléculas de mais de 25 mil átomos (2019) sem quebrar o padrão. Existe algum limite de massa, complexidade ou consciência acima do qual a superposição simplesmente para de funcionar — ou é superposição até o fim, sem exceção?</li>
+    <li>Já confirmamos milhares de <b>exoplanetas</b>, e um punhado deles orbita na "zona habitável" de sua estrela — mas nenhum foi confirmado como tendo vida. Continuamos sem saber se planetas como a Terra são raros ou comuns na galáxia.</li>
+    <li>O <b>universo observável</b> tem cerca de 93 bilhões de anos-luz de diâmetro — um limite definido pela idade do universo e pela velocidade da luz, não uma borda física do espaço. O que existe além dele, se é que "além" faz sentido nessa escala, é informação que nunca poderá nos alcançar; não sabemos se o universo é finito ou infinito.</li>
+    <li>Estima-se que existam algo entre <b>cem bilhões e dois trilhões de galáxias</b> no universo observável (a contagem mudou bastante entre estimativas do Hubble e do James Webb), cada uma com bilhões de estrelas — e catalogamos posições precisas de uma fração minúscula delas.</li>
+    <li>A pergunta se estamos <b>sozinhos</b> no universo segue sem resposta observacional: nenhum sinal, sonda ou biomarcador atmosférico confirmou vida fora da Terra até hoje. Isso não é evidência de ausência — é, na melhor das hipóteses, um espaço de busca ainda pequeno diante da escala do problema.</li>
   </ul>
 </aside>
 
-<section id="deck" class="panel" aria-label="Controles do experimento">
-  <div class="row btnrow">
-    <button id="fireBtn" class="btn primary">disparar elétron</button>
-    <button id="pathToggle" class="btn"><span class="dot"></span>detector "qual caminho"</button>
-    <button id="clearBtn" class="btn">limpar anteparo</button>
-    <span id="counter">detecções: <b id="nCount">0</b></span>
-  </div>
-  <div class="row">
-    <label class="pname eyebrow" for="dSlit">separação das fendas (d)</label>
-    <input id="dSlit" type="range" min="200" max="900" value="420">
-    <span class="readout" id="dVal">420 nm</span>
-  </div>
-  <div class="row">
-    <label class="pname eyebrow" for="wSlit">largura das fendas (a)</label>
-    <input id="wSlit" type="range" min="20" max="180" value="60">
-    <span class="readout" id="wVal">60 nm</span>
-  </div>
-  <div class="row">
-    <label class="pname eyebrow" for="energy">energia do elétron</label>
-    <input id="energy" type="range" min="10" max="400" value="80">
-    <span class="readout" id="eVal">80 eV · λ=0,137 nm</span>
-  </div>
-</section>
+<div id="loading" class="panel" role="status" aria-live="polite">
+  <span class="eyebrow">preparando a nave</span>
+  <h2>carregando o cosmos…</h2>
+  <div class="bar"><i id="loadBar"></i></div>
+  <div class="pct" id="loadPct">0%</div>
+</div>
 
-<div id="hint" class="eyebrow" style="position:fixed;bottom:16px;right:16px;opacity:0.75;display:none;"></div>
-
-<script>
-(function(){
-  "use strict";
-  var canvas = document.getElementById("scene");
-  var ctx = canvas.getContext("2d");
-
-  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  /* ============================================================
-     PHYSICS
-     Fraunhofer double-slit intensity:
-       I(theta) = I0 * cos^2(pi*d*sin(theta)/lambda) * sinc^2(pi*a*sin(theta)/lambda)
-     Which-path (decoherence) case: incoherent sum of two single-slit
-     envelopes centered at +/- d/2, i.e. the cos^2 interference term is
-     dropped and we sum |E1|^2 + |E2|^2 instead of |E1+E2|^2.
-     ============================================================ */
-
-  var state = {
-    d: 420,        // slit separation, nm
-    a: 60,         // slit width, nm
-    energyEV: 80,  // electron kinetic energy, eV
-    lambda: 0,     // de Broglie wavelength, nm (derived)
-    whichPath: false,
-    mode: "single", // "single" | "stream"
-    running: false,
-    count: 0
-  };
-
-  function updateLambda(){
-    // de Broglie: lambda[nm] = 1.226 / sqrt(E[eV])  (non-relativistic electron)
-    state.lambda = 1.226 / Math.sqrt(state.energyEV);
+<script type="importmap">
+{
+  "imports": {
+    "three": "../vendor/three.module.min.js"
   }
-  updateLambda();
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+/* Note: OrbitControls.js (vendored) is intentionally NOT used here.
+   It orbits a fixed target — this room needs true free-flight (WASD +
+   mouse-look across three scale layers), which OrbitControls cannot do,
+   so camera control is hand-rolled below (see FLIGHT CONTROLS). The
+   importmap that maps the bare specifier 'three' -> '../vendor/three.module.min.js'
+   is still declared, since it's what makes any future `import {OrbitControls}
+   from '../vendor/OrbitControls.js'` resolve its internal `import ... from 'three'`. */
 
-  function sinc(x){
-    if (Math.abs(x) < 1e-8) return 1;
-    return Math.sin(x) / x;
-  }
+/* ============================================================
+   CONSTANTS & SCALE MODEL
+   ------------------------------------------------------------
+   Everything lives in the SAME 3D space, centered on the origin.
+   Three concentric "layers" (groups) exist simultaneously:
+     - solarGroup    : sun/planets, radius roughly 0..340 units
+     - stellarGroup  : starfield + nebulae, radius roughly 300..2200
+     - galacticGroup : milky way disc + distant galaxies, 1800..6000
+   Layers overlap on purpose so transitions can cross-fade instead
+   of popping. We never re-origin the camera or jump coordinates —
+   the camera's radial distance from the origin (journeyR) is the
+   single source of truth that drives which layers are visible and
+   how opaque/scaled they are. This keeps floating point precision
+   sane (max camera distance stays under ~6000 units) while still
+   feeling like a continuous "zoom out through reality" effect.
+   ============================================================ */
 
-  // Screen geometry: theta measured from slit-plane normal.
-  // With real electron-diffraction values (d, a in nanometers; lambda ~0.06-0.4nm),
-  // the fringe period lambda/d is on the order of milliradians — a real apparatus
-  // only keeps this visible by placing the screen very far away (x = L*theta, L
-  // on the order of meters). THETA_MAX below is a single fixed angular half-range,
-  // calibrated once to the default parameters (equivalent to fixing L); it is NOT
-  // re-derived per parameter change, so moving d, a or the energy slider visibly
-  // changes fringe spacing and count on screen, exactly like moving the physical
-  // screen further away would. The underlying intensity is still evaluated at the
-  // true angle theta — only the fixed angular window is a rendering choice.
-  var THETA_MAX = 0.002448; // radians, calibrated so d=420nm/a=60nm/80eV shows ~15 fringes
+var REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function intensity(theta){
-    var d = state.d, a = state.a, lambda = state.lambda;
-    var beta = Math.PI * a * Math.sin(theta) / lambda;   // single-slit (diffraction) phase
-    var gamma = Math.PI * d * Math.sin(theta) / lambda;  // double-slit (interference) phase
-    var envelope = sinc(beta) * sinc(beta); // sinc^2, single-slit diffraction envelope
-    if (state.whichPath){
-      // incoherent sum: |E1|^2 + |E2|^2 = 2 * envelope (no cross term)
-      return envelope; // normalized shape only; peak envelope, no fringes
-    }
-    var fringe = Math.cos(gamma) * Math.cos(gamma); // cos^2 interference term
-    return envelope * fringe;
-  }
+/* solar system layer thresholds (world units) */
+var SOLAR_MAX      = 340;   // outer edge of designed solar system (Neptune orbit)
+var LAYER1_FADE_IN = 260;   // stellar layer starts fading in
+var LAYER1_FULL    = 520;   // solar layer fully faded out, stellar fully in
+var LAYER2_FADE_IN = 1500;  // galactic layer starts fading in
+var LAYER2_FULL    = 3200;  // stellar fully out, galactic fully in
 
-  // Precompute a fine intensity table over theta in [-THETA_MAX, THETA_MAX]
-  // and build a CDF for inverse-transform sampling.
-  var N_TABLE = 2048;
-  var pdfTable, cdfTable, thetaTable;
+/* ============================================================
+   RENDERER / SCENE / CAMERA
+   ============================================================ */
+var canvas = document.getElementById('scene');
+var renderer;
+try{
+  renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, logarithmicDepthBuffer: true, powerPreference:'high-performance' });
+}catch(e){
+  renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false });
+}
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-  function rebuildDistribution(){
-    thetaTable = new Float64Array(N_TABLE);
-    pdfTable = new Float64Array(N_TABLE);
-    var sum = 0;
-    for (var i = 0; i < N_TABLE; i++){
-      var t = -THETA_MAX + (2*THETA_MAX) * (i/(N_TABLE-1));
-      thetaTable[i] = t;
-      var v = intensity(t);
-      if (v < 0) v = 0;
-      pdfTable[i] = v;
-      sum += v;
-    }
-    cdfTable = new Float64Array(N_TABLE);
-    var acc = 0;
-    for (var j = 0; j < N_TABLE; j++){
-      acc += pdfTable[j];
-      cdfTable[j] = acc / sum;
-    }
-  }
-  rebuildDistribution();
+var scene = new THREE.Scene();
+scene.background = new THREE.Color(0x020207);
 
-  // sample a theta from the CDF via binary search + linear interpolation
-  function sampleTheta(){
-    var u = Math.random();
-    var lo = 0, hi = N_TABLE - 1;
-    while (lo < hi){
-      var mid = (lo + hi) >> 1;
-      if (cdfTable[mid] < u) lo = mid + 1; else hi = mid;
-    }
-    var i = lo;
-    if (i === 0) return thetaTable[0];
-    var c0 = cdfTable[i-1], c1 = cdfTable[i];
-    var t0 = thetaTable[i-1], t1 = thetaTable[i];
-    var frac = (c1 > c0) ? (u - c0)/(c1 - c0) : 0;
-    return t0 + (t1 - t0) * frac;
-  }
+var camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.05, 9000);
+camera.position.set(0, 14, 46);
 
-  /* ============================================================
-     RENDERING LAYOUT
-     Instrument-plate style: emitter (left) -> slit barrier (mid) -> screen (right)
-     ============================================================ */
+function resize(){
+  var w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
 
-  var W = 0, H = 0, DPR = 1;
-  var layout = { emitterX:0, barrierX:0, screenX:0, midY:0, screenTop:0, screenBottom:0, screenH:0 };
+/* ============================================================
+   LOADING MANAGER
+   ============================================================ */
+var loadingEl = document.getElementById('loading');
+var loadBar = document.getElementById('loadBar');
+var loadPct = document.getElementById('loadPct');
+var manager = new THREE.LoadingManager();
+manager.onProgress = function(url, loaded, total){
+  var pct = total ? Math.round((loaded/total)*100) : 0;
+  loadBar.style.width = pct + '%';
+  loadPct.textContent = pct + '%';
+};
+manager.onLoad = function(){
+  loadBar.style.width = '100%';
+  loadPct.textContent = '100%';
+  setTimeout(function(){ loadingEl.classList.add('hidden'); }, 220);
+};
+manager.onError = function(url){
+  console.warn('[voo] falha ao carregar textura, usando cor sólida como fallback:', url);
+};
+var texLoader = new THREE.TextureLoader(manager);
 
-  function resize(){
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
-    W = canvas.clientWidth; H = canvas.clientHeight;
-    canvas.width = Math.max(1, Math.round(W*DPR));
-    canvas.height = Math.max(1, Math.round(H*DPR));
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-    layout.emitterX = W * 0.10;
-    layout.barrierX = W * 0.40;
-    layout.screenX  = W * 0.86;
-    layout.midY = H * 0.5;
-    layout.screenH = Math.min(H * 0.72, 560);
-    layout.screenTop = layout.midY - layout.screenH/2;
-    layout.screenBottom = layout.midY + layout.screenH/2;
-    rebuildAccumBuffer();
-  }
-
-  /* accumulation buffer along screen (vertical bins) representing the
-     detection histogram, independent of canvas resolution */
-  var N_BINS = 360;
-  var bins = new Float64Array(N_BINS);
-  var maxBin = 1;
-
-  function rebuildAccumBuffer(){
-    // keep counts, just used for drawing scale; nothing to reallocate since
-    // bins are logical (theta-space), not pixel-space.
-  }
-
-  function clearScreen(){
-    bins = new Float64Array(N_BINS);
-    maxBin = 1;
-    state.count = 0;
-    impactFlashes.length = 0;
-    updateCounter();
-  }
-
-  function thetaToScreenY(theta){
-    // map theta in [-THETA_MAX, THETA_MAX] to screen Y range, small-angle-ish
-    // but we just use linear mapping across the rendered span for visual clarity.
-    var frac = (theta + THETA_MAX) / (2*THETA_MAX);
-    return layout.screenTop + frac * layout.screenH;
-  }
-
-  function binIndexForTheta(theta){
-    var frac = (theta + THETA_MAX) / (2*THETA_MAX);
-    var idx = Math.floor(frac * N_BINS);
-    if (idx < 0) idx = 0;
-    if (idx >= N_BINS) idx = N_BINS - 1;
-    return idx;
-  }
-
-  /* ============================================================
-     PARTICLES IN FLIGHT (visual: emitter -> slit -> screen)
-     ============================================================ */
-  var flights = []; // {x,y0,y1,theta,t,dur,slit}
-  var impactFlashes = []; // {y, t, life}
-
-  function spawnParticle(){
-    var theta = sampleTheta();
-    var slit = pickSlitForTheta(theta);
-    var dur = reduceMotion ? 0.001 : (0.55 + Math.random()*0.15);
-    flights.push({
-      theta: theta,
-      slit: slit,
-      t: 0,
-      dur: dur
-    });
-    state.count++;
-    updateCounter();
-  }
-
-  // choose which slit (visually) the particle "goes through" for the flight path.
-  // In which-path mode this is meaningful (detector knows). In interference mode
-  // it's just a visual device (either is equally valid, unobservable in reality) —
-  // we pick randomly 50/50 to depict "both paths available."
-  function pickSlitForTheta(theta){
-    return Math.random() < 0.5 ? -1 : 1;
-  }
-
-  function tickFlights(dt){
-    for (var i = flights.length - 1; i >= 0; i--){
-      var f = flights[i];
-      f.t += dt / f.dur;
-      if (f.t >= 1){
-        // impact: record into histogram, stamp permanent dot, flash
-        var idx = binIndexForTheta(f.theta);
-        bins[idx]++;
-        if (bins[idx] > maxBin) maxBin = bins[idx];
-        stampImpact(f.theta);
-        impactFlashes.push({y: thetaToScreenY(f.theta), life:1});
-        flights.splice(i,1);
-      }
-    }
-    for (var j = impactFlashes.length - 1; j >= 0; j--){
-      impactFlashes[j].life -= dt * 2.2;
-      if (impactFlashes[j].life <= 0) impactFlashes.splice(j,1);
-    }
-  }
-
-  /* ============================================================
-     THEME-AWARE COLORS (read CSS custom properties so light/dark both work)
-     ============================================================ */
-  var COL = {};
-  function readColors(){
-    var cs = getComputedStyle(document.documentElement);
-    COL.bg = cs.getPropertyValue('--bg').trim() || '#07080D';
-    COL.text = cs.getPropertyValue('--text').trim() || '#EDEAE2';
-    COL.dim = cs.getPropertyValue('--dim').trim() || '#9C9788';
-    COL.gold = cs.getPropertyValue('--gold').trim() || '#D4A85C';
-    COL.goldBright = cs.getPropertyValue('--gold-bright').trim() || '#E8C27E';
-    COL.plasma = cs.getPropertyValue('--plasma').trim() || '#6FA8C7';
-    COL.plasmaBright = cs.getPropertyValue('--plasma-bright').trim() || '#8FC3DE';
-    COL.line = cs.getPropertyValue('--line').trim() || 'rgba(212,168,92,0.14)';
-    COL.alert = cs.getPropertyValue('--alert').trim() || '#C4574A';
-  }
-
-  function hexToRgb(hex){
-    hex = hex.replace('#','');
-    if (hex.length === 3) hex = hex.split('').map(function(c){return c+c;}).join('');
-    var num = parseInt(hex,16);
-    return [(num>>16)&255, (num>>8)&255, num&255];
-  }
-
-  /* ============================================================
-     STARFIELD / AMBIENT BACKDROP (subtle, matches Horizonte's ambient motion)
-     ============================================================ */
-  var stars = [];
-  function buildStars(){
-    stars = [];
-    var n = Math.floor((W*H) / 9000);
-    for (var i=0;i<n;i++){
-      stars.push({
-        x: Math.random()*W, y: Math.random()*H,
-        r: Math.random()*1.1 + 0.2,
-        phase: Math.random()*Math.PI*2,
-        speed: 0.4 + Math.random()*0.8
-      });
-    }
-  }
-
-  /* ============================================================
-     DRAW
-     ============================================================ */
-  var simTime = 0;
-
-  function draw(dt){
-    simTime += dt;
-    ctx.clearRect(0,0,W,H);
-
-    // background
-    ctx.fillStyle = COL.bg;
-    ctx.fillRect(0,0,W,H);
-
-    // ambient stars
-    var starAlphaBase = 0.5;
-    for (var s=0; s<stars.length; s++){
-      var st = stars[s];
-      var tw = reduceMotion ? 0.7 : (0.5 + 0.5*Math.sin(simTime*st.speed + st.phase));
-      ctx.globalAlpha = starAlphaBase * tw * 0.55;
-      ctx.fillStyle = COL.text;
-      ctx.beginPath();
-      ctx.arc(st.x, st.y, st.r, 0, Math.PI*2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-
-    drawApparatus();
-    drawTheoryCurve();
-    drawScreenAccumulation();
-    drawFlights();
-    drawEmitterPulse();
-
-    // vignette
-    var grad = ctx.createRadialGradient(W/2,H/2, Math.min(W,H)*0.25, W/2,H/2, Math.max(W,H)*0.72);
-    grad.addColorStop(0,'rgba(0,0,0,0)');
-    grad.addColorStop(1,'rgba(0,0,0,0.38)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,W,H);
-  }
-
-  function drawApparatus(){
-    var midY = layout.midY;
-
-    // emitter (instrument-like housing)
-    ctx.save();
-    ctx.translate(layout.emitterX, midY);
-    ctx.strokeStyle = COL.line;
-    ctx.lineWidth = 1;
-    ctx.fillStyle = 'rgba(212,168,92,0.05)';
-    roundRect(ctx, -34, -44, 68, 88, 8);
-    ctx.fill();
-    ctx.stroke();
-    // aperture glow
-    var glowR = 16 + Math.sin(simTime*1.6)*1.2*(reduceMotion?0:1);
-    var g = ctx.createRadialGradient(30,0,0, 30,0,glowR);
-    g.addColorStop(0, hexA(COL.gold, 0.55));
-    g.addColorStop(1, hexA(COL.gold, 0));
-    ctx.fillStyle = g;
-    ctx.beginPath(); ctx.arc(30,0,glowR,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = COL.goldBright;
-    ctx.beginPath(); ctx.arc(30,0,3.4,0,Math.PI*2); ctx.fill();
-    ctx.restore();
-
-    // beam guide lines from emitter to barrier (faint, decorative optics)
-    ctx.save();
-    ctx.strokeStyle = hexA(COL.gold, 0.10);
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(layout.emitterX+34, midY);
-    ctx.lineTo(layout.barrierX, midY);
-    ctx.stroke();
-    ctx.restore();
-
-    // slit barrier
-    var slitGapPx = mapSlitToPx(state.d);
-    var slitWidthPx = mapWidthToPx(state.a);
-    var barrierTop = layout.screenTop - 40;
-    var barrierBottom = layout.screenBottom + 40;
-    ctx.save();
-    ctx.fillStyle = 'rgba(237,234,226,0.06)';
-    ctx.strokeStyle = COL.line;
-    ctx.lineWidth = 1;
-    var bx = layout.barrierX, bw = 14;
-    // top segment
-    var slit1Top = midY - slitGapPx/2 - slitWidthPx/2;
-    var slit1Bot = midY - slitGapPx/2 + slitWidthPx/2;
-    var slit2Top = midY + slitGapPx/2 - slitWidthPx/2;
-    var slit2Bot = midY + slitGapPx/2 + slitWidthPx/2;
-
-    ctx.beginPath();
-    ctx.rect(bx-bw/2, barrierTop, bw, slit1Top-barrierTop);
-    ctx.rect(bx-bw/2, slit1Bot, bw, slit2Top-slit1Bot);
-    ctx.rect(bx-bw/2, slit2Bot, bw, barrierBottom-slit2Bot);
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-
-    // slit apertures highlight + which-path detector marker
-    [ {c:midY - slitGapPx/2, on:true, label:'A'}, {c:midY + slitGapPx/2, on:true, label:'B'} ].forEach(function(sl, idx){
-      ctx.save();
-      var col = state.whichPath ? COL.plasmaBright : COL.goldBright;
-      ctx.strokeStyle = hexA(col, 0.7);
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(bx, sl.c - slitWidthPx/2);
-      ctx.lineTo(bx, sl.c + slitWidthPx/2);
-      ctx.stroke();
-      if (state.whichPath){
-        ctx.fillStyle = hexA(COL.plasma, 0.16);
-        ctx.beginPath();
-        ctx.arc(bx, sl.c, 12, 0, Math.PI*2);
-        ctx.fill();
-        ctx.strokeStyle = hexA(COL.plasmaBright, 0.85);
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(bx, sl.c, 12, 0, Math.PI*2);
-        ctx.stroke();
-        ctx.fillStyle = COL.plasmaBright;
-        ctx.font = "9px " + FONT_MONO;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('●', bx, sl.c);
-      }
-      ctx.restore();
-    });
-
-    // labels
-    ctx.save();
-    ctx.fillStyle = COL.dim;
-    ctx.font = "10px " + FONT_MONO;
-    ctx.textAlign = 'center';
-    ctx.fillText('emissor', layout.emitterX, midY + 62);
-    ctx.fillText('anteparo dupla fenda', bx, barrierBottom + 16);
-    ctx.restore();
-
-    // screen (detection plate) frame
-    ctx.save();
-    ctx.strokeStyle = COL.line;
-    ctx.lineWidth = 1;
-    ctx.fillStyle = 'rgba(237,234,226,0.03)';
-    roundRect(ctx, layout.screenX-10, layout.screenTop-14, 20, layout.screenH+28, 4);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = COL.dim;
-    ctx.font = "10px " + FONT_MONO;
-    ctx.textAlign = 'center';
-    ctx.fillText('anteparo de detecção', layout.screenX, layout.screenBottom + 30);
-    ctx.restore();
-  }
-
-  var FONT_MONO = "ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace";
-
-  function mapSlitToPx(d_nm){
-    // map physical d (nm, ~200-900) to a visual gap in px between the two slit centers
-    var span = layout.screenH * 0.34;
-    var t = (d_nm - 200) / (900 - 200);
-    return 26 + t * (span - 26);
-  }
-  function mapWidthToPx(a_nm){
-    var t = (a_nm - 20) / (180 - 20);
-    return 3 + t * 15;
-  }
-
-  function drawTheoryCurve(){
-    // faint theoretical intensity curve overlay along the screen, instrument-plate style
-    ctx.save();
-    ctx.beginPath();
-    var first = true;
-    for (var i=0;i<N_TABLE;i+=4){
-      var th = thetaTable[i];
-      var v = pdfTable[i];
-      var y = thetaToScreenY(th);
-      var norm = maxPdf();
-      var xoff = (v/norm) * 46;
-      var x = layout.screenX + 26 + xoff;
-      if (first){ ctx.moveTo(x,y); first=false; } else ctx.lineTo(x,y);
-    }
-    ctx.strokeStyle = hexA(state.whichPath ? COL.plasma : COL.gold, 0.55);
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  var _maxPdfCache = null;
-  function maxPdf(){
-    if (_maxPdfCache !== null) return _maxPdfCache;
-    var m = 0;
-    for (var i=0;i<N_TABLE;i++) if (pdfTable[i] > m) m = pdfTable[i];
-    _maxPdfCache = m || 1;
-    return _maxPdfCache;
-  }
-
-  function drawScreenAccumulation(){
-    var binH = layout.screenH / N_BINS;
-    ctx.save();
-    for (var i=0;i<N_BINS;i++){
-      var c = bins[i];
-      if (c <= 0) continue;
-      var y = layout.screenTop + i*binH;
-      var alpha = Math.min(1, c / (maxBin*0.55));
-      var col = state.whichPath ? COL.plasmaBright : COL.goldBright;
-      ctx.fillStyle = hexA(col, 0.10 + alpha*0.55);
-      ctx.fillRect(layout.screenX - 9, y, 18, Math.max(1,binH));
-    }
-    ctx.restore();
-
-    // accumulated dot cloud (subtle persistent texture drawn from bins as scatter)
-    // Drawn via a lightweight cached canvas would be ideal; for simplicity we
-    // redraw a bounded number of representative points using deterministic jitter.
-  }
-
-  // Persistent dot layer: we keep an offscreen canvas that we draw impact dots onto
-  // permanently (so old dots don't need to be redrawn every frame from bins).
-  var dotLayer = document.createElement('canvas');
-  var dotCtx = dotLayer.getContext('2d');
-  function resizeDotLayer(){
-    dotLayer.width = canvas.width;
-    dotLayer.height = canvas.height;
-    dotCtx.setTransform(DPR,0,0,DPR,0,0);
-    dotCtx.clearRect(0,0,W,H);
-  }
-
-  function stampImpact(theta){
-    var y = thetaToScreenY(theta);
-    var x = layout.screenX + (Math.random()-0.5)*3;
-    var col = state.whichPath ? COL.plasmaBright : COL.goldBright;
-    dotCtx.fillStyle = hexA(col, 0.68);
-    dotCtx.beginPath();
-    dotCtx.arc(x, y + (Math.random()-0.5)*1.4, 1.15, 0, Math.PI*2);
-    dotCtx.fill();
-  }
-
-  function drawFlights(){
-    var midY = layout.midY;
-    ctx.save();
-    for (var i=0;i<flights.length;i++){
-      var f = flights[i];
-      var y0 = midY, x0 = layout.emitterX+34;
-      var slitGapPx = mapSlitToPx(state.d);
-      var slitY = midY + (f.slit<0 ? -slitGapPx/2 : slitGapPx/2);
-      var x1 = layout.barrierX, y1 = slitY;
-      var yEnd = thetaToScreenY(f.theta), xEnd = layout.screenX;
-
-      var col = state.whichPath ? COL.plasmaBright : COL.goldBright;
-      var p; // progress along whichever leg
-      var px, py;
-      if (f.t < 0.42){
-        p = f.t/0.42;
-        px = x0 + (x1-x0)*p;
-        py = y0 + (y1-y0)*p;
-      } else {
-        p = (f.t-0.42)/0.58;
-        px = x1 + (xEnd-x1)*p;
-        py = y1 + (yEnd-y1)*p;
-      }
-      ctx.fillStyle = col;
-      ctx.globalAlpha = 0.95;
-      ctx.beginPath();
-      ctx.arc(px,py,2.6,0,Math.PI*2);
-      ctx.fill();
-      // small trail
-      var grad = ctx.createRadialGradient(px,py,0,px,py,9);
-      grad.addColorStop(0, hexA(col,0.5));
-      grad.addColorStop(1, hexA(col,0));
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(px,py,9,0,Math.PI*2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-    ctx.restore();
-
-    // impact flashes
-    ctx.save();
-    for (var j=0;j<impactFlashes.length;j++){
-      var fl = impactFlashes[j];
-      var col2 = state.whichPath ? COL.plasmaBright : COL.goldBright;
-      ctx.globalAlpha = Math.max(0,fl.life);
-      ctx.fillStyle = col2;
-      ctx.beginPath();
-      ctx.arc(layout.screenX, fl.y, 3 + (1-fl.life)*7, 0, Math.PI*2);
-      ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-    ctx.restore();
-  }
-
-  function drawEmitterPulse(){
-    // handled inline in drawApparatus via glow; placeholder for future extension
-  }
-
-  function hexA(hex, a){
-    if (hex.indexOf('rgba') === 0 || hex.indexOf('rgb(') === 0){
-      // already rgb-ish (e.g. from --line token); just return as-is scaled alpha not trivial, fallback
-      return hex;
-    }
-    var rgb = hexToRgb(hex);
-    return 'rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+','+a+')';
-  }
-
-  function roundRect(c,x,y,w,h,r){
-    c.beginPath();
-    c.moveTo(x+r,y);
-    c.arcTo(x+w,y,x+w,y+h,r);
-    c.arcTo(x+w,y+h,x,y+h,r);
-    c.arcTo(x,y+h,x,y,r);
-    c.arcTo(x,y,x+w,y,r);
-    c.closePath();
-  }
-
-  /* ============================================================
-     UI WIRING
-     ============================================================ */
-  var elDVal = document.getElementById('dVal');
-  var elWVal = document.getElementById('wVal');
-  var elEVal = document.getElementById('eVal');
-  var elCount = document.getElementById('nCount');
-
-  function updateCounter(){ elCount.textContent = state.count.toLocaleString('pt-BR'); }
-
-  function fmt1(x){ return x.toFixed(x<1?3:(x<10?2:1)).replace('.',','); }
-
-  function refreshReadouts(){
-    elDVal.textContent = Math.round(state.d) + ' nm';
-    elWVal.textContent = Math.round(state.a) + ' nm';
-    elEVal.textContent = Math.round(state.energyEV) + ' eV · λ=' + fmt1(state.lambda) + ' nm';
-  }
-
-  function onPhysicsParamChange(){
-    _maxPdfCache = null;
-    rebuildDistribution();
-    refreshReadouts();
-    clearScreen();
-    resizeDotLayer();
-  }
-  document.getElementById('dSlit').addEventListener('input', function(e){
-    state.d = +e.target.value;
-    onPhysicsParamChange();
-  });
-  document.getElementById('wSlit').addEventListener('input', function(e){
-    state.a = +e.target.value;
-    onPhysicsParamChange();
-  });
-  document.getElementById('energy').addEventListener('input', function(e){
-    state.energyEV = +e.target.value;
-    updateLambda();
-    onPhysicsParamChange();
-  });
-
-  var pathToggle = document.getElementById('pathToggle');
-  pathToggle.addEventListener('click', function(){
-    state.whichPath = !state.whichPath;
-    pathToggle.classList.toggle('on', state.whichPath);
-    pathToggle.setAttribute('aria-pressed', String(state.whichPath));
-    _maxPdfCache = null;
-    rebuildDistribution();
-    clearScreen();
-    resizeDotLayer();
-  });
-  pathToggle.setAttribute('aria-pressed','false');
-
-  var fireBtn = document.getElementById('fireBtn');
-  var streamActive = false;
-  var streamAccum = 0;
-
-  fireBtn.addEventListener('click', function(){
-    if (state.mode === 'single'){
-      spawnParticle();
-    } else {
-      streamActive = !streamActive;
-      fireBtn.textContent = streamActive ? 'pausar feixe' : 'retomar feixe';
-      fireBtn.classList.toggle('on', streamActive);
-    }
-  });
-
-  document.getElementById('clearBtn').addEventListener('click', function(){
-    clearScreen();
-    resizeDotLayer();
-  });
-
-  var modeBtns = document.querySelectorAll('.seg button[data-mode]');
-  modeBtns.forEach(function(b){
-    b.addEventListener('click', function(){
-      modeBtns.forEach(function(x){ x.classList.remove('on'); });
-      b.classList.add('on');
-      state.mode = b.dataset.mode;
-      streamActive = false;
-      if (state.mode === 'single'){
-        fireBtn.textContent = 'disparar elétron';
-        fireBtn.classList.remove('on');
-      } else {
-        fireBtn.textContent = 'iniciar feixe';
-        fireBtn.classList.remove('on');
-      }
+/* Graceful texture fallback: if a texture 404s or fails to decode, three.js
+   would otherwise leave `map` pointing at a broken/empty texture, which can
+   render the mesh solid black or invisible even though a fallback `color`
+   was set on the material. To actually honor the fallback color, we detect
+   the error and clear `map` on every material that was using it, forcing
+   the renderer back to the solid base color instead. */
+function loadTex(path, targetMaterials, opts){
+  opts = opts || {};
+  var t = texLoader.load(path, undefined, undefined, function(){
+    console.warn('[voo] textura indisponível, aplicando fallback:', path);
+    (targetMaterials||[]).forEach(function(m){
+      if (!m) return;
+      m.map = null;
+      // decorative overlay layers (clouds, night lights, rings, distant sky
+      // discs) have no meaningful solid-color substitute, so they simply
+      // fade out instead of turning into an opaque colored blob; the base
+      // planet sphere below (opts.hide=false) keeps its fallback `color`.
+      if (opts.hide) m.opacity = 0;
+      m.needsUpdate = true;
     });
   });
+  if (opts.colorSpaceSRGB !== false) t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
+}
 
-  /* info panel */
-  var infoBtn = document.getElementById('infoBtn'), info = document.getElementById('info');
-  var infoBtnLabel = document.getElementById('infoBtnLabel');
-  infoBtn.addEventListener('click', function(){
-    var open = info.classList.toggle('open');
-    info.setAttribute('aria-hidden', String(!open));
-    infoBtn.setAttribute('aria-expanded', String(open));
-    infoBtnLabel.textContent = open ? 'fechar' : 'entenda a física';
-    infoBtn.classList.add('seen');
-  });
+/* safe material factory: if a texture 404s, loadTex() above clears the
+   map and the base `color` set here keeps the mesh visible and colored
+   plausibly — this is the "graceful fallback" requirement. */
+function safeStandardMaterial(opts){
+  var mat = new THREE.MeshStandardMaterial(opts);
+  return mat;
+}
 
-  /* welcome overlay (first visit) */
-  var welcome = document.getElementById('welcome');
-  var WKEY = 'fisicavisual_duplafenda_seen';
-  try{
-    if (localStorage.getItem(WKEY)) welcome.classList.add('hidden');
-  } catch(e){}
-  function dismissWelcome(remember){
-    welcome.classList.add('hidden');
-    if (remember){ try{ localStorage.setItem(WKEY, '1'); } catch(e){} }
+/* ============================================================
+   LIGHTING
+   ============================================================ */
+scene.add(new THREE.AmbientLight(0x223344, 0.35));
+var sunLight = new THREE.PointLight(0xfff2d0, 3.4, 0, 0.4);
+sunLight.position.set(0,0,0);
+scene.add(sunLight);
+
+/* ============================================================
+   LAYER GROUPS
+   ============================================================ */
+var solarGroup    = new THREE.Group();
+var stellarGroup  = new THREE.Group();
+var galacticGroup = new THREE.Group();
+scene.add(solarGroup, stellarGroup, galacticGroup);
+
+/* ============================================================
+   POINTS OF INTEREST registry — filled in as bodies are built.
+   Each entry: { name, mesh, radius (world units, for camera framing),
+                 eyebrow, facts:[ {k,v} ], prose, realRadiusKm,
+                 distanceAuText, layer }
+   ============================================================ */
+var POIS = [];
+
+/* ============================================================
+   SUN
+   ============================================================ */
+var SUN_R = 10;
+var sunMat = new THREE.MeshBasicMaterial({ color: 0xffcc55 });
+sunMat.map = loadTex('../assets/textures/2k_sun.jpg', [sunMat]);
+var sunMesh = new THREE.Mesh(new THREE.SphereGeometry(SUN_R, 48, 48), sunMat);
+solarGroup.add(sunMesh);
+
+/* glow sprite (cheap bloom substitute — no postprocessing pipeline needed) */
+function makeGlowSprite(color, size, opacity){
+  var c = document.createElement('canvas'); c.width = c.height = 256;
+  var ctx = c.getContext('2d');
+  var g = ctx.createRadialGradient(128,128,0,128,128,128);
+  g.addColorStop(0, 'rgba('+color+','+opacity+')');
+  g.addColorStop(0.4, 'rgba('+color+','+(opacity*0.35)+')');
+  g.addColorStop(1, 'rgba('+color+',0)');
+  ctx.fillStyle = g; ctx.fillRect(0,0,256,256);
+  var tex = new THREE.CanvasTexture(c);
+  var mat = new THREE.SpriteMaterial({ map: tex, transparent:true, blending: THREE.AdditiveBlending, depthWrite:false });
+  var spr = new THREE.Sprite(mat);
+  spr.scale.set(size,size,1);
+  return spr;
+}
+var sunGlow = makeGlowSprite('255,214,140', SUN_R*7, 0.9);
+solarGroup.add(sunGlow);
+
+POIS.push({
+  name:'Sol', mesh:sunMesh, radius:SUN_R, layer:'solar',
+  eyebrow:'Estrela · classe G2V',
+  facts:[
+    {k:'raio real', v:'≈ 696.000 km (109 vezes o raio da Terra)'},
+    {k:'temperatura de superfície', v:'≈ 5.500 °C'},
+    {k:'idade', v:'≈ 4,6 bilhões de anos'},
+    {k:'massa', v:'99,86% de toda a massa do sistema solar'}
+  ],
+  prose:'Uma estrela anã amarela de meia-idade — já queimou cerca de metade do seu combustível de hidrogênio. Sem ela, nada aqui teria luz, calor ou uma órbita para seguir.'
+});
+
+/* ============================================================
+   PLANET DEFINITIONS
+   ------------------------------------------------------------
+   radius: visual radius in world units, proportional to real
+   relative radii but compressed so Mercury is still visible next
+   to Jupiter. orbit: compressed distance from sun (NOT to scale
+   with real AU — see field notebook). speed: orbital angular
+   speed (purely decorative, slow).
+   ============================================================ */
+var PLANETS = [
+  { id:'mercury', name:'Mercúrio', tex:'2k_mercury.jpg', fb:0x9c9285, radius:1.1, orbit:22,  speed:0.09, tilt:0.001,
+    eyebrow:'Planeta rochoso · o mais próximo do Sol',
+    facts:[{k:'raio real',v:'2.439 km (38% da Terra)'},{k:'distância real do Sol',v:'≈ 58 milhões de km (0,39 UA)'},{k:'temperatura',v:'−180 °C a 430 °C — a maior variação do sistema'},{k:'luas',v:'nenhuma'}],
+    prose:'Sem atmosfera para reter calor, Mercúrio congela à noite e queima de dia — a maior amplitude térmica de qualquer planeta do sistema solar.' },
+  { id:'venus', name:'Vênus', tex:'2k_venus_surface.jpg', cloudTex:'2k_venus_atmosphere.jpg', fb:0xd9b98a, radius:1.9, orbit:34, speed:0.065, tilt:3.096,
+    eyebrow:'Planeta rochoso · o mais quente',
+    facts:[{k:'raio real',v:'6.052 km (95% da Terra)'},{k:'distância real do Sol',v:'≈ 108 milhões de km (0,72 UA)'},{k:'temperatura de superfície',v:'≈ 465 °C — mais quente que Mercúrio'},{k:'luas',v:'nenhuma'}],
+    prose:'Uma atmosfera esmagadora de CO₂ (92 vezes a pressão terrestre) causa um efeito estufa descontrolado — Vênus é mais quente que Mercúrio, mesmo estando mais longe do Sol.' },
+  { id:'earth', name:'Terra', tex:'2k_earth_daymap.jpg', nightTex:'2k_earth_nightmap.jpg', cloudTex:'2k_earth_clouds.jpg', fb:0x2f6a9e, radius:2.0, orbit:48, speed:0.05, tilt:0.409,
+    eyebrow:'Planeta rochoso · o nosso',
+    facts:[{k:'raio real',v:'6.371 km'},{k:'distância real do Sol',v:'≈ 150 milhões de km (1 UA, por definição)'},{k:'temperatura média',v:'≈ 15 °C'},{k:'luas',v:'1 (a Lua)'}],
+    prose:'O único mundo confirmado com vida em todo o universo conhecido — e o único cuja atmosfera tem oxigênio livre em grande quantidade, produto de bilhões de anos de fotossíntese.' },
+  { id:'mars', name:'Marte', tex:'2k_mars.jpg', fb:0xb35c3a, radius:1.3, orbit:66, speed:0.038, tilt:0.440,
+    eyebrow:'Planeta rochoso · o planeta vermelho',
+    facts:[{k:'raio real',v:'3.390 km (53% da Terra)'},{k:'distância real do Sol',v:'≈ 228 milhões de km (1,52 UA)'},{k:'temperatura média',v:'≈ −65 °C'},{k:'luas',v:'2 (Fobos e Deimos)'}],
+    prose:'A cor vermelha vem de óxido de ferro (ferrugem) na poeira da superfície. Tem o maior vulcão do sistema solar, o Monte Olimpo, com quase 22 km de altura — quase 2,5 vezes o Everest.' },
+  { id:'jupiter', name:'Júpiter', tex:'2k_jupiter.jpg', fb:0xc9a687, radius:6.4, orbit:110, speed:0.021, tilt:0.055,
+    eyebrow:'Gigante gasoso · o maior planeta',
+    facts:[{k:'raio real',v:'69.911 km (11 vezes a Terra)'},{k:'distância real do Sol',v:'≈ 778 milhões de km (5,2 UA)'},{k:'luas conhecidas',v:'95 confirmadas (Io, Europa, Ganimedes, Calisto entre as maiores)'},{k:'A Grande Mancha Vermelha',v:'uma tempestade maior que a Terra, ativa há séculos'}],
+    prose:'Tão massivo que seu centro de gravidade com o Sol fica ligeiramente fora da superfície solar. Sua gravidade também protege os planetas internos, desviando muitos cometas e asteroides.' },
+  { id:'saturn', name:'Saturno', tex:'2k_saturn.jpg', ringTex:'2k_saturn_ring_alpha.png', fb:0xd8c297, radius:5.4, orbit:150, speed:0.0155, tilt:0.466,
+    eyebrow:'Gigante gasoso · o anelado',
+    facts:[{k:'raio real',v:'58.232 km (9 vezes a Terra)'},{k:'distância real do Sol',v:'≈ 1,43 bilhão de km (9,5 UA)'},{k:'densidade',v:'menor que a da água — flutuaria numa banheira gigante'},{k:'luas conhecidas',v:'mais de 140 confirmadas'}],
+    prose:'Os anéis são feitos quase inteiramente de gelo de água, em pedaços que vão de grãos de poeira a blocos do tamanho de uma casa — e têm menos de 1 km de espessura, apesar dos milhares de km de largura.' },
+  { id:'uranus', name:'Urano', tex:'2k_uranus.jpg', fb:0x9fd6e0, radius:3.3, orbit:186, speed:0.0108, tilt:1.706,
+    eyebrow:'Gigante de gelo · o planeta deitado',
+    facts:[{k:'raio real',v:'25.362 km (4 vezes a Terra)'},{k:'distância real do Sol',v:'≈ 2,87 bilhões de km (19,2 UA)'},{k:'inclinação axial',v:'≈ 98° — gira praticamente "deitado"'},{k:'temperatura',v:'≈ −224 °C, o planeta mais frio do sistema'}],
+    prose:'Provavelmente foi tombado de lado por uma colisão antiga. Seus polos passam décadas seguidas em luz solar direta ou escuridão total, por causa dessa inclinação extrema.' },
+  { id:'neptune', name:'Netuno', tex:'2k_neptune.jpg', fb:0x3f5fc0, radius:3.2, orbit:220, speed:0.0087, tilt:0.494,
+    eyebrow:'Gigante de gelo · o mais distante',
+    facts:[{k:'raio real',v:'24.622 km (3,9 vezes a Terra)'},{k:'distância real do Sol',v:'≈ 4,50 bilhões de km (30,1 UA)'},{k:'ventos',v:'os mais rápidos do sistema solar — até 2.100 km/h'},{k:'luas conhecidas',v:'16, a maior é Tritão'}],
+    prose:'Foi o primeiro planeta descoberto por previsão matemática, não observação direta — perturbações na órbita de Urano indicaram sua existência antes de ser visto, em 1846.' }
+];
+
+var EARTH_MOON = { name:'Lua', tex:'2k_moon.jpg', fb:0xaaa79c, radius:0.55, orbit:4.2, speed:0.6,
+  eyebrow:'Satélite natural da Terra',
+  facts:[{k:'raio real',v:'1.737 km (27% da Terra)'},{k:'distância real da Terra',v:'≈ 384.400 km'},{k:'origem provável',v:'colisão entre a Terra jovem e um corpo do tamanho de Marte'},{k:'curiosidade',v:'sempre mostra a mesma face para a Terra (rotação sincronizada)'}],
+  prose:'Estabiliza a inclinação axial da Terra ao longo de milhões de anos, o que ajuda a manter um clima relativamente estável — sem a Lua, o eixo terrestre provavelmente oscilaria de forma caótica.'
+};
+
+var planetMeshes = []; // {mesh, orbitGroup, def, cloudMesh?, nightMesh?}
+
+PLANETS.forEach(function(def){
+  var orbitGroup = new THREE.Group();
+  orbitGroup.rotation.y = Math.random()*Math.PI*2;
+  solarGroup.add(orbitGroup);
+
+  // orbit ring (subtle)
+  var ringGeo = new THREE.RingGeometry(def.orbit-0.05, def.orbit+0.05, 128);
+  var ringMat = new THREE.MeshBasicMaterial({ color:0x6fa8c7, transparent:true, opacity:0.10, side:THREE.DoubleSide });
+  var ringMesh = new THREE.Mesh(ringGeo, ringMat);
+  ringMesh.rotation.x = Math.PI/2;
+  solarGroup.add(ringMesh);
+
+  var mat = safeStandardMaterial({ color: def.fb || 0xffffff, roughness:1, metalness:0 });
+  mat.map = loadTex('../assets/textures/' + def.tex, [mat]);
+  var mesh = new THREE.Mesh(new THREE.SphereGeometry(def.radius, 40, 40), mat);
+  mesh.position.set(def.orbit, 0, 0);
+  mesh.rotation.z = def.tilt || 0;
+  orbitGroup.add(mesh);
+
+  var nightMesh = null;
+  if (def.nightTex){
+    var nightMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.55, blending: THREE.AdditiveBlending });
+    nightMat.map = loadTex('../assets/textures/' + def.nightTex, [nightMat], {hide:true});
+    nightMesh = new THREE.Mesh(new THREE.SphereGeometry(def.radius*1.001, 40, 40), nightMat);
+    mesh.add(nightMesh);
   }
-  document.getElementById('welcomeGo').addEventListener('click', function(){ dismissWelcome(true); });
-  document.getElementById('welcomeSkip').addEventListener('click', function(){ dismissWelcome(true); });
-  welcome.addEventListener('click', function(e){ if (e.target === welcome) dismissWelcome(true); });
-  document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape' && !welcome.classList.contains('hidden')) dismissWelcome(true);
+
+  var cloudMesh = null;
+  if (def.cloudTex){
+    var cloudMat = new THREE.MeshStandardMaterial({ color:0xffffff, transparent:true, opacity: def.id==='venus'?0.85:0.55, depthWrite:false, roughness:1 });
+    cloudMat.map = loadTex('../assets/textures/' + def.cloudTex, [cloudMat], {hide:true});
+    cloudMesh = new THREE.Mesh(new THREE.SphereGeometry(def.radius*1.012, 40, 40), cloudMat);
+    mesh.add(cloudMesh);
+  }
+
+  if (def.ringTex){
+    var rMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, side:THREE.DoubleSide, depthWrite:false });
+    rMat.map = loadTex('../assets/textures/' + def.ringTex, [rMat], {hide:true});
+    var ringPlane = new THREE.Mesh(new THREE.RingGeometry(def.radius*1.3, def.radius*2.4, 64), rMat);
+    ringPlane.rotation.x = Math.PI/2 - 0.42;
+    mesh.add(ringPlane);
+  }
+
+  POIS.push({
+    name: def.name, mesh: mesh, radius: def.radius, layer:'solar',
+    eyebrow: def.eyebrow, facts: def.facts, prose: def.prose
   });
 
-  /* theme sync: recompute colors when OS or explicit theme toggling changes */
-  var themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
-  function onThemeChange(){ readColors(); }
-  if (themeMedia.addEventListener) themeMedia.addEventListener('change', onThemeChange);
-  var mo = new MutationObserver(function(){ readColors(); });
-  mo.observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+  var entry = { mesh:mesh, orbitGroup:orbitGroup, def:def, cloudMesh:cloudMesh, nightMesh:nightMesh };
+  planetMeshes.push(entry);
+});
 
-  /* ============================================================
-     MAIN LOOP
-     ============================================================ */
-  var last = performance.now();
-  function frame(now){
-    var dt = Math.min((now-last)/1000, 0.1);
-    last = now;
+/* Earth's moon needs to orbit the Earth in world space, independent of
+   Earth's own axial spin — its pivot lives inside Earth's orbitGroup
+   (same rotating frame as Earth's own orbit position) but is kept
+   re-centered on Earth's local position every frame, so the moon orbits
+   the planet regardless of how far Earth has traveled around the Sun. */
+var earthEntry = planetMeshes.filter(function(p){ return p.def.id==='earth'; })[0];
+var moonPivot = new THREE.Group();
+earthEntry.orbitGroup.add(moonPivot);
+moonPivot.position.copy(earthEntry.mesh.position);
+var moonMat = safeStandardMaterial({ color: EARTH_MOON.fb || 0xaaaaaa, roughness:1 });
+moonMat.map = loadTex('../assets/textures/' + EARTH_MOON.tex, [moonMat]);
+var moonMesh = new THREE.Mesh(new THREE.SphereGeometry(EARTH_MOON.radius, 28, 28), moonMat);
+moonMesh.position.set(EARTH_MOON.orbit, 0, 0);
+moonPivot.add(moonMesh);
+POIS.push({ name: EARTH_MOON.name, mesh: moonMesh, radius: EARTH_MOON.radius, layer:'solar',
+  eyebrow: EARTH_MOON.eyebrow, facts: EARTH_MOON.facts, prose: EARTH_MOON.prose });
 
-    if (state.mode === 'stream' && streamActive){
-      streamAccum += dt;
-      var rate = reduceMotion ? 18 : 60; // particles per second
-      var interval = 1/rate;
-      while (streamAccum > interval){
-        spawnParticle();
-        streamAccum -= interval;
-      }
+/* ============================================================
+   STELLAR LAYER — procedural starfield + nebula sprites
+   ============================================================ */
+(function buildStellarLayer(){
+  var COUNT = 3200;
+  var positions = new Float32Array(COUNT*3);
+  var colors = new Float32Array(COUNT*3);
+  var sizes = new Float32Array(COUNT);
+
+  // simplified spectral classes: hot blue/white, sun-like yellow, cool red
+  var classes = [
+    { color:new THREE.Color(0x9fbfff), weight:0.16 }, // blue-white hot
+    { color:new THREE.Color(0xf3f6ff), weight:0.30 }, // white
+    { color:new THREE.Color(0xfff1c2), weight:0.30 }, // yellow, sun-like
+    { color:new THREE.Color(0xffb37a), weight:0.14 }, // orange
+    { color:new THREE.Color(0xff8064), weight:0.10 }  // red, cool
+  ];
+  function pickClass(){
+    var r = Math.random(), acc = 0;
+    for (var i=0;i<classes.length;i++){ acc += classes[i].weight; if (r<=acc) return classes[i]; }
+    return classes[classes.length-1];
+  }
+
+  for (var i=0;i<COUNT;i++){
+    // distribute in a thick shell between LAYER1_FADE_IN*0.7 and LAYER2_FULL
+    var r = 380 + Math.pow(Math.random(), 0.6) * 2600;
+    var theta = Math.random()*Math.PI*2;
+    var phi = Math.acos(2*Math.random()-1);
+    var x = r*Math.sin(phi)*Math.cos(theta);
+    var y = r*Math.cos(phi)*0.55; // flatten slightly for a nicer band
+    var z = r*Math.sin(phi)*Math.sin(theta);
+    positions[i*3] = x; positions[i*3+1] = y; positions[i*3+2] = z;
+
+    var cls = pickClass();
+    colors[i*3] = cls.color.r; colors[i*3+1] = cls.color.g; colors[i*3+2] = cls.color.b;
+    sizes[i] = (Math.random()*2.2 + 0.6) * (cls === classes[0] ? 1.3 : 1);
+  }
+
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colors,3));
+  geo.setAttribute('size', new THREE.BufferAttribute(sizes,1));
+
+  var starMat = new THREE.PointsMaterial({
+    size: 2.4, vertexColors:true, transparent:true, opacity:0.95,
+    sizeAttenuation:true, depthWrite:false, blending: THREE.AdditiveBlending
+  });
+  var starPoints = new THREE.Points(geo, starMat);
+  stellarGroup.add(starPoints);
+
+  // nebulae: soft radial-gradient sprites, additive blend, two color themes
+  function makeNebulaTexture(hue1, hue2){
+    var c = document.createElement('canvas'); c.width = c.height = 512;
+    var ctx = c.getContext('2d');
+    ctx.globalCompositeOperation = 'lighter';
+    for (var k=0;k<5;k++){
+      var cx = 256 + (Math.random()-0.5)*220, cy = 256 + (Math.random()-0.5)*220;
+      var rad = 130 + Math.random()*140;
+      var g = ctx.createRadialGradient(cx,cy,0,cx,cy,rad);
+      var hue = k%2===0 ? hue1 : hue2;
+      g.addColorStop(0, 'hsla('+hue+',85%,68%,0.55)');
+      g.addColorStop(0.5, 'hsla('+hue+',80%,55%,0.22)');
+      g.addColorStop(1, 'hsla('+hue+',80%,40%,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(cx,cy,rad,0,Math.PI*2); ctx.fill();
     }
-
-    tickFlights(dt);
-    draw(dt);
-
-    // draw persistent dot layer on top of screen accumulation each frame
-    ctx.save();
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.drawImage(dotLayer, 0, 0);
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-    ctx.restore();
-
-    requestAnimationFrame(frame);
+    var tex = new THREE.CanvasTexture(c);
+    return tex;
   }
 
-  window.addEventListener('resize', function(){
-    resize();
-    buildStars();
-    resizeDotLayer();
+  var nebulaDefs = [
+    { hue1:300, hue2:260, pos:[620,140,-480], size:900 },  // magenta/violet
+    { hue1:190, hue2:150, pos:[-900,-220,700], size:1100 } // teal/emerald
+  ];
+  nebulaDefs.forEach(function(nd){
+    var tex = makeNebulaTexture(nd.hue1, nd.hue2);
+    var mat = new THREE.SpriteMaterial({ map: tex, transparent:true, opacity:0.55, blending:THREE.AdditiveBlending, depthWrite:false });
+    var spr = new THREE.Sprite(mat);
+    spr.position.set(nd.pos[0], nd.pos[1], nd.pos[2]);
+    spr.scale.set(nd.size, nd.size, 1);
+    stellarGroup.add(spr);
   });
 
-  readColors();
-  resize();
-  buildStars();
-  resizeDotLayer();
-  refreshReadouts();
-  requestAnimationFrame(frame);
+  POIS.push({
+    name:'Nebulosa (representação artística)', mesh:null, worldPos:new THREE.Vector3(620,140,-480), radius:60, layer:'stellar',
+    eyebrow:'Vizinhança estelar · ilustrativo',
+    facts:[{k:'o que é de verdade',v:'nebulosas reais são nuvens de gás e poeira onde estrelas nascem ou morrem'},{k:'o que é aqui',v:'um gradiente de cor procedural, sem correspondência com um objeto catalogado'}],
+    prose:'Cores vibrantes como estas em fotos reais geralmente vêm de imageamento em falsa cor de diferentes comprimentos de onda (emissão de hidrogênio, oxigênio, enxofre) — não é assim que o olho humano veria a olho nu.'
+  });
 })();
 
+/* ============================================================
+   GALACTIC LAYER — stylized Milky Way disc + distant galaxies
+   ============================================================ */
+(function buildGalacticLayer(){
+  var discGeo = new THREE.CylinderGeometry(2000, 2000, 40, 64, 1, true);
+  var discMat = new THREE.MeshBasicMaterial({
+    side: THREE.DoubleSide, transparent:true, opacity:0.85,
+    blending: THREE.AdditiveBlending, depthWrite:false
+  });
+  discMat.map = loadTex('../assets/textures/2k_stars_milky_way.jpg', [discMat], {hide:true});
+  var disc = new THREE.Mesh(discGeo, discMat);
+  galacticGroup.add(disc);
+
+  // background sky sphere for this layer using the wide starfield texture
+  var skyGeo = new THREE.SphereGeometry(4000, 32, 32);
+  var skyMat = new THREE.MeshBasicMaterial({ side: THREE.BackSide, transparent:true, opacity:0.6, depthWrite:false });
+  skyMat.map = loadTex('../assets/textures/2k_stars.jpg', [skyMat], {hide:true});
+  galacticGroup.add(new THREE.Mesh(skyGeo, skyMat));
+
+  // a handful of distant "galaxies": simplified spiral smears via sprites
+  function makeGalaxyTexture(hue){
+    var c = document.createElement('canvas'); c.width = c.height = 256;
+    var ctx = c.getContext('2d');
+    ctx.translate(128,128);
+    for (var arm=0; arm<2; arm++){
+      ctx.save();
+      ctx.rotate(arm*Math.PI);
+      for (var t=0;t<200;t++){
+        var a = t*0.16;
+        var r = t*0.55;
+        var x = Math.cos(a)*r, y = Math.sin(a)*r*0.45;
+        var alpha = Math.max(0, 1 - t/200);
+        ctx.fillStyle = 'hsla('+hue+',70%,'+(60+alpha*20)+'%,'+(alpha*0.5)+')';
+        ctx.beginPath(); ctx.arc(x,y, 2.2+alpha*2, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+    }
+    var g = ctx.createRadialGradient(0,0,0,0,0,60);
+    g.addColorStop(0,'hsla('+hue+',60%,85%,0.9)');
+    g.addColorStop(1,'hsla('+hue+',60%,85%,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0,0,60,0,Math.PI*2); ctx.fill();
+    return new THREE.CanvasTexture(c);
+  }
+
+  var galaxyDefs = [
+    { hue:280, pos:[2400, 300, -1600], size:520, name:'Espiral distante I' },
+    { hue:200, pos:[-2600, -450, 1200], size:640, name:'Espiral distante II' },
+    { hue:40,  pos:[1200, -800, 2600], size:420, name:'Espiral distante III' }
+  ];
+  galaxyDefs.forEach(function(gd){
+    var tex = makeGalaxyTexture(gd.hue);
+    var mat = new THREE.SpriteMaterial({ map: tex, transparent:true, blending: THREE.AdditiveBlending, depthWrite:false });
+    var spr = new THREE.Sprite(mat);
+    spr.position.set(gd.pos[0], gd.pos[1], gd.pos[2]);
+    spr.scale.set(gd.size, gd.size, 1);
+    galacticGroup.add(spr);
+  });
+
+  POIS.push({
+    name:'Via Láctea (vista estilizada)', mesh:null, worldPos:new THREE.Vector3(0,0,0), radius:2000, layer:'galactic',
+    eyebrow:'Escala galáctica · ilustrativo',
+    facts:[{k:'estrelas na Via Láctea',v:'estimativa de 100 a 400 bilhões'},{k:'diâmetro real',v:'≈ 100.000 anos-luz'},{k:'nossa posição real',v:'num braço espiral secundário, a ≈ 27.000 anos-luz do centro'}],
+    prose:'Aqui você está "por fora" olhando a galáxia de longe — algo que nenhuma sonda humana jamais fez de verdade. A imagem usada é uma textura de céu estelar estilizada para sugerir a forma de um disco espiral, não uma fotografia real da Via Láctea vista de fora.'
+  });
+})();
+
+/* ============================================================
+   POI MARKERS (2D overlay, projected each frame)
+   ============================================================ */
+var markerLayer = document.createElement('div');
+markerLayer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:4;';
+document.body.appendChild(markerLayer);
+
+POIS.forEach(function(poi){
+  var m = document.createElement('button');
+  m.className = 'poi-marker';
+  m.setAttribute('aria-label', poi.name);
+  m.style.pointerEvents = 'auto';
+  var lbl = document.createElement('div');
+  lbl.className = 'poi-label';
+  lbl.textContent = poi.name;
+  markerLayer.appendChild(m);
+  markerLayer.appendChild(lbl);
+  poi._el = m; poi._lbl = lbl;
+  m.addEventListener('click', function(){ openPoi(poi); });
+});
+
+var _wv = new THREE.Vector3();
+function updateMarkers(){
+  var camDist = camera.position.length();
+  POIS.forEach(function(poi){
+    if (poi.mesh){ poi.mesh.getWorldPosition(_wv); } else { _wv.copy(poi.worldPos); }
+    // visibility: only show markers belonging to layers that are meaningfully visible
+    var visible = true;
+    if (poi.layer === 'solar' && camDist > LAYER1_FULL) visible = false;
+    if (poi.layer === 'stellar' && (camDist < LAYER1_FADE_IN*0.5 || camDist > LAYER2_FULL)) visible = false;
+    if (poi.layer === 'galactic' && camDist < LAYER2_FADE_IN*0.6) visible = false;
+
+    var proj = _wv.clone().project(camera);
+    var inFront = proj.z < 1;
+    if (!visible || !inFront || proj.x < -1.05 || proj.x > 1.05 || proj.y < -1.05 || proj.y > 1.05){
+      poi._el.style.display = 'none'; poi._lbl.style.display = 'none';
+      return;
+    }
+    var x = (proj.x*0.5+0.5) * innerWidth;
+    var y = (1-(proj.y*0.5+0.5)) * innerHeight;
+    poi._el.style.display = 'block'; poi._el.style.left = x+'px'; poi._el.style.top = y+'px';
+    poi._lbl.style.display = 'block'; poi._lbl.style.left = x+'px'; poi._lbl.style.top = y+'px';
+  });
+}
+
+/* ============================================================
+   POI CARD interactions
+   ============================================================ */
+var poiCard = document.getElementById('poiCard');
+var poiName = document.getElementById('poiName');
+var poiEyebrow = document.getElementById('poiEyebrow');
+var poiFacts = document.getElementById('poiFacts');
+var poiProse = document.getElementById('poiProse');
+var poiGoBtn = document.getElementById('poiGo');
+var poiCloseBtn = document.getElementById('poiClose');
+var activePoi = null;
+var travelTarget = null; // {pos:Vector3, lookAt:Vector3} eased toward each frame
+
+function openPoi(poi){
+  activePoi = poi;
+  poiName.textContent = poi.name;
+  poiEyebrow.textContent = poi.eyebrow || '';
+  poiFacts.innerHTML = '';
+  (poi.facts||[]).forEach(function(f){
+    var d = document.createElement('div');
+    d.innerHTML = '<b>'+f.k+':</b> '+f.v;
+    poiFacts.appendChild(d);
+  });
+  poiProse.textContent = poi.prose || '';
+  poiCard.classList.add('open');
+}
+poiCloseBtn.addEventListener('click', function(){ poiCard.classList.remove('open'); activePoi = null; });
+poiGoBtn.addEventListener('click', function(){
+  if (!activePoi) return;
+  var target = activePoi.mesh ? activePoi.mesh.getWorldPosition(new THREE.Vector3()) : activePoi.worldPos.clone();
+  var dist = Math.max(activePoi.radius*4.2, 6);
+  var dir = camera.position.clone().sub(target);
+  if (dir.lengthSq() < 0.0001) dir.set(0,0.3,1);
+  dir.normalize().multiplyScalar(dist);
+  travelTarget = { pos: target.clone().add(dir), look: target.clone() };
+  poiCard.classList.remove('open');
+});
+
+/* ============================================================
+   FLIGHT CONTROLS — WASD + mouse-look (pointer lock optional) +
+   scroll-accumulated speed + touch controls for mobile.
+   ============================================================ */
+var yaw = -Math.PI/2 * 0; // facing -Z-ish by default via lookAt below
+var pitch = 0;
+var euler = new THREE.Euler(0,0,0,'YXZ');
+camera.lookAt(0,0,0);
+euler.setFromQuaternion(camera.quaternion);
+yaw = euler.y; pitch = euler.x;
+
+var keys = {};
+window.addEventListener('keydown', function(e){
+  keys[e.code] = true;
+  if (e.code === 'Space'){ speed = 0; e.preventDefault(); }
+});
+window.addEventListener('keyup', function(e){ keys[e.code] = false; });
+
+var speed = 0;              // current forward speed, units/sec
+var MAX_SPEED = 260;
+var MIN_SPEED = 0;
+var dragging = false, lastX=0, lastY=0;
+
+canvas.classList.add('grabbable');
+canvas.addEventListener('pointerdown', function(e){
+  dragging = true; lastX = e.clientX; lastY = e.clientY;
+  canvas.classList.add('dragging');
+  canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
+});
+window.addEventListener('pointerup', function(e){
+  dragging = false; canvas.classList.remove('dragging');
+});
+window.addEventListener('pointermove', function(e){
+  if (!dragging) return;
+  var dx = e.clientX-lastX, dy = e.clientY-lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  yaw -= dx*0.0026;
+  pitch -= dy*0.0026;
+  pitch = Math.max(-1.5, Math.min(1.5, pitch));
+});
+
+/* optional pointer lock for desktop: double-click canvas to engage */
+canvas.addEventListener('dblclick', function(){
+  if (canvas.requestPointerLock) canvas.requestPointerLock();
+});
+document.addEventListener('pointerlockchange', function(){
+  var locked = document.pointerLockElement === canvas;
+  if (locked){
+    document.addEventListener('mousemove', onLockedMove);
+  } else {
+    document.removeEventListener('mousemove', onLockedMove);
+  }
+});
+function onLockedMove(e){
+  yaw -= e.movementX*0.0022;
+  pitch -= e.movementY*0.0022;
+  pitch = Math.max(-1.5, Math.min(1.5, pitch));
+}
+
+canvas.addEventListener('wheel', function(e){
+  e.preventDefault();
+  var delta = -e.deltaY*0.06;
+  speed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed+delta));
+}, { passive:false });
+
+/* ---- touch controls ---- */
+var touchCtl = document.getElementById('touchCtl');
+var isTouch = matchMedia('(pointer: coarse)').matches;
+if (isTouch) touchCtl.classList.add('active');
+
+var tstick = document.getElementById('tstick'), tknob = document.getElementById('tknob');
+var stickVec = {x:0,y:0}; var stickActive=false, stickId=null, stickOrigin={x:0,y:0};
+tstick.addEventListener('pointerdown', function(e){
+  stickActive = true; stickId = e.pointerId;
+  var r = tstick.getBoundingClientRect();
+  stickOrigin = { x:r.left+r.width/2, y:r.top+r.height/2 };
+  tstick.setPointerCapture(e.pointerId);
+});
+tstick.addEventListener('pointermove', function(e){
+  if (!stickActive || e.pointerId!==stickId) return;
+  var dx = e.clientX-stickOrigin.x, dy = e.clientY-stickOrigin.y;
+  var max = 40;
+  var len = Math.min(max, Math.hypot(dx,dy));
+  var ang = Math.atan2(dy,dx);
+  var cx = Math.cos(ang)*len, cy = Math.sin(ang)*len;
+  tknob.style.transform = 'translate('+cx+'px,'+cy+'px)';
+  stickVec = { x: cx/max, y: cy/max };
+});
+function stickEnd(e){
+  if (e.pointerId!==stickId) return;
+  stickActive=false; stickVec={x:0,y:0}; tknob.style.transform='translate(0,0)';
+}
+tstick.addEventListener('pointerup', stickEnd);
+tstick.addEventListener('pointercancel', stickEnd);
+
+var tlook = document.getElementById('tlook');
+var lookActive=false, lookId=null, lookLastX=0, lookLastY=0;
+tlook.addEventListener('pointerdown', function(e){ lookActive=true; lookId=e.pointerId; lookLastX=e.clientX; lookLastY=e.clientY; tlook.setPointerCapture(e.pointerId); });
+tlook.addEventListener('pointermove', function(e){
+  if (!lookActive || e.pointerId!==lookId) return;
+  var dx = e.clientX-lookLastX, dy=e.clientY-lookLastY;
+  lookLastX=e.clientX; lookLastY=e.clientY;
+  yaw -= dx*0.0032; pitch -= dy*0.0032;
+  pitch = Math.max(-1.5, Math.min(1.5, pitch));
+});
+function lookEnd(e){ if (e.pointerId===lookId) lookActive=false; }
+tlook.addEventListener('pointerup', lookEnd);
+tlook.addEventListener('pointercancel', lookEnd);
+
+var vertUp=false, vertDown=false;
+var tup = document.getElementById('tup'), tdown = document.getElementById('tdown');
+tup.addEventListener('pointerdown', function(){ vertUp=true; });
+tup.addEventListener('pointerup', function(){ vertUp=false; });
+tup.addEventListener('pointercancel', function(){ vertUp=false; });
+tdown.addEventListener('pointerdown', function(){ vertDown=true; });
+tdown.addEventListener('pointerup', function(){ vertDown=false; });
+tdown.addEventListener('pointercancel', function(){ vertDown=false; });
+
+/* touch throttle buttons removed in favor of stick-forward=speed to keep
+   the control surface simple; forward/back handled by stick Y axis. */
+
+/* ============================================================
+   HUD refs
+   ============================================================ */
+var layerNameEl = document.getElementById('layerName');
+var nearNameEl = document.getElementById('nearName');
+var speedValEl = document.getElementById('speedVal');
+var speedBarEl = document.getElementById('speedBar');
+
+/* ============================================================
+   MAIN LOOP
+   ============================================================ */
+var tmpForward = new THREE.Vector3();
+var tmpRight = new THREE.Vector3();
+var tmpUp = new THREE.Vector3(0,1,0);
+var clock = new THREE.Clock();
+
+function updateCamera(dt){
+  euler.set(pitch, yaw, 0, 'YXZ');
+  camera.quaternion.setFromEuler(euler);
+
+  camera.getWorldDirection(tmpForward);
+  tmpRight.crossVectors(tmpForward, tmpUp).normalize();
+
+  // keyboard-driven acceleration nudges the accumulated speed rather than
+  // setting velocity directly, per spec ("velocidade que se acumula")
+  var accel = 0;
+  if (keys['KeyW']||keys['ArrowUp']) accel += 1;
+  if (keys['KeyS']||keys['ArrowDown']) accel -= 1;
+  speed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed + accel*140*dt));
+
+  var moveDist = speed*dt;
+  camera.position.addScaledVector(tmpForward, moveDist);
+
+  // strafe (instant, not accumulated — feels better for lateral correction)
+  var strafe = 0;
+  if (keys['KeyA']||keys['ArrowLeft']) strafe -= 1;
+  if (keys['KeyD']||keys['ArrowRight']) strafe += 1;
+  if (strafe) camera.position.addScaledVector(tmpRight, strafe*60*dt);
+
+  var vert = 0;
+  if (keys['KeyQ']||vertDown) vert -= 1;
+  if (keys['KeyE']||vertUp) vert += 1;
+  if (vert) camera.position.addScaledVector(tmpUp, vert*60*dt);
+
+  // touch stick: y = forward/back accel, x = yaw turn assist
+  if (stickActive){
+    speed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed - stickVec.y*160*dt));
+    yaw -= stickVec.x*1.6*dt;
+  }
+}
+
+/* smooth assisted travel toward a POI (never an instant teleport) */
+function updateTravel(dt){
+  if (!travelTarget) return;
+  var toPos = travelTarget.pos;
+  var d = camera.position.distanceTo(toPos);
+  var easing = REDUCE_MOTION ? 6.5 : 2.4;
+  var t = 1 - Math.exp(-easing*dt);
+  camera.position.lerp(toPos, t);
+
+  var desiredDir = travelTarget.look.clone().sub(camera.position).normalize();
+  var desiredYaw = Math.atan2(-desiredDir.x, -desiredDir.z);
+  var desiredPitch = Math.asin(Math.max(-1,Math.min(1,desiredDir.y)));
+  yaw += (desiredYaw-yaw)*Math.min(1, t*1.6);
+  pitch += (desiredPitch-pitch)*Math.min(1, t*1.6);
+
+  if (d < 0.15){ travelTarget = null; speed *= 0.3; }
+}
+
+function updateLayers(){
+  var d = camera.position.length();
+
+  var solarOpacity = 1 - smoothstep(LAYER1_FADE_IN, LAYER1_FULL, d);
+  var stellarOpacity = smoothstep(LAYER1_FADE_IN*0.55, LAYER1_FADE_IN, d) * (1 - smoothstep(LAYER2_FADE_IN, LAYER2_FULL, d));
+  var galacticOpacity = smoothstep(LAYER2_FADE_IN, LAYER2_FULL, d);
+
+  setGroupOpacity(solarGroup, solarOpacity);
+  setGroupOpacity(stellarGroup, stellarOpacity);
+  setGroupOpacity(galacticGroup, Math.max(galacticOpacity, d>LAYER1_FULL ? 0.08 : 0));
+
+  solarGroup.visible = solarOpacity > 0.002;
+  stellarGroup.visible = stellarOpacity > 0.002 || galacticOpacity>0;
+  galacticGroup.visible = true;
+
+  var layerLabel = 'Sistema Solar';
+  if (d >= LAYER1_FADE_IN && d < LAYER2_FADE_IN) layerLabel = 'Vizinhança estelar';
+  if (d >= LAYER2_FADE_IN) layerLabel = 'Escala galáctica';
+  layerNameEl.textContent = layerLabel;
+}
+
+function smoothstep(a,b,x){
+  var t = Math.max(0, Math.min(1, (x-a)/(b-a)));
+  return t*t*(3-2*t);
+}
+function setGroupOpacity(group, op){
+  group.traverse(function(obj){
+    if (obj.material){
+      var mats = Array.isArray(obj.material)?obj.material:[obj.material];
+      mats.forEach(function(m){
+        if (m.opacity === undefined) return;
+        if (m.userData._baseOpacity === undefined) m.userData._baseOpacity = m.opacity;
+        m.transparent = true;
+        m.opacity = m.userData._baseOpacity * op;
+      });
+    }
+    if (obj.isPoints && obj.material){
+      obj.material.transparent = true;
+      if (obj.material.userData._baseOpacity===undefined) obj.material.userData._baseOpacity = obj.material.opacity;
+      obj.material.opacity = obj.material.userData._baseOpacity * op;
+    }
+  });
+}
+
+function updateNearest(){
+  var best = null, bestD = Infinity;
+  POIS.forEach(function(poi){
+    var pos = poi.mesh ? poi.mesh.getWorldPosition(_wv).clone() : poi.worldPos;
+    var d = camera.position.distanceTo(pos);
+    if (d < bestD){ bestD = d; best = poi; }
+  });
+  if (best) nearNameEl.textContent = best.name;
+}
+
+var frameCount = 0;
+function animate(){
+  var dt = Math.min(clock.getDelta(), 0.1);
+
+  if (travelTarget){
+    updateTravel(dt);
+  } else {
+    updateCamera(dt);
+  }
+
+  // planetary motion
+  planetMeshes.forEach(function(p){
+    p.orbitGroup.rotation.y += p.def.speed*dt*0.3;
+    p.mesh.rotation.y += dt*0.15;
+    if (p.cloudMesh) p.cloudMesh.rotation.y += dt*0.05;
+  });
+  moonPivot.rotation.y += EARTH_MOON.speed*dt*0.3;
+  sunMesh.rotation.y += dt*0.02;
+
+  updateLayers();
+
+  frameCount++;
+  if (frameCount % 3 === 0){ updateMarkers(); updateNearest(); }
+
+  speedValEl.textContent = Math.round(speed) + ' un/s';
+  speedBarEl.style.width = Math.min(100, (speed/MAX_SPEED)*100) + '%';
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+/* ============================================================
+   UI WIRING — info button / welcome overlay / theme sync
+   (structure mirrors the other rooms almost verbatim)
+   ============================================================ */
+var infoBtn = document.getElementById('infoBtn'), info = document.getElementById('info');
+var infoBtnLabel = document.getElementById('infoBtnLabel');
+infoBtn.addEventListener('click', function(){
+  var open = info.classList.toggle('open');
+  info.setAttribute('aria-hidden', String(!open));
+  infoBtn.setAttribute('aria-expanded', String(open));
+  infoBtnLabel.textContent = open ? 'fechar' : 'entenda a física';
+  infoBtn.classList.add('seen');
+});
+
+var welcome = document.getElementById('welcome');
+var WKEY = 'fisicavisual_voo_seen';
+try{
+  if (localStorage.getItem(WKEY)) welcome.classList.add('hidden');
+}catch(e){}
+function dismissWelcome(remember){
+  welcome.classList.add('hidden');
+  if (remember){ try{ localStorage.setItem(WKEY, '1'); }catch(e){} }
+}
+document.getElementById('welcomeGo').addEventListener('click', function(){ dismissWelcome(true); });
+document.getElementById('welcomeSkip').addEventListener('click', function(){ dismissWelcome(true); });
+welcome.addEventListener('click', function(e){ if (e.target === welcome) dismissWelcome(true); });
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape'){
+    if (!welcome.classList.contains('hidden')) dismissWelcome(true);
+    else if (poiCard.classList.contains('open')){ poiCard.classList.remove('open'); activePoi=null; }
+    else if (document.pointerLockElement === canvas) document.exitPointerLock();
+  }
+});
+
+/* theme attribute changes don't affect the WebGL scene (space stays dark
+   by design) but panels read CSS vars live via the stylesheet, so no JS
+   recoloring is needed here — this listener is kept only so a future
+   theme-dependent HUD tweak has a hook, matching the other rooms' pattern. */
+var themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+var mo = new MutationObserver(function(){ /* no-op: CSS vars handle it */ });
+mo.observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
 </script>

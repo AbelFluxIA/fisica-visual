@@ -1,0 +1,1 @@
+Texturas planetárias e estelares por [Solar System Scope](https://www.solarsystemscope.com/textures/), licenciadas sob [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
