@@ -455,7 +455,12 @@ canvas{display:block;}
 /* ---------- mobile touch controls ----------
    No fixed joystick/stick UI (removed per feedback — "não gostei daquela
    bolinha"). #touchCtl now only hosts the drag-hint chip; the actual
-   flight input is a direct touch-drag on #scene itself, handled in JS. */
+   look input is a direct touch-drag on #scene itself, handled in JS.
+   Forward thrust is its own dedicated press-and-hold button (#thrustBtn,
+   defined further below) — kept deliberately separate from #touchCtl so
+   drag-to-look and press-to-thrust never share a single gesture again
+   (explicit feedback: "quase não consigo andar" when both were combined
+   into one vertical-drag-sets-throttle gesture). */
 #touchCtl{display:none;position:fixed;inset:0;z-index:4;pointer-events:none;}
 #touchCtl.active{display:block;}
 
@@ -652,8 +657,8 @@ canvas{display:block;}
 @media (max-width:640px){
   /* on mobile #ctlHint is hidden (display:none) so the bottom-right
      corner is free of the desktop collision this had; keep it there,
-     just raised clear of #speedo/#stopBtn. */
-  #guideTip{right:8px;bottom:104px;max-width:calc(100vw - 100px);padding:10px 11px;}
+     just raised clear of #speedo/#stopBtn/#thrustBtn. */
+  #guideTip{right:8px;bottom:186px;max-width:calc(100vw - 100px);padding:10px 11px;}
 }
 
 /* ---------- exploration-orbit "locked" state ----------
@@ -719,11 +724,17 @@ canvas{display:block;}
   #rotateOverlay .ricon.spin svg{animation:none;}
 }
 
-/* ---------- mobile drag-to-fly + big STOP button ----------
+/* ---------- mobile drag-to-look + press-and-hold thrust + big STOP button ----------
    Replaces the old fixed virtual-joystick knob (explicit negative
-   feedback: "não gostei daquela bolinha", "não sei como parar"). No
-   persistent on-screen stick — touch-drag anywhere on the open scene
-   steers, and release always means an immediate, total stop. */
+   feedback: "não gostei daquela bolinha", "não sei como parar") AND the
+   follow-up drag-sets-throttle scheme (explicit negative feedback:
+   "quase não consigo andar" — combining look and speed into one vertical
+   drag was confusing). Current scheme, gamepad-style:
+     - drag anywhere on the open scene = look only, no speed component.
+     - #thrustBtn (bottom-right, thumb-reach in landscape) = press-and-hold
+       to accelerate forward with a short ramp; release = instant stop.
+     - #stopBtn (bottom-center, red) = unmissable panic/safety stop,
+       unchanged, always available regardless of what else is pressed. */
 #stopBtn{
   display:none;position:fixed;z-index:6;left:50%;bottom:18px;transform:translateX(-50%);
   align-items:center;gap:8px;padding:13px 26px;border-radius:26px;
@@ -739,13 +750,57 @@ canvas{display:block;}
   display:none;position:fixed;z-index:5;left:50%;bottom:66px;transform:translateX(-50%);
   font-family:var(--mono);font-size:9.5px;letter-spacing:0.03em;color:var(--dim);
   background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:6px 12px;
-  pointer-events:none;opacity:0.9;white-space:nowrap;
+  pointer-events:none;opacity:0.9;max-width:calc(100vw - 32px);text-align:center;
 }
 #dragHint.show{display:block;}
+
+/* ---------- thrust button (press-and-hold forward) ----------
+   The most-used touch control, so it gets the largest hit target and the
+   thumb-natural bottom-right corner (where the hand holding a phone in
+   landscape already rests). Round, big, high-contrast "go" color (gold/
+   plasma) to read as distinct from the red STOP button. touch-action:none
+   stops the browser from treating a held finger as a scroll/zoom gesture. */
+#thrustBtn{
+  display:none;position:fixed;z-index:6;right:18px;bottom:104px;
+  width:84px;height:84px;border-radius:50%;
+  align-items:center;justify-content:center;flex-direction:column;gap:2px;
+  background:rgba(212,168,92,0.16);border:2px solid rgba(212,168,92,0.7);color:var(--gold-bright);
+  font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;
+  cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 4px 22px rgba(212,168,92,0.25);touch-action:none;user-select:none;-webkit-user-select:none;
+  transition:transform .12s ease,background .12s ease,box-shadow .12s ease;
+}
+#thrustBtn.show{display:flex;}
+#thrustBtn svg{width:22px;height:22px;flex-shrink:0;}
+/* pressed state — the required "toque registrou" visual feedback: scales
+   up slightly (thumb still covers it, so this reads more as "glow" than
+   as a jarring size jump), brightens fill and glow. Driven by the .pressed
+   class (set on pointerdown/pointerup in JS) rather than :active alone so
+   it stays correct if the pointer is captured or the gesture is cancelled. */
+#thrustBtn.pressed{
+  transform:scale(1.08);background:rgba(212,168,92,0.34);border-color:rgba(232,194,126,0.95);
+  box-shadow:0 4px 30px rgba(212,168,92,0.5);
+}
 @media (max-width:640px){
   #stopBtn{bottom:14px;padding:11px 22px;font-size:12px;}
   #dragHint{bottom:58px;font-size:8.5px;padding:5px 10px;}
+  #thrustBtn{width:76px;height:76px;right:14px;bottom:96px;font-size:9px;}
+  #thrustBtn svg{width:19px;height:19px;}
+  /* the speedo readout shares this corner with the thrust button — lift
+     it clear so the number/bar are never covered by the thumb resting
+     on the button. */
+  #speedo{bottom:196px;}
 }
+@media (max-width:420px){
+  #thrustBtn{width:70px;height:70px;right:12px;bottom:86px;}
+  #speedo{bottom:172px;}
+}
+/* NOTE: the short-landscape (max-height:420px) sizing/position for
+   #thrustBtn/#speedo/#guideTip lives in the dedicated block near the end
+   of this stylesheet (search "item 3's golden path") — CSS rules of equal
+   specificity resolve by source order, so a rule here would be silently
+   overridden by that later block anyway; kept in one place to avoid the
+   two drifting out of sync. */
 
 /* ---------- short landscape phones (item 3's golden path) ----------
    A phone rotated to landscape is WIDE but SHORT — the width-based rules
@@ -775,9 +830,12 @@ canvas{display:block;}
   #radar{width:52px;height:52px;}
   #poiCard{bottom:8px;top:8px;left:auto;right:8px;transform:none;width:min(280px,42vw);max-height:calc(100vh - 16px);overflow-y:auto;}
   #orbitPanel{top:8px;bottom:8px;max-height:calc(100vh - 16px);}
-  #speedo{bottom:8px;}
+  #speedo{bottom:82px;right:10px;}
   #stopBtn{bottom:8px;padding:9px 20px;font-size:11px;}
   #dragHint{bottom:52px;}
+  #thrustBtn{width:68px;height:68px;right:14px;bottom:8px;font-size:8px;}
+  #thrustBtn svg{width:18px;height:18px;}
+  #guideTip{bottom:82px;}
   #orbitBadge{top:40px;padding:4px 10px;}
   #orbitBadge span{font-size:8px;}
   #welcome .card{max-height:calc(100vh - 16px);padding:16px 18px 14px;}
@@ -865,14 +923,23 @@ canvas{display:block;}
   <canvas id="radar" width="104" height="104" aria-label="Radar: sua posição relativa ao Sol e aos planetas próximos"></canvas>
 </div>
 
-<!-- Mobile flight controls: touch-and-drag directly on the scene (no
-     fixed joystick knob — reported pain point) plus an always-visible,
-     unmissable STOP button that zeroes speed instantly. #touchCtl itself
-     stays as the semantic/activation marker (JS toggles touchCtl.active
-     on coarse-pointer devices) but no longer paints a stick UI. -->
+<!-- Mobile flight controls, gamepad-style (item: "botões fixos na tela"):
+     - dragging anywhere on #scene = look only (canvas pointer handlers in
+       JS), no speed component;
+     - #thrustBtn = press-and-hold forward thrust, ramps up while held,
+       drops to zero the instant it's released;
+     - #stopBtn = always-visible, unmissable panic stop that zeroes speed
+       instantly from anywhere, independent of what else is pressed.
+     #touchCtl itself stays as the semantic/activation marker (JS toggles
+     touchCtl.active on coarse-pointer devices) but no longer paints a
+     stick UI. -->
 <div id="touchCtl">
-  <div id="dragHint">arraste para olhar e mover · toque em <b>PARAR</b> a qualquer momento</div>
+  <div id="dragHint">arraste para olhar ao redor · segure <b>▲</b> para avançar · toque em <b>PARAR</b> a qualquer momento</div>
 </div>
+<button id="thrustBtn" type="button" aria-label="Manter pressionado para avançar — soltar para parar de acelerar">
+  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3l6 13H4l6-13z" fill="currentColor"/></svg>
+  avançar
+</button>
 <button id="stopBtn" type="button" aria-label="Parar imediatamente — zera a velocidade de voo">
   <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="2.5" y="2.5" width="9" height="9" rx="1.4" fill="currentColor"/></svg>
   parar
@@ -942,7 +1009,7 @@ canvas{display:block;}
     <p>Esta sala é uma cabine de comando: você pilota livremente entre o Sol e os planetas, depois se afasta o suficiente para atravessar a vizinhança estelar e, por fim, a escala das próprias galáxias — sem cortes de câmera, como um zoom contínuo.</p>
     <ol>
       <li id="welcomeDesktopMove"><b>WASD</b> (ou setas) move a nave; arraste o <b>mouse</b> para olhar ao redor; o <b>scroll</b> acelera ou freia.</li>
-      <li id="welcomeMobileMove" hidden><b>arraste o dedo</b> na tela para olhar e mover a nave; solte para continuar no ritmo atual. Toque no botão vermelho <b>PARAR</b> a qualquer momento para zerar a velocidade na hora.</li>
+      <li id="welcomeMobileMove" hidden><b>arraste o dedo</b> na tela para olhar ao redor · segure o botão <b>▲ avançar</b> para acelerar a nave · toque em <b>PARAR</b> a qualquer momento para zerar a velocidade na hora.</li>
       <li>Marcadores dourados são <b>pontos de interesse</b>. Clique (ou toque) num deles para ver fatos reais e viajar até lá com a câmera.</li>
       <li>Ao se afastar bastante, a cena troca de camada de escala sozinha — observe o indicador no topo mudar de "Sistema Solar" para "vizinhança estelar", depois "escala galáctica" e, no limite, uma dramatização visual do próprio Big Bang.</li>
       <li>Perdido? O radar no canto e o botão <b>"recentralizar"</b> sempre te trazem de volta a uma vista geral do sistema solar.</li>
@@ -1966,14 +2033,15 @@ var MIN_SPEED = 0;
 var dragging = false, lastX=0, lastY=0;
 var isTouch = matchMedia('(pointer: coarse)').matches;
 
-/* touch drag-to-fly state (item 2 — replaces the old fixed joystick).
-   touchDragY accumulates vertical drag distance from where THIS drag
-   gesture started; that offset (not per-frame delta) drives forward
-   speed, exactly like pulling a throttle back and forth. Letting go
-   ALWAYS zeroes speed immediately in updateCamera() below — the
-   reported "avança e não sei como parar" problem — no inertia carries
-   over into the next gesture or into free (un-dragged) flight. */
-var touchDragActive = false, touchStartY = 0, touchDragY = 0;
+/* touch look-drag state (redesigned — see #thrustBtn below for the speed
+   half of the old combined gesture). touchDragActive just marks "a finger
+   is down on the open scene right now"; unlike the previous design it has
+   NO effect on speed at all — dragging on the scene only ever turns the
+   camera, exactly like desktop mouse-look. This is the direct fix for
+   "quase não consigo andar": the old scheme read vertical drag distance
+   as throttle, which fought with the natural small vertical wobble of a
+   "just turning to look" drag and made forward progress feel unreliable. */
+var touchDragActive = false;
 
 canvas.classList.add('grabbable');
 canvas.addEventListener('pointerdown', function(e){
@@ -1990,7 +2058,7 @@ canvas.addEventListener('pointerdown', function(e){
   // is what actually matters for "is the ship now under touch control".
   try{ canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId); }catch(err){}
   if (isTouch && e.pointerType === 'touch'){
-    touchDragActive = true; touchStartY = e.clientY; touchDragY = 0;
+    touchDragActive = true;
     if (dragHintEl) dragHintEl.classList.remove('show');
   }
   // dragging while the guided tour is mid-flight between stops (not yet
@@ -2003,14 +2071,11 @@ canvas.addEventListener('pointerdown', function(e){
 });
 window.addEventListener('pointerup', function(e){
   dragging = false; canvas.classList.remove('dragging');
-  if (touchDragActive){
-    touchDragActive = false; touchDragY = 0;
-    speed = 0; // immediate, total stop on release — the opposite of the reported bug
-  }
+  touchDragActive = false;
 });
 window.addEventListener('pointercancel', function(e){
   dragging = false; canvas.classList.remove('dragging');
-  if (touchDragActive){ touchDragActive = false; touchDragY = 0; speed = 0; }
+  touchDragActive = false;
 });
 window.addEventListener('pointermove', function(e){
   if (!dragging) return;
@@ -2025,13 +2090,11 @@ window.addEventListener('pointermove', function(e){
     return;
   }
   if (touchDragActive){
-    // horizontal drag steers (yaw), same feel as mouse-look
+    // touch look: same feel as mouse-look, both axes just turn the
+    // camera — no speed/throttle component on this gesture at all.
     yaw -= dx*0.0034;
-    // vertical drag distance FROM GESTURE START sets throttle: drag up
-    // (finger moves toward top of screen, e.clientY decreases) = move
-    // forward faster; drag down = slow/reverse. Capped so a single
-    // gesture can't overshoot MAX_SPEED instantly.
-    touchDragY = touchStartY - e.clientY;
+    pitch -= dy*0.0034;
+    pitch = Math.max(-1.5, Math.min(1.5, pitch));
     return;
   }
   yaw -= dx*0.0026;
@@ -2069,26 +2132,52 @@ canvas.addEventListener('wheel', function(e){
   if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
 }, { passive:false });
 
-/* ---- touch controls (item 2 — redesigned) ----
-   Old design: fixed virtual joystick knob + separate look zone + up/down
+/* ---- touch controls (gamepad-style redesign) ----
+   Generation 1: fixed virtual joystick knob + separate look zone + up/down
    buttons — explicitly disliked ("não gostei daquela bolinha") and
-   confusing to stop ("avança e não sei como parar"). New design: touch
-   and drag ANYWHERE on the open scene to look-and-move (handled by the
-   canvas pointerdown/move/up listeners above); release always stops
-   completely; a large always-visible STOP button provides a second,
-   redundant, unmissable way to kill speed instantly at any time — never
-   hidden behind a gesture. No vertical Q/E-equivalent on touch: keeping
-   the input surface to "drag to fly, tap to stop" is the simplest design
-   that resolves the reported panic, and Q/E remain available via an
-   attached physical keyboard if present. */
+   confusing to stop ("avança e não sei como parar").
+   Generation 2: drag anywhere to look-AND-accelerate (vertical drag
+   distance = throttle) — explicit follow-up feedback: "quase não consigo
+   andar", the combined gesture made looking and moving fight each other.
+   Generation 3 (current): the two actions are fully separate inputs, like
+   a gamepad —
+     - drag anywhere on the open scene = look ONLY (canvas pointer
+       handlers above), zero effect on speed;
+     - #thrustBtn = dedicated press-and-hold forward control. Holding it
+       ramps speed up smoothly to a comfortable cruise value over ~0.8s
+       and holds it there for as long as the finger stays down; releasing
+       (pointerup/pointercancel/pointerleave) drops speed to exactly zero
+       immediately — same "no residual drift" guarantee the old design
+       had, so the "não sei como parar" fix is preserved even though the
+       accelerate gesture itself changed;
+     - #stopBtn remains the large, always-visible, unmissable panic/safety
+       stop, redundant with releasing the thrust button, for killing speed
+       from anywhere at any time (e.g. mid-drag-look, or if thrust was left
+       pressed by accident).
+   No reverse button: evaluated the space in the bottom-right corner next
+   to #stopBtn and #speedo and a second control there reads cluttered and
+   risks mis-taps against a control this frequently used; forward-only
+   plus the instant STOP covers "get to zero fast" without it. No vertical
+   Q/E-equivalent on touch either, unchanged from the previous design —
+   Q/E remain available via an attached physical keyboard if present. */
 var touchCtl = document.getElementById('touchCtl');
 var dragHintEl = document.getElementById('dragHint');
 var stopBtn = document.getElementById('stopBtn');
+var thrustBtn = document.getElementById('thrustBtn');
 var vertUp=false, vertDown=false; // no touch equivalent by design; kept as constants for updateCamera()
+
+/* thrustHeld: true for the entire press-and-hold window (touchstart..
+   touchend/cancel/leave). updateCamera() eases `speed` toward
+   THRUST_CRUISE_SPEED while this is true and snaps it to 0 the instant
+   it goes false — see the main loop below. */
+var thrustHeld = false;
+var THRUST_CRUISE_SPEED = 150;   // comfortable cruise value reached at the top of the ramp
+var THRUST_RAMP_SECONDS = 0.8;   // 0.5–1s ramp requested — time to go from 0 to cruise
 
 if (isTouch){
   touchCtl.classList.add('active');
   stopBtn.classList.add('show');
+  thrustBtn.classList.add('show');
   dragHintEl.classList.add('show');
   // the hint is a one-time affordance: fades once the player has
   // successfully dragged once (see pointerdown above) or after a beat.
@@ -2097,11 +2186,42 @@ if (isTouch){
 
 function hardStop(){
   speed = 0;
-  touchDragActive = false; touchDragY = 0;
+  thrustHeld = false; thrustBtn.classList.remove('pressed');
   if (orbitState) leaveOrbit();
   if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
 }
 stopBtn.addEventListener('pointerdown', function(e){ e.preventDefault(); hardStop(); });
+
+/* thrust button: press-and-hold, gamepad-button style. Uses pointer
+   events (not touchstart/touchend) so it behaves identically for a mouse
+   or a stylus in case a touch-capable laptop lands here — matches how
+   every other control on this screen is wired. pointerup/pointercancel
+   AND pointerleave all release thrust: pointerleave matters because a
+   finger can slide off the button's hit area while still technically
+   "down" on the screen, which must read as "let go", not "still held". */
+function thrustStart(e){
+  e.preventDefault();
+  thrustHeld = true;
+  thrustBtn.classList.add('pressed');
+  // pressing thrust is manual flight intent — same "player touched the
+  // stick" cancel semantics WASD/drag already trigger elsewhere.
+  if (orbitState) leaveOrbit();
+  if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
+  try{ thrustBtn.setPointerCapture && thrustBtn.setPointerCapture(e.pointerId); }catch(err){}
+}
+function thrustEnd(e){
+  if (e) e.preventDefault();
+  thrustHeld = false;
+  thrustBtn.classList.remove('pressed');
+  speed = 0; // immediate, total stop on release — no inertia, no ramp-down
+}
+thrustBtn.addEventListener('pointerdown', thrustStart);
+thrustBtn.addEventListener('pointerup', thrustEnd);
+thrustBtn.addEventListener('pointercancel', thrustEnd);
+thrustBtn.addEventListener('pointerleave', thrustEnd);
+// a context menu (long-press on some browsers) mid-hold would otherwise
+// leave thrustHeld stuck true with no matching pointerup ever firing.
+thrustBtn.addEventListener('contextmenu', function(e){ e.preventDefault(); });
 
 /* ============================================================
    HUD refs
@@ -2160,17 +2280,19 @@ function updateCamera(dt){
   if (keys['KeyE']||vertUp) vert += 1;
   if (vert) camera.position.addScaledVector(tmpUp, vert*60*dt);
 
-  // touch drag-to-fly (item 2): while a finger is down on the scene,
-  // the vertical distance dragged from where the gesture STARTED sets a
-  // target speed (drag up = faster forward, drag down = slower/reverse),
-  // eased toward rather than snapped to, so it feels like a throttle
-  // rather than a twitchy toggle. The moment the finger lifts (see the
-  // pointerup handler above), speed is forced to exactly 0 — no residual
-  // drift survives a released gesture, which is the direct fix for
-  // "avança e não sei como parar".
-  if (touchDragActive){
-    var targetSpeed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, touchDragY * 1.35));
-    speed += (targetSpeed - speed) * Math.min(1, dt*4.5);
+  // thrust button (press-and-hold, gamepad-style — replaces the old
+  // drag-sets-throttle scheme): while held, speed eases up toward
+  // THRUST_CRUISE_SPEED over THRUST_RAMP_SECONDS and holds there for as
+  // long as the finger stays down, completely independent of any look
+  // drag happening at the same time on the scene. Release is handled in
+  // thrustEnd() above, which snaps speed to exactly 0 the instant the
+  // finger lifts — no residual drift, same "no coasting" guarantee the
+  // previous scheme had, direct fix for "avança e não sei como parar".
+  if (thrustHeld && speed < THRUST_CRUISE_SPEED){
+    // linear ramp so "reaches cruise in THRUST_RAMP_SECONDS" is exact and
+    // easy to verify, not just an asymptotic approach that never quite
+    // arrives — matters for a control this central to "consigo andar".
+    speed = Math.min(THRUST_CRUISE_SPEED, speed + (THRUST_CRUISE_SPEED/THRUST_RAMP_SECONDS)*dt);
   }
 
   resolveCollisions();
