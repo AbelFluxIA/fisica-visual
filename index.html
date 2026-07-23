@@ -1,6 +1,7 @@
 <meta charset="utf-8">
-<title>Observatório — jornadas pela física</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Física Visual — o observatório</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="description" content="Você está pronto para explorar o espaço? Uma introdução cinematográfica ao observatório de física visual.">
 <style>
 @font-face{
   font-family:'Fraunces Display';
@@ -64,416 +65,367 @@
   --alert:#A13F32;
 }
 
+/* ============================================================
+   INTRO — cinematic opening. A slow-drifting starfield/cosmos
+   background (canvas2d, no WebGL dependency needed for something this
+   ambient) plays underneath timed captions, an optional narration
+   audio track, and a skip control. Ends by handing off to /voo/.
+   ============================================================ */
 *{box-sizing:border-box;}
-html,body{height:100%;margin:0;}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none;}
 body{
-  background:var(--bg);color:var(--text);font-family:var(--sans);
-  overflow-x:hidden;position:relative;min-height:100vh;
-}
-body::before{
-  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:radial-gradient(ellipse 90% 60% at 50% -10%, rgba(212,168,92,0.07), transparent 60%),
-             radial-gradient(ellipse 70% 50% at 85% 100%, rgba(111,168,199,0.06), transparent 60%);
+  background:#020207;color:var(--text, #EDEAE2);font-family:var(--sans);
+  position:relative;
 }
 
-#stars{position:fixed;inset:0;z-index:0;display:block;}
+#introStage{position:fixed;inset:0;}
+#introCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
 
-.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 24px 80px;}
-
-/* ---------- header ---------- */
-header{padding:64px 0 40px;text-align:center;}
-.eyebrow{
-  font-family:var(--mono);font-size:11px;letter-spacing:0.24em;text-transform:uppercase;
-  color:var(--gold);display:inline-block;margin-bottom:18px;
-  border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 18px;
-}
-h1{
-  font-family:var(--display);font-weight:600;font-size:clamp(40px,7vw,76px);
-  margin:0 0 14px;text-wrap:balance;letter-spacing:-0.01em;line-height:1.02;
-}
-h1 em{font-family:var(--italic);font-style:italic;font-weight:500;color:var(--gold-bright);}
-.lede{
-  font-size:clamp(15px,2vw,18px);color:var(--dim);max-width:56ch;margin:0 auto;line-height:1.65;
+/* soft vignette so caption text always has contrast, regardless of what's
+   drifting behind it at that moment */
+#introStage::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 90% 70% at 50% 55%, transparent 40%, rgba(2,2,7,0.55) 100%),
+             linear-gradient(rgba(2,2,7,0.35), transparent 18%, transparent 78%, rgba(2,2,7,0.55));
 }
 
-/* ---------- trail strip ---------- */
-#trail{
-  display:flex;align-items:center;gap:0;margin:48px 0 8px;overflow-x:auto;
-  padding:4px 4px 14px;
+#captionWrap{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:0 24px;pointer-events:none;z-index:2;
 }
-.trail-node{
-  display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;
-  width:118px;text-align:center;position:relative;
+#caption{
+  max-width:44rem;text-align:center;font-family:'Fraunces Italic',Georgia,serif;font-style:italic;font-weight:500;
+  font-size:clamp(20px,4.2vw,38px);line-height:1.42;letter-spacing:0.002em;
+  color:#F5F1E6;text-wrap:balance;
+  opacity:0;transform:translateY(10px);
+  transition:opacity 1.3s ease, transform 1.3s ease;
+  text-shadow:0 2px 24px rgba(0,0,0,0.5);
 }
-.trail-dot{
-  width:13px;height:13px;border-radius:50%;background:var(--panel-solid);
-  border:2px solid var(--line);position:relative;z-index:1;transition:border-color .3s, background .3s;
-}
-.trail-node.done .trail-dot{background:var(--gold);border-color:var(--gold);box-shadow:0 0 10px rgba(212,168,92,0.5);}
-.trail-node.now .trail-dot{border-color:var(--gold);background:var(--bg);box-shadow:0 0 0 4px rgba(212,168,92,0.14);}
-.trail-line{
-  position:absolute;top:6px;left:calc(-59px + 6.5px);width:118px;height:2px;background:var(--line);z-index:0;
-}
-.trail-node:first-child .trail-line{display:none;}
-.trail-node.done .trail-line{background:linear-gradient(90deg, var(--gold), var(--line));}
-.trail-label{font-family:var(--mono);font-size:10.5px;letter-spacing:0.04em;color:var(--dim);line-height:1.4;}
-.trail-node.now .trail-label,.trail-node.done .trail-label{color:var(--text);}
+#caption.show{opacity:1;transform:translateY(0);}
 
-/* ---------- section labels ---------- */
-.section-head{display:flex;align-items:baseline;gap:14px;margin:56px 0 22px;}
-.section-head h2{font-family:var(--display);font-weight:600;font-size:22px;margin:0;}
-.section-head .count{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:0.06em;}
-.section-head .rule{flex:1;height:1px;background:var(--line);}
+/* a faint permanent eyebrow above the caption so the intro doesn't feel
+   like an unlabeled black box on first paint, before any caption fires */
+#introEyebrow{
+  position:absolute;top:max(28px, env(safe-area-inset-top));left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:10.5px;letter-spacing:0.28em;text-transform:uppercase;
+  color:rgba(237,234,226,0.5);z-index:2;opacity:0;transition:opacity 1.4s ease .3s;
+}
+#introEyebrow.show{opacity:1;}
 
-/* ---------- constellation grid ---------- */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;}
-
-.card{
-  position:relative;border-radius:14px;border:1px solid var(--line);background:var(--panel);
+#introControls{
+  position:absolute;bottom:max(26px, env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:14px;z-index:3;
+}
+#beginBtn{
+  background:rgba(212,168,92,0.14);border:1px solid rgba(212,168,92,0.5);border-radius:24px;
+  color:#E8C27E;font-family:var(--mono);font-size:12.5px;letter-spacing:0.04em;
+  padding:13px 28px;cursor:pointer;opacity:0;pointer-events:none;
+  transition:opacity 1s ease, background .2s, border-color .2s, transform .2s;
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  overflow:hidden;text-decoration:none;color:inherit;display:block;
-  transition:transform .28s cubic-bezier(.2,.8,.2,1), border-color .28s, box-shadow .28s;
-  cursor:pointer;
 }
-.card:hover, .card:focus-visible{
-  transform:translateY(-4px);
-  border-color:rgba(212,168,92,0.4);
-  box-shadow:0 16px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(212,168,92,0.12);
-}
-.card:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
-.card.locked{cursor:default;opacity:0.55;}
-.card.locked:hover{transform:none;border-color:var(--line);box-shadow:none;}
+#beginBtn.show{opacity:1;pointer-events:auto;}
+#beginBtn:hover{background:rgba(212,168,92,0.24);border-color:rgba(212,168,92,0.75);transform:translateY(-1px);}
+#beginBtn:focus-visible{outline:2px solid #E8C27E;outline-offset:3px;}
 
-.card-scene{
-  height:150px;position:relative;overflow:hidden;
-  background:radial-gradient(circle at 30% 30%, rgba(212,168,92,0.10), transparent 60%);
+#skipBtn{
+  background:transparent;border:none;color:rgba(237,234,226,0.45);font-family:var(--mono);
+  font-size:10.5px;letter-spacing:0.06em;cursor:pointer;text-decoration:underline;
+  text-underline-offset:3px;padding:6px 10px;
 }
-.card-scene canvas{position:absolute;inset:0;width:100%;height:100%;}
-.card-badge{
-  position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:9.5px;
-  letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:20px;
-  border:1px solid var(--line);background:var(--panel-solid);color:var(--dim);z-index:2;
-}
-.card-badge.ready{color:var(--gold);border-color:rgba(212,168,92,0.35);}
-.card-badge.soon{color:var(--dim);}
-.card-body{padding:18px 20px 20px;}
-.card-eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--plasma);margin-bottom:8px;}
-.card h3{font-family:var(--display);font-weight:600;font-size:21px;margin:0 0 8px;letter-spacing:-0.005em;}
-.card h3 em{font-family:var(--italic);font-style:italic;color:var(--gold-bright);}
-.card p{font-size:13px;color:var(--dim);line-height:1.55;margin:0;}
-.card .hook{
-  margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--gold);
-  display:flex;align-items:center;gap:6px;
-}
-.card.locked .hook{color:var(--dim);}
-.card .hook svg{width:11px;height:11px;flex-shrink:0;}
+#skipBtn:hover{color:rgba(237,234,226,0.85);}
+#skipBtn:focus-visible{outline:2px solid #E8C27E;}
 
-/* ---------- footer note ---------- */
-footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);text-align:center;}
-footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:0.03em;}
+#skipCorner{
+  position:absolute;top:max(20px, env(safe-area-inset-top));right:max(20px, env(safe-area-inset-right));z-index:4;
+  background:rgba(13,15,24,0.5);border:1px solid rgba(255,255,255,0.12);border-radius:20px;
+  color:rgba(237,234,226,0.7);font-family:var(--mono);font-size:10.5px;letter-spacing:0.05em;
+  padding:8px 14px;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+#skipCorner:hover{color:#fff;border-color:rgba(255,255,255,0.3);}
+#skipCorner:focus-visible{outline:2px solid #E8C27E;}
 
-@media (prefers-reduced-motion:reduce){ *{transition:none !important;scroll-behavior:auto !important;} }
+/* also-available link to the rooms hub, kept very quiet — this is the
+   "outras salas" escape hatch required even from the cinematic intro */
+#salasLink{
+  position:absolute;bottom:max(14px, env(safe-area-inset-bottom));right:max(18px, env(safe-area-inset-right));z-index:3;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:0.05em;color:rgba(237,234,226,0.32);
+  text-decoration:none;padding:6px 8px;
+}
+#salasLink:hover{color:rgba(237,234,226,0.7);}
+#salasLink:focus-visible{outline:2px solid #E8C27E;}
+
+/* transition-out: when the intro finishes/skips, fade to black before
+   handing off to /voo/ — avoids a jarring hard cut between two very
+   different rendering contexts (canvas2d intro vs. WebGL flight room) */
+#introStage.leaving{transition:opacity .9s ease;opacity:0;}
+#captionWrap.leaving, #introControls.leaving{transition:opacity .5s ease;opacity:0;}
+
+@media (max-width:640px){
+  #caption{font-size:clamp(17px,5.4vw,26px);max-width:88vw;}
+  #introEyebrow{font-size:8px;letter-spacing:0.16em;top:max(20px, env(safe-area-inset-top));max-width:150px;line-height:1.5;}
+  #beginBtn{padding:11px 22px;font-size:11.5px;}
+  #skipCorner{padding:6px 11px;font-size:9.5px;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.2s !important;}
+}
 </style>
 
-<canvas id="stars" aria-hidden="true"></canvas>
-
-<div class="wrap">
-  <header>
-    <span class="eyebrow">Física Visual</span>
-    <h1>O <em>observatório</em></h1>
-    <p class="lede">Cada sala aqui é um instrumento — não uma aula. Você mexe, aproxima, mede, e a física responde de verdade por trás da tela. Comece pela trilha sugerida ou entre direto em qualquer sala já aberta.</p>
-  </header>
-
-  <nav id="trail" aria-label="Trilha sugerida"></nav>
-
-  <div class="section-head"><h2>Salas abertas</h2><span class="rule"></span><span class="count" id="openCount"></span></div>
-  <div class="grid" id="openGrid"></div>
-
-  <div class="section-head"><h2>Em construção</h2><span class="rule"></span><span class="count" id="soonCount"></span></div>
-  <div class="grid" id="soonGrid"></div>
-
-  <footer>
-    <p>cada sala termina com "o que ainda não sabemos" — o objetivo não é fechar as perguntas, é te dar as certas.</p>
-  </footer>
+<div id="introStage">
+  <canvas id="introCanvas" aria-hidden="true"></canvas>
 </div>
+
+<span id="introEyebrow">física visual · uma introdução</span>
+
+<div id="captionWrap">
+  <p id="caption"></p>
+</div>
+
+<div id="introControls">
+  <button id="beginBtn" type="button">iniciar o voo</button>
+  <button id="skipBtn" type="button">pular introdução</button>
+</div>
+
+<button id="skipCorner" type="button">pular ›</button>
+<a id="salasLink" href="/salas/">ver todas as salas</a>
+
+<audio id="narration" src="assets/audio/intro-narration.mp3" preload="auto"></audio>
 
 <script>
 (function(){
   "use strict";
 
-  var MODULES = [
-    {
-      id:"horizonte", status:"ready", track:1,
-      eyebrow:"Relatividade geral",
-      title:"Horizonte", titleEm:null,
-      desc:"Aproxime-se de um buraco negro real. Veja a luz se curvar ao redor dele e o seu relógio dessincronizar do relógio da Terra.",
-      hook:"o tempo que você mede depende de onde você está",
-      href:"/horizonte/",
-      scene:"blackhole"
-    },
-    {
-      id:"dupla-fenda", status:"ready", track:2,
-      eyebrow:"Mecânica quântica",
-      title:"A dupla ", titleEm:"fenda",
-      desc:"Atire elétrons um por um contra duas fendas. Depois tente descobrir por qual fenda cada um passou — e observe o padrão desmoronar.",
-      hook:"observar muda o que é observado",
-      href:"/dupla-fenda/",
-      scene:"doubleslit"
-    },
-    {
-      id:"cordas", status:"ready", track:3,
-      eyebrow:"Teoria das cordas",
-      title:"Cordas ", titleEm:"vibrantes",
-      desc:"Cada partícula do universo pode ser um modo de vibração da mesma corda. Toque harmônicos diferentes e sinta a física — e a especulação — por trás da ideia.",
-      hook:"uma nota diferente, uma partícula diferente",
-      href:"/cordas/",
-      scene:"strings"
-    },
-    {
-      id:"velocidade-luz", status:"ready", track:null,
-      eyebrow:"Relatividade especial",
-      title:"Quase à ", titleEm:"velocidade da luz",
-      desc:"Acelere uma nave até frações de c e veja o universo se deformar de verdade: aberração, Doppler relativístico e o paradoxo dos gêmeos nos seus próprios relógios.",
-      hook:"nada explicado, tudo calculado",
-      href:"/velocidade-luz/",
-      scene:"lightspeed"
-    },
-    {
-      id:"voo", status:"ready", track:null,
-      eyebrow:"Exploração livre",
-      title:"Voo ", titleEm:"espacial",
-      desc:"Pilote uma nave livremente entre o Sol e os planetas, depois se afaste até atravessar a vizinhança estelar e a escala das próprias galáxias — sem um único corte de câmera.",
-      hook:"do seu quintal cósmico até a escala das galáxias",
-      href:"/voo/",
-      scene:"spaceflight"
-    },
-    {
-      id:"ondas-gravitacionais", status:"soon", track:null,
-      eyebrow:"Astrofísica",
-      title:"Ondas no ", titleEm:"espaço-tempo",
-      desc:"Duas estrelas de nêutrons espiralam uma para a outra, distorcendo o próprio tecido do espaço — e você ouve o eco real captado pelo LIGO.",
-      hook:"em construção",
-      href:null,
-      scene:"gravwaves"
-    }
+  var REDUCE_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ============================================================
+     CAPTIONS — the exact script provided, in order. `at` is the
+     target start time in seconds, used to sync with the <audio>
+     element's timeupdate event when narration audio is available and
+     playable; when it isn't (no file yet, load error, autoplay
+     blocked), a plain JS timer fallback advances captions at roughly
+     the same cadence so the intro works identically either way.
+     Duration per caption ~4-6s reading time, per spec.
+     ============================================================ */
+  var CAPTIONS = [
+    { at: 0.5,  dur: 5.0, text: "Você está pronto para explorar o espaço?" },
+    { at: 6.0,  dur: 5.5, text: "Eu sou a sua Guia, e o meu objetivo aqui é mostrar um pouco do cosmo." },
+    { at: 12.0, dur: 8.5, text: "Eu quero que você saia daqui com mais conhecimento, experiência — e principalmente, com a percepção de que diante da vastidão do universo, nossas opiniões, problemas e situações não são nada." },
+    { at: 21.0, dur: 8.5, text: "Mas, ao mesmo tempo, de como você é único. E que privilégio é estar vivo, poder experimentar tudo isso, num universo tão grande e magnífico." },
+    { at: 30.0, dur: 5.5, text: "Está pronto? Então vamos nessa." }
   ];
+  var TOTAL_FALLBACK_DURATION = 36.5; // last caption's at+dur, plus a beat of silence before auto-advancing
 
-  var TRACK = MODULES.filter(function(m){ return m.track; }).sort(function(a,b){ return a.track-b.track; });
+  var captionEl = document.getElementById("caption");
+  var eyebrowEl = document.getElementById("introEyebrow");
+  var beginBtn = document.getElementById("beginBtn");
+  var skipBtn = document.getElementById("skipBtn");
+  var skipCorner = document.getElementById("skipCorner");
+  var narration = document.getElementById("narration");
+  var introStage = document.getElementById("introStage");
+  var captionWrap = document.getElementById("captionWrap");
+  var introControls = document.getElementById("introControls");
 
-  /* ---------- trail ---------- */
-  var trailEl = document.getElementById("trail");
-  TRACK.forEach(function(m, i){
-    var a = document.createElement(m.href ? "a" : "div");
-    a.className = "trail-node " + (m.status==="ready" ? (i===0?"done":"now") : "");
-    if (m.href) a.href = m.href;
-    a.style.textDecoration = "none"; a.style.color = "inherit";
-    a.innerHTML = '<span class="trail-line" aria-hidden="true"></span>'
-      + '<span class="trail-dot"></span>'
-      + '<span class="trail-label">' + (i+1) + ' · ' + m.title + (m.titleEm||'') + '</span>';
-    trailEl.appendChild(a);
-  });
+  var currentCaptionIndex = -1;
+  var finished = false;
+  var usingAudioSync = false;
+  var fallbackTimer = null;
+  var fallbackStart = null;
 
-  /* ---------- cards ---------- */
-  function cardHTML(m){
-    var badge = m.status==="ready"
-      ? '<span class="card-badge ready">aberta</span>'
-      : '<span class="card-badge soon">em construção</span>';
-    var titleHTML = m.title + (m.titleEm ? '<em>'+m.titleEm+'</em>' : '');
-    var hookIcon = m.status==="ready"
-      ? '<svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-      : '<svg viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.3" stroke="currentColor" stroke-width="1.3"/></svg>';
-    return ''
-      + '<div class="card-scene"><canvas data-scene="'+m.scene+'"></canvas>'+badge+'</div>'
-      + '<div class="card-body">'
-      + '<div class="card-eyebrow">'+m.eyebrow+'</div>'
-      + '<h3>'+titleHTML+'</h3>'
-      + '<p>'+m.desc+'</p>'
-      + '<div class="hook">'+hookIcon+' '+m.hook+'</div>'
-      + '</div>';
+  eyebrowEl.classList.add("show");
+
+  function showCaption(i){
+    if (i === currentCaptionIndex) return;
+    currentCaptionIndex = i;
+    if (i < 0 || i >= CAPTIONS.length){
+      captionEl.classList.remove("show");
+      return;
+    }
+    captionEl.classList.remove("show");
+    // brief pause between fade-out and fade-in reads as intentional
+    // pacing rather than a glitch — matches the "peso/cinematografia"
+    // requirement (silence is part of the effect, not just captions).
+    window.setTimeout(function(){
+      captionEl.textContent = CAPTIONS[i].text;
+      // force reflow so the transition retriggers even if text is identical
+      void captionEl.offsetWidth;
+      captionEl.classList.add("show");
+    }, REDUCE_MOTION ? 0 : 260);
   }
 
-  var openGrid = document.getElementById("openGrid"), soonGrid = document.getElementById("soonGrid");
-  var openCount = 0, soonCount = 0;
-  MODULES.forEach(function(m){
-    var el = document.createElement(m.href ? "a" : "div");
-    el.className = "card" + (m.status!=="ready" ? " locked" : "");
-    if (m.href){ el.href = m.href; }
-    else { el.setAttribute("tabindex","0"); el.setAttribute("role","group"); el.setAttribute("aria-label", m.title+(m.titleEm||'')+" — em construção"); }
-    el.innerHTML = cardHTML(m);
-    if (m.status==="ready"){ openGrid.appendChild(el); openCount++; }
-    else { soonGrid.appendChild(el); soonCount++; }
+  function captionIndexForTime(t){
+    var idx = -1;
+    for (var i=0;i<CAPTIONS.length;i++){
+      if (t >= CAPTIONS[i].at && t < CAPTIONS[i].at + CAPTIONS[i].dur) idx = i;
+    }
+    return idx;
+  }
+
+  function revealControls(){
+    beginBtn.classList.add("show");
+  }
+
+  function finishIntro(){
+    if (finished) return;
+    finished = true;
+    revealControls();
+  }
+
+  /* ---- audio-synced path ---- */
+  function onTimeUpdate(){
+    var t = narration.currentTime;
+    showCaption(captionIndexForTime(t));
+  }
+  function onAudioEnded(){
+    finishIntro();
+  }
+  narration.addEventListener("timeupdate", onTimeUpdate);
+  narration.addEventListener("ended", onAudioEnded);
+
+  /* ---- JS timer fallback path (no audio / failed to load / autoplay blocked) ---- */
+  function startFallbackTimer(){
+    if (usingAudioSync || fallbackTimer) return;
+    fallbackStart = performance.now();
+    function tick(){
+      var t = (performance.now() - fallbackStart) / 1000;
+      showCaption(captionIndexForTime(t));
+      if (t >= TOTAL_FALLBACK_DURATION){
+        finishIntro();
+        return;
+      }
+      fallbackTimer = requestAnimationFrame(tick);
+    }
+    fallbackTimer = requestAnimationFrame(tick);
+  }
+  function stopFallbackTimer(){
+    if (fallbackTimer){ cancelAnimationFrame(fallbackTimer); fallbackTimer = null; }
+  }
+
+  // try to play narration; if it actually starts, prefer audio-synced
+  // captions and cancel the fallback timer. If it fails for any reason
+  // (no file yet — expected until the user records one — decode error,
+  // or autoplay policy blocking it), fall back to the plain timer so
+  // the intro still plays start to finish.
+  var playPromise;
+  try{ playPromise = narration.play(); }catch(e){ playPromise = undefined; }
+  if (playPromise && typeof playPromise.then === "function"){
+    playPromise.then(function(){
+      usingAudioSync = true;
+      stopFallbackTimer();
+    }).catch(function(){
+      startFallbackTimer();
+    });
+  } else {
+    startFallbackTimer();
+  }
+  narration.addEventListener("error", function(){
+    usingAudioSync = false;
+    startFallbackTimer();
   });
-  document.getElementById("openCount").textContent = openCount + (openCount===1?" sala":" salas");
-  document.getElementById("soonCount").textContent = soonCount + (soonCount===1?" sala":" salas");
+  // safety net: if neither play() resolution nor rejection fires within
+  // a beat (some browsers are inconsistent here), start the fallback
+  // anyway — showCaption() is idempotent-safe either way.
+  window.setTimeout(function(){ if (!usingAudioSync) startFallbackTimer(); }, 900);
 
-  /* ---------- background starfield (canvas2d, cheap) ---------- */
-  (function(){
-    var c = document.getElementById("stars");
-    var ctx = c.getContext("2d");
-    var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var stars = [];
-    function resize(){
-      c.width = innerWidth * Math.min(devicePixelRatio,1.5);
-      c.height = innerHeight * Math.min(devicePixelRatio,1.5);
-      c.style.width = innerWidth+"px"; c.style.height = innerHeight+"px";
-      var n = Math.floor((innerWidth*innerHeight)/9000);
-      stars = [];
-      for (var i=0;i<n;i++){
-        stars.push({
-          x: Math.random()*c.width, y: Math.random()*c.height,
-          r: Math.random()*1.3 + 0.25,
-          p: Math.random()*Math.PI*2,
-          s: Math.random()*0.015 + 0.006
-        });
-      }
-    }
-    window.addEventListener("resize", resize);
-    resize();
-    function draw(t){
-      ctx.clearRect(0,0,c.width,c.height);
-      for (var i=0;i<stars.length;i++){
-        var st = stars[i];
-        var tw = reduceMotion ? 0.7 : 0.55 + 0.45*Math.sin(st.p + t*st.s*60);
-        ctx.globalAlpha = tw*0.85;
-        ctx.fillStyle = "#EDEAE2";
-        ctx.beginPath();
-        ctx.arc(st.x, st.y, st.r*Math.min(devicePixelRatio,1.5), 0, 7);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      if (!reduceMotion) requestAnimationFrame(draw);
-    }
-    requestAnimationFrame(draw);
-  })();
+  /* ---- reduced motion: shorten the whole intro, keep it meaningful ---- */
+  if (REDUCE_MOTION){
+    // compress timings so a reduced-motion visit isn't forced to sit
+    // through 36s of camera drift it explicitly asked to minimize
+    CAPTIONS.forEach(function(c, i){ c.at = i*2.2; c.dur = 2.0; });
+    TOTAL_FALLBACK_DURATION = CAPTIONS[CAPTIONS.length-1].at + CAPTIONS[CAPTIONS.length-1].dur + 1;
+  }
 
-  /* ---------- tiny card scenes (canvas2d, ambient, cheap) ---------- */
-  function initScene(canvas, kind){
-    var ctx = canvas.getContext("2d");
-    var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var w,h,dpr;
-    function resize(){
-      dpr = Math.min(devicePixelRatio,1.5);
-      w = canvas.clientWidth; h = canvas.clientHeight;
-      canvas.width = w*dpr; canvas.height = h*dpr;
-      ctx.setTransform(dpr,0,0,dpr,0,0);
-    }
-    resize();
-    window.addEventListener("resize", resize);
+  /* ---- navigation: begin / skip both lead to /voo/ ---- */
+  function goToFlight(){
+    introStage.classList.add("leaving");
+    captionWrap.classList.add("leaving");
+    introControls.classList.add("leaving");
+    try{ narration.pause(); }catch(e){}
+    window.setTimeout(function(){
+      window.location.href = "/voo/";
+    }, REDUCE_MOTION ? 80 : 720);
+  }
+  beginBtn.addEventListener("click", goToFlight);
+  skipBtn.addEventListener("click", goToFlight);
+  skipCorner.addEventListener("click", goToFlight);
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape") goToFlight();
+  });
 
-    var goldC = getComputedStyle(document.documentElement).getPropertyValue('--gold').trim() || "#D4A85C";
-    var plasmaC = getComputedStyle(document.documentElement).getPropertyValue('--plasma').trim() || "#6FA8C7";
+  /* ============================================================
+     BACKGROUND — slow-drifting starfield with a distant warm core,
+     evoking "video of the universe evolving" without needing WebGL:
+     a dense parallax starfield drifts past the camera at a lazy pace,
+     with a soft pulsing glow standing in for a distant stellar core.
+     prefers-reduced-motion gets a mostly-static field (tiny twinkle
+     only, no drift) rather than an abrupt jump-cut removal of motion.
+     ============================================================ */
+  var canvas = document.getElementById("introCanvas");
+  var ctx = canvas.getContext("2d");
+  var w, h, dpr;
+  function resize(){
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    w = innerWidth; h = innerHeight;
+    canvas.width = w*dpr; canvas.height = h*dpr;
+    canvas.style.width = w+"px"; canvas.style.height = h+"px";
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener("resize", resize);
+  resize();
 
-    function blackhole(t){
-      ctx.clearRect(0,0,w,h);
-      var cx=w*0.55, cy=h*0.55, r=Math.min(w,h)*0.16;
-      var grad = ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r*2.4);
-      grad.addColorStop(0, goldC+"cc"); grad.addColorStop(0.35, goldC+"33"); grad.addColorStop(1,"transparent");
-      ctx.save();
-      ctx.translate(cx,cy); ctx.rotate(0.5);
-      for (var ring=0; ring<2; ring++){
-        ctx.beginPath();
-        ctx.ellipse(0,0, r*(2.1+ring*0.5), r*(0.5+ring*0.12), 0, 0, Math.PI*2);
-        ctx.strokeStyle = goldC + (ring===0?"aa":"55");
-        ctx.lineWidth = 2-ring*0.7;
-        ctx.stroke();
-      }
-      ctx.restore();
-      ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
-      ctx.fillStyle = "#020207"; ctx.fill();
-    }
-
-    var slitPhase = 0;
-    function doubleslit(t){
-      ctx.clearRect(0,0,w,h);
-      var midX = w*0.42;
-      ctx.strokeStyle = plasmaC+"55"; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.moveTo(midX,0); ctx.lineTo(midX,h*0.38); ctx.moveTo(midX,h*0.46); ctx.lineTo(midX,h*0.54); ctx.moveTo(midX,h*0.62); ctx.lineTo(midX,h); ctx.stroke();
-      for (var i=0;i<26;i++){
-        var ph = (t*0.4 + i*0.31) % 1;
-        var x = midX*0.15 + ph*(w-midX*0.15);
-        var yy = h*0.5 + Math.sin(i*12.9)*h*0.06;
-        var past = x > midX;
-        var yy2 = past ? h*0.5 + (Math.sin(i*7.7+i)*h*0.32) * Math.min(1,(x-midX)/(w-midX)) : yy;
-        ctx.globalAlpha = 0.55;
-        ctx.fillStyle = plasmaC;
-        ctx.beginPath(); ctx.arc(x, past?yy2:yy, 1.6, 0, 7); ctx.fill();
-      }
-      ctx.globalAlpha=1;
-    }
-
-    function strings(t){
-      ctx.clearRect(0,0,w,h);
-      ctx.strokeStyle = goldC+"cc"; ctx.lineWidth=1.6;
-      ctx.beginPath();
-      for (var x=0;x<=w;x+=4){
-        var y = h/2 + Math.sin(x*0.05 + t*1.6)*h*0.22*Math.sin(x/w*Math.PI);
-        if (x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-      }
-      ctx.stroke();
-    }
-    function lightspeed(t){
-      ctx.clearRect(0,0,w,h);
-      var cx=w/2, cy=h/2;
-      for (var i=0;i<40;i++){
-        var a = i*0.42 + t*0.3;
-        var rr = ((i*13 + t*90) % Math.max(w,h));
-        var x = cx + Math.cos(a)*rr, y = cy + Math.sin(a)*rr*0.6;
-        ctx.globalAlpha = Math.max(0, 1-rr/Math.max(w,h));
-        ctx.fillStyle = plasmaC;
-        ctx.beginPath(); ctx.arc(x,y,1.3,0,7); ctx.fill();
-      }
-      ctx.globalAlpha=1;
-    }
-    function gravwaves(t){
-      ctx.clearRect(0,0,w,h);
-      var cx=w/2, cy=h/2;
-      ctx.strokeStyle = goldC+"66";
-      for (var i=1;i<=5;i++){
-        var r = (i*14 + (t*22)%14);
-        ctx.globalAlpha = 1-(i/6);
-        ctx.beginPath(); ctx.ellipse(cx,cy,r*1.4,r*0.6,0.4,0,Math.PI*2); ctx.stroke();
-      }
-      ctx.globalAlpha=1;
-    }
-
-    var flightOrbits = [
-      {r:0.22, speed:0.9,  size:1.1, color:"#9fbfff"},
-      {r:0.30, speed:0.65, size:1.5, color:plasmaC},
-      {r:0.38, speed:0.48, size:1.3, color:goldC},
-      {r:0.46, speed:0.34, size:1.0, color:"#ff8064"}
-    ];
-    function spaceflight(t){
-      ctx.clearRect(0,0,w,h);
-      var cx=w*0.5, cy=h*0.52, base=Math.min(w,h);
-      var sunR = base*0.07;
-      var grad = ctx.createRadialGradient(cx,cy,0,cx,cy,sunR*3);
-      grad.addColorStop(0, goldC+"ee"); grad.addColorStop(0.4, goldC+"55"); grad.addColorStop(1,"transparent");
-      ctx.fillStyle = grad;
-      ctx.beginPath(); ctx.arc(cx,cy,sunR*3,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle = goldC;
-      ctx.beginPath(); ctx.arc(cx,cy,sunR,0,Math.PI*2); ctx.fill();
-      flightOrbits.forEach(function(o){
-        var rr = base*o.r;
-        ctx.strokeStyle = plasmaC+"22"; ctx.lineWidth=1;
-        ctx.beginPath(); ctx.ellipse(cx,cy,rr,rr*0.42,0.28,0,Math.PI*2); ctx.stroke();
-        var a = t*o.speed;
-        var ex = cx + Math.cos(a)*rr*Math.cos(0.28) - Math.sin(a)*rr*0.42*Math.sin(0.28);
-        var ey = cy + Math.cos(a)*rr*Math.sin(0.28) + Math.sin(a)*rr*0.42*Math.cos(0.28);
-        ctx.fillStyle = o.color;
-        ctx.beginPath(); ctx.arc(ex,ey,o.size,0,Math.PI*2); ctx.fill();
+  var LAYERS = [
+    { n: 140, speed: 6,  size: [0.5,1.1], color: "159,180,214" },
+    { n: 90,  speed: 14, size: [0.8,1.6], color: "237,234,226" },
+    { n: 40,  speed: 26, size: [1.1,2.2], color: "232,194,126" }
+  ];
+  var stars = [];
+  LAYERS.forEach(function(layer, li){
+    for (var i=0;i<layer.n;i++){
+      stars.push({
+        x: Math.random(), y: Math.random(),
+        z: li, speed: layer.speed,
+        r: layer.size[0] + Math.random()*(layer.size[1]-layer.size[0]),
+        color: layer.color,
+        tw: Math.random()*Math.PI*2,
+        twSpeed: 0.4 + Math.random()*0.6
       });
     }
+  });
 
-    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight};
-    var fn = fns[kind] || function(){};
-    var t0 = performance.now();
-    function loop(now){
-      fn((now-t0)/1000);
-      if (!reduceMotion) requestAnimationFrame(loop);
-    }
-    if (reduceMotion){ fn(0.6); } else { requestAnimationFrame(loop); }
+  var t0 = performance.now();
+  function draw(now){
+    var t = (now - t0) / 1000;
+    ctx.clearRect(0,0,w,h);
+
+    // distant warm core, gently pulsing — a quiet stand-in for a
+    // stellar/black-hole core, not a literal render of either room
+    var cx = w*0.5, cy = h*0.46;
+    var pulse = REDUCE_MOTION ? 0.5 : 0.5 + Math.sin(t*0.35)*0.5;
+    var coreR = Math.min(w,h) * (0.16 + pulse*0.015);
+    var grad = ctx.createRadialGradient(cx,cy,0,cx,cy,coreR*3.2);
+    grad.addColorStop(0, "rgba(232,194,126,"+(0.16+pulse*0.05)+")");
+    grad.addColorStop(0.4, "rgba(212,168,92,"+(0.07+pulse*0.02)+")");
+    grad.addColorStop(1, "rgba(212,168,92,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx,cy,coreR*3.2,0,Math.PI*2); ctx.fill();
+
+    stars.forEach(function(s){
+      if (!REDUCE_MOTION){
+        s.y += (s.speed/h) * (1/60);
+        if (s.y > 1.05){ s.y = -0.05; s.x = Math.random(); }
+      }
+      var tw = REDUCE_MOTION ? 0.85 : 0.55 + 0.45*Math.sin(s.tw + t*s.twSpeed);
+      ctx.globalAlpha = tw * (0.55 + s.z*0.18);
+      ctx.fillStyle = "rgb("+s.color+")";
+      ctx.beginPath();
+      ctx.arc(s.x*w, s.y*h, s.r, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    if (!REDUCE_MOTION || true) requestAnimationFrame(draw); // keep a low-cost rAF alive even reduced (twinkle only)
   }
-
-  document.querySelectorAll("[data-scene]").forEach(function(c){ initScene(c, c.dataset.scene); });
+  requestAnimationFrame(draw);
 })();
 </script>
+

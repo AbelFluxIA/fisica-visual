@@ -1,6 +1,6 @@
 <meta charset="utf-8">
-<title>Horizonte — o observatório</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Observatório — jornadas pela física</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <style>
 @font-face{
   font-family:'Fraunces Display';
@@ -33,9 +33,11 @@
 
 :root{
   --bg:#07080D;
+  --bg-deep:#020207;
   --panel:rgba(13,15,24,0.80);
-  --line:rgba(212,168,92,0.16);
-  --line-soft:rgba(255,255,255,0.08);
+  --panel-solid:#0D0F18;
+  --line:rgba(212,168,92,0.14);
+  --line-soft:rgba(255,255,255,0.07);
   --text:#EDEAE2;
   --dim:#9C9788;
   --gold:#D4A85C;
@@ -49,8 +51,10 @@
 }
 :root[data-theme="light"]{
   --bg:#F3EFE4;
-  --panel:rgba(255,253,247,0.86);
-  --line:rgba(120,90,30,0.20);
+  --bg-deep:#EAE4D4;
+  --panel:rgba(255,253,247,0.85);
+  --panel-solid:#FFFDF7;
+  --line:rgba(120,90,30,0.18);
   --line-soft:rgba(20,20,10,0.08);
   --text:#221F19;
   --dim:#6B6455;
@@ -61,595 +65,427 @@
 }
 
 *{box-sizing:border-box;}
-html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;}
-#gl{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none;}
-#gl.dragging{cursor:grabbing;}
-
-.panel{
-  position:fixed;background:var(--panel);border:1px solid var(--line);border-radius:11px;
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  box-shadow:0 10px 36px rgba(0,0,0,0.4);
+html,body{height:100%;margin:0;}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--sans);
+  overflow-x:hidden;position:relative;min-height:100vh;
 }
-.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);}
-
-/* ---------- back link ---------- */
-#back{
-  position:fixed;top:16px;left:16px;z-index:6;display:flex;align-items:center;gap:6px;
-  font-family:var(--mono);font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;
-  color:var(--dim);text-decoration:none;padding:7px 12px;border:1px solid var(--line);border-radius:20px;
-  background:var(--panel);backdrop-filter:blur(16px);transition:color .2s,border-color .2s;
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 90% 60% at 50% -10%, rgba(212,168,92,0.07), transparent 60%),
+             radial-gradient(ellipse 70% 50% at 85% 100%, rgba(111,168,199,0.06), transparent 60%);
 }
-#back:hover{color:var(--gold);border-color:rgba(212,168,92,0.4);}
-#back:focus-visible{outline:2px solid var(--gold);}
-#back svg{width:11px;height:11px;flex-shrink:0;}
+
+#stars{position:fixed;inset:0;z-index:0;display:block;}
+
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 24px 80px;}
 
 /* ---------- header ---------- */
-#hdr{top:60px;left:16px;padding:16px 20px 14px;max-width:270px;}
-#hdr .eyebrow{color:var(--gold);}
-#hdr h1{font-family:var(--display);font-weight:600;font-size:29px;margin:6px 0 3px;letter-spacing:-0.01em;line-height:1.05;}
-#hdr .sub{font-family:var(--italic);font-style:italic;font-size:14px;color:var(--dim);margin:0 0 12px;}
-.seg{display:flex;gap:0;border:1px solid var(--line);border-radius:7px;overflow:hidden;}
-.seg button{
-  flex:1;background:transparent;border:none;color:var(--dim);font-family:var(--mono);
-  font-size:10.5px;padding:7px 4px;cursor:pointer;letter-spacing:0.04em;white-space:nowrap;
+header{padding:64px 0 40px;text-align:center;}
+.eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:0.24em;text-transform:uppercase;
+  color:var(--gold);display:inline-block;margin-bottom:18px;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 18px;
 }
-.seg button+button{border-left:1px solid var(--line);}
-.seg button.on{background:rgba(212,168,92,0.16);color:var(--gold-bright);}
-.seg button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;}
-
-/* ---------- control deck ---------- */
-#deck{
-  left:50%;bottom:16px;transform:translateX(-50%);
-  width:min(680px,calc(100vw - 24px));
-  padding:16px 20px 18px;
-  display:flex;flex-direction:column;gap:11px;
+h1{
+  font-family:var(--display);font-weight:600;font-size:clamp(40px,7vw,76px);
+  margin:0 0 14px;text-wrap:balance;letter-spacing:-0.01em;line-height:1.02;
 }
-#deck .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
-#deck label{white-space:nowrap;}
-input[type=range]{
-  flex:1;min-width:140px;appearance:none;-webkit-appearance:none;height:22px;background:transparent;cursor:pointer;
-}
-input[type=range]::-webkit-slider-runnable-track{height:3px;background:linear-gradient(90deg,var(--alert),var(--gold) 30%,var(--line-soft));border-radius:2px;}
-input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;
-  background:var(--gold);border:2px solid var(--bg);margin-top:-6.5px;box-shadow:0 0 8px rgba(212,168,92,0.55);
-}
-input[type=range]::-moz-range-track{height:3px;background:linear-gradient(90deg,var(--alert),var(--gold) 30%,var(--line-soft));border-radius:2px;}
-input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);}
-input[type=range]:focus-visible{outline:2px solid var(--gold);outline-offset:4px;border-radius:4px;}
-
-.readout{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13px;}
-#rVal{color:var(--gold-bright);}
-#kmVal{color:var(--dim);font-size:11px;}
-#zone{
-  font-family:var(--mono);font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;
-  padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--dim);white-space:nowrap;
-}
-#zone.warn{color:var(--alert);border-color:rgba(196,87,74,0.5);background:rgba(196,87,74,0.09);}
-#zone.mid{color:var(--gold-bright);border-color:rgba(212,168,92,0.4);}
-
-#dilation{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
-#factor{font-family:var(--mono);font-size:30px;font-variant-numeric:tabular-nums;color:var(--plasma);line-height:1;}
-#factorTxt{font-size:12.5px;color:var(--dim);max-width:260px;line-height:1.45;}
-#factorTxt b{color:var(--text);font-weight:600;}
-
-.clocks{display:flex;gap:18px;margin-left:auto;align-items:center;}
-.clock{display:flex;flex-direction:column;align-items:center;gap:3px;}
-.clock svg{display:block;}
-.clock .name{font-family:var(--mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;}
-.clock .t{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;}
-.clock.you .name,.clock.you .t{color:var(--gold-bright);}
-.clock.earth .name,.clock.earth .t{color:var(--plasma);}
-#reset{
-  background:transparent;border:1px solid var(--line);border-radius:6px;color:var(--dim);
-  font-family:var(--mono);font-size:10px;padding:4px 8px;cursor:pointer;letter-spacing:0.06em;
-}
-#reset:hover{color:var(--text);border-color:rgba(212,168,92,0.35);}
-#reset:focus-visible{outline:2px solid var(--gold);}
-
-/* ---------- info ---------- */
-#infoBtn{
-  position:fixed;top:16px;right:16px;z-index:5;display:flex;align-items:center;gap:8px;
-  background:rgba(212,168,92,0.14);border:1px solid rgba(212,168,92,0.4);border-radius:20px;color:var(--gold-bright);
-  font-family:var(--mono);font-size:11.5px;letter-spacing:0.05em;padding:9px 16px 9px 14px;cursor:pointer;
-  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  box-shadow:0 4px 18px rgba(212,168,92,0.15);
-}
-#infoBtn svg{width:13px;height:13px;flex-shrink:0;}
-#infoBtn:hover{border-color:rgba(212,168,92,0.65);background:rgba(212,168,92,0.2);}
-#infoBtn:focus-visible{outline:2px solid var(--gold);}
-#infoBtn .pulse{
-  position:absolute;inset:-1px;border-radius:20px;border:1px solid var(--gold);
-  animation:pulseRing 2.2s ease-out infinite;pointer-events:none;
-}
-#infoBtn.seen .pulse{display:none;}
-@keyframes pulseRing{
-  0%{opacity:0.7;transform:scale(1);}
-  100%{opacity:0;transform:scale(1.18);}
+h1 em{font-family:var(--italic);font-style:italic;font-weight:500;color:var(--gold-bright);}
+.lede{
+  font-size:clamp(15px,2vw,18px);color:var(--dim);max-width:56ch;margin:0 auto;line-height:1.65;
 }
 
-/* ---------- welcome overlay ---------- */
-#welcome{
-  position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
-  background:rgba(2,2,7,0.62);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
-  padding:24px;
+/* ---------- trail strip ---------- */
+#trail{
+  display:flex;align-items:center;gap:0;margin:48px 0 8px;overflow-x:auto;
+  padding:4px 4px 14px;
 }
-#welcome.hidden{display:none;}
-#welcome .card{
-  max-width:440px;width:100%;padding:30px 32px 26px;text-align:left;
-  animation:welcomeIn .5s cubic-bezier(.2,.8,.2,1);
+.trail-node{
+  display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;
+  width:118px;text-align:center;position:relative;
 }
-@keyframes welcomeIn{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:none;}}
-#welcome .eyebrow{color:var(--gold);}
-#welcome h2{font-family:var(--display);font-weight:600;font-size:25px;margin:10px 0 12px;letter-spacing:-0.01em;text-wrap:balance;}
-#welcome p{font-size:14px;line-height:1.6;color:var(--text);margin:0 0 10px;}
-#welcome p.dim{color:var(--dim);font-size:13px;}
-#welcome ol{margin:14px 0 18px;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;}
-#welcome ol li{font-size:13px;line-height:1.5;color:var(--text);padding-left:26px;position:relative;}
-#welcome ol li b{color:var(--gold-bright);}
-#welcome ol li::before{
-  content:counter(step);counter-increment:step;position:absolute;left:0;top:0;
-  font-family:var(--mono);font-size:11px;color:var(--gold);border:1px solid var(--line);
-  width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+.trail-dot{
+  width:13px;height:13px;border-radius:50%;background:var(--panel-solid);
+  border:2px solid var(--line);position:relative;z-index:1;transition:border-color .3s, background .3s;
 }
-#welcome ol{counter-reset:step;}
-#welcome .actions{display:flex;align-items:center;gap:14px;margin-top:6px;}
-#welcome .go{
-  background:var(--gold);border:none;border-radius:8px;color:var(--bg);font-family:var(--mono);
-  font-size:12.5px;font-weight:600;letter-spacing:0.03em;padding:11px 20px;cursor:pointer;
+.trail-node.done .trail-dot{background:var(--gold);border-color:var(--gold);box-shadow:0 0 10px rgba(212,168,92,0.5);}
+.trail-node.now .trail-dot{border-color:var(--gold);background:var(--bg);box-shadow:0 0 0 4px rgba(212,168,92,0.14);}
+.trail-line{
+  position:absolute;top:6px;left:calc(-59px + 6.5px);width:118px;height:2px;background:var(--line);z-index:0;
 }
-#welcome .go:hover{background:var(--gold-bright);}
-#welcome .go:focus-visible{outline:2px solid var(--text);outline-offset:2px;}
-#welcome .skip{
-  background:transparent;border:none;color:var(--dim);font-family:var(--mono);font-size:11.5px;
-  cursor:pointer;text-decoration:underline;text-underline-offset:3px;
-}
-#welcome .skip:hover{color:var(--text);}
-#welcome .skip:focus-visible{outline:2px solid var(--gold);}
-#info{
-  top:60px;right:16px;bottom:110px;width:min(400px,calc(100vw - 32px));
-  padding:4px 22px 22px;overflow-y:auto;display:none;z-index:5;
-}
-#info.open{display:block;}
-#info h2{font-family:var(--display);font-weight:600;font-size:19px;margin:20px 0 7px;color:var(--gold-bright);letter-spacing:-0.005em;}
-#info h2:first-of-type{margin-top:18px;}
-#info h2.final{color:var(--plasma);}
-#info p{font-size:13.5px;line-height:1.64;color:var(--text);margin:0 0 10px;max-width:62ch;}
-#info p.note{color:var(--dim);font-size:12px;border-top:1px solid var(--line);padding-top:13px;margin-top:18px;}
-#info ul.open-q{margin:0 0 4px;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:10px;}
-#info ul.open-q li{font-size:13px;line-height:1.55;color:var(--text);padding-left:18px;position:relative;}
-#info ul.open-q li::before{content:"?";position:absolute;left:0;top:0;color:var(--plasma);font-family:var(--mono);font-size:12px;}
-#info code{font-family:var(--mono);font-size:12px;color:var(--plasma);background:rgba(111,168,199,0.09);padding:1px 5px;border-radius:4px;}
+.trail-node:first-child .trail-line{display:none;}
+.trail-node.done .trail-line{background:linear-gradient(90deg, var(--gold), var(--line));}
+.trail-label{font-family:var(--mono);font-size:10.5px;letter-spacing:0.04em;color:var(--dim);line-height:1.4;}
+.trail-node.now .trail-label,.trail-node.done .trail-label{color:var(--text);}
 
-#hint{
-  position:fixed;bottom:16px;right:16px;font-family:var(--mono);font-size:10px;color:var(--dim);
-  letter-spacing:0.08em;text-transform:uppercase;opacity:0.75;pointer-events:none;
-}
-#fallback{position:fixed;inset:0;display:none;place-items:center;padding:24px;text-align:center;color:var(--dim);}
+/* ---------- section labels ---------- */
+.section-head{display:flex;align-items:baseline;gap:14px;margin:56px 0 22px;}
+.section-head h2{font-family:var(--display);font-weight:600;font-size:22px;margin:0;}
+.section-head .count{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:0.06em;}
+.section-head .rule{flex:1;height:1px;background:var(--line);}
 
-@media (max-width:640px){
-  #hdr{top:56px;max-width:210px;padding:12px 16px;}
-  #hdr h1{font-size:23px;}
-  #hdr .sub{display:none;}
-  #deck{padding:13px 15px;gap:9px;}
-  #factor{font-size:24px;}
-  .clocks{margin-left:0;}
-  #hint{display:none;}
-  #info{bottom:180px;}
-  #welcome .card{padding:24px 22px 22px;}
-  #welcome h2{font-size:21px;}
+/* ---------- constellation grid ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;}
+
+.card{
+  position:relative;border-radius:14px;border:1px solid var(--line);background:var(--panel);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  overflow:hidden;text-decoration:none;color:inherit;display:block;
+  transition:transform .28s cubic-bezier(.2,.8,.2,1), border-color .28s, box-shadow .28s;
+  cursor:pointer;
 }
-@media (prefers-reduced-motion:reduce){
-  *{transition:none !important;}
-  #infoBtn .pulse{animation:none;display:none;}
+.card:hover, .card:focus-visible{
+  transform:translateY(-4px);
+  border-color:rgba(212,168,92,0.4);
+  box-shadow:0 16px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(212,168,92,0.12);
 }
+.card:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+.card.locked{cursor:default;opacity:0.55;}
+.card.locked:hover{transform:none;border-color:var(--line);box-shadow:none;}
+
+.card-scene{
+  height:150px;position:relative;overflow:hidden;
+  background:radial-gradient(circle at 30% 30%, rgba(212,168,92,0.10), transparent 60%);
+}
+.card-scene canvas{position:absolute;inset:0;width:100%;height:100%;}
+.card-badge{
+  position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:20px;
+  border:1px solid var(--line);background:var(--panel-solid);color:var(--dim);z-index:2;
+}
+.card-badge.ready{color:var(--gold);border-color:rgba(212,168,92,0.35);}
+.card-badge.soon{color:var(--dim);}
+.card-body{padding:18px 20px 20px;}
+.card-eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--plasma);margin-bottom:8px;}
+.card h3{font-family:var(--display);font-weight:600;font-size:21px;margin:0 0 8px;letter-spacing:-0.005em;}
+.card h3 em{font-family:var(--italic);font-style:italic;color:var(--gold-bright);}
+.card p{font-size:13px;color:var(--dim);line-height:1.55;margin:0;}
+.card .hook{
+  margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--gold);
+  display:flex;align-items:center;gap:6px;
+}
+.card.locked .hook{color:var(--dim);}
+.card .hook svg{width:11px;height:11px;flex-shrink:0;}
+
+/* ---------- footer note ---------- */
+footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);text-align:center;}
+footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:0.03em;}
+
+#backlink{
+  position:relative;z-index:2;display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--dim);text-decoration:none;padding:7px 12px;border:1px solid var(--line);border-radius:20px;
+  background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  transition:color .2s,border-color .2s;margin:20px 0 0;
+}
+#backlink svg{width:11px;height:11px;flex-shrink:0;}
+#backlink:hover{color:var(--gold-bright);border-color:rgba(212,168,92,0.4);}
+#backlink:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+
+@media (prefers-reduced-motion:reduce){ *{transition:none !important;scroll-behavior:auto !important;} }
 </style>
 
-<canvas id="gl" aria-label="Simulação de um buraco negro com disco de acreção e lente gravitacional. Arraste para orbitar."></canvas>
-<div id="fallback"><p>Seu navegador não conseguiu iniciar o WebGL, que é necessário para a simulação.<br>Tente atualizar o navegador ou habilitar a aceleração de hardware.</p></div>
+<canvas id="stars" aria-hidden="true"></canvas>
 
-<a id="back" href="/salas/"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>observatório</a>
+<div class="wrap">
+  <a id="backlink" href="/"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>início</a>
+  <header>
+    <span class="eyebrow">Física Visual</span>
+    <h1>O <em>observatório</em></h1>
+    <p class="lede">Cada sala aqui é um instrumento — não uma aula. Você mexe, aproxima, mede, e a física responde de verdade por trás da tela. Comece pela trilha sugerida ou entre direto em qualquer sala já aberta.</p>
+  </header>
 
-<header id="hdr" class="panel">
-  <div class="eyebrow">Relatividade geral · Sala 01</div>
-  <h1>Horizonte</h1>
-  <p class="sub">uma visita a um buraco negro de Schwarzschild</p>
-  <div class="seg" role="group" aria-label="Massa do buraco negro">
-    <button data-m="stellar" class="on">10 M☉</button>
-    <button data-m="sgra">Sgr A*</button>
-    <button data-m="m87">M87*</button>
-  </div>
-</header>
+  <nav id="trail" aria-label="Trilha sugerida"></nav>
 
-<button id="infoBtn" aria-expanded="false" aria-controls="info"><span class="pulse" aria-hidden="true"></span><svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 6.3v4M7 4v.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><span id="infoBtnLabel">entenda a física</span></button>
+  <div class="section-head"><h2>Salas abertas</h2><span class="rule"></span><span class="count" id="openCount"></span></div>
+  <div class="grid" id="openGrid"></div>
 
-<div id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
-  <div class="card panel">
-    <span class="eyebrow">Relatividade geral · Sala 01</span>
-    <h2 id="welcomeTitle">Você está prestes a visitar um buraco negro</h2>
-    <p>Esta não é uma animação — é a luz sendo curvada de verdade pela gravidade, calculada em tempo real enquanto você se move.</p>
-    <ol>
-      <li><b>Arraste</b> a cena para orbitar ao redor do buraco negro.</li>
-      <li>Puxe o <b>slider de distância</b> lá embaixo até quase encostar no horizonte — repare nos dois relógios acelerando de forma diferente.</li>
-      <li>Toque em <b>"entenda a física"</b> no canto a qualquer momento — é lá que fica o porquê de tudo isso, incluindo o que ainda nem os físicos sabem responder.</li>
-    </ol>
-    <div class="actions">
-      <button class="go" id="welcomeGo">começar</button>
-      <button class="skip" id="welcomeSkip">não mostrar de novo</button>
-    </div>
-  </div>
+  <div class="section-head"><h2>Em construção</h2><span class="rule"></span><span class="count" id="soonCount"></span></div>
+  <div class="grid" id="soonGrid"></div>
+
+  <footer>
+    <p>cada sala termina com "o que ainda não sabemos" — o objetivo não é fechar as perguntas, é te dar as certas.</p>
+  </footer>
 </div>
-<aside id="info" class="panel" aria-hidden="true">
-  <h2>O disco de acreção</h2>
-  <p>Gás em queda espirala ao redor do buraco negro a frações da velocidade da luz e aquece a milhões de graus por atrito. O lado que vem na sua direção parece mais brilhante e azulado — é o <b>efeito Doppler relativístico</b> (beaming), calculado de verdade nesta cena.</p>
-  <h2>Por que o disco aparece "dobrado"?</h2>
-  <p>Você vê o disco por cima <i>e</i> por baixo ao mesmo tempo, mesmo olhando de lado. A gravidade curva os raios de luz que passam por trás do buraco negro e os entrega até você — isso é a <b>lente gravitacional</b>. Cada pixel desta imagem é um raio de luz cuja trajetória curva foi integrada na métrica de Schwarzschild.</p>
-  <h2>A esfera de fótons (r = 1,5 r<sub>s</sub>)</h2>
-  <p>A essa distância, a luz consegue orbitar o buraco negro em círculos. O anel fino e brilhante colado à sombra são fótons que deram uma ou mais voltas completas antes de escapar na sua direção.</p>
-  <h2>A dilatação do tempo</h2>
-  <p>Quanto mais fundo você está no campo gravitacional, mais devagar o seu tempo corre em relação a quem ficou longe: <code>τ = t·√(1 − r_s/r)</code>. É o efeito do planeta de Miller em <i>Interstellar</i> — chegue a r = 1,02 r<sub>s</sub> e veja o relógio da Terra disparar em relação ao seu.</p>
-  <h2>A ISCO (r = 3 r<sub>s</sub>)</h2>
-  <p>Abaixo de 3 raios de Schwarzschild não existe órbita circular estável para matéria: qualquer perturbação e você mergulha. Por isso o disco de acreção termina aí — o gás que cruza a ISCO cai direto.</p>
-  <p class="note">Como é calculado: geodésicas nulas integradas na GPU (aceleração −3h²r̂/2r⁴, unidades r<sub>s</sub> = 1), disco com beaming Doppler, dilatação √(1 − r_s/r) para observador estático. É um buraco negro sem rotação (Schwarzschild) — a maioria dos buracos negros reais gira (Kerr) e distorce o espaço de forma ainda mais extrema. É uma reconstrução fisicamente fundamentada, não um render científico completo como os do Event Horizon Telescope.</p>
-  <h2 class="final">O que ainda não sabemos</h2>
-  <ul class="open-q">
-    <li>O que existe de fato na singularidade, no centro? A relatividade geral prevê densidade infinita — o que é o sinal de que a própria teoria está deixando de funcionar ali, não uma descrição literal da realidade.</li>
-    <li>A informação que cai num buraco negro se perde para sempre, ou reaparece codificada na radiação Hawking quando ele evapora? É o "paradoxo da informação", ainda sem consenso.</li>
-    <li>Existe alguma "firewall" de energia extrema logo depois do horizonte, contradizendo a relatividade geral, que diz que atravessá-lo deveria ser suave e imperceptível?</li>
-    <li>Como descrever esse objeto simultaneamente pela relatividade geral (a gravidade) e pela mecânica quântica (o que acontece na escala da singularidade)? Nenhuma teoria hoje faz as duas coisas ao mesmo tempo — é o maior problema em aberto da física fundamental.</li>
-  </ul>
-</aside>
-
-<section id="deck" class="panel" aria-label="Controles da sonda">
-  <div class="row">
-    <label class="eyebrow" for="dist">Distância ao horizonte</label>
-    <input id="dist" type="range" min="0" max="1000" value="620" aria-label="Distância ao buraco negro em raios de Schwarzschild">
-    <span class="readout"><span id="rVal">r = 6,0 r_s</span><br><span id="kmVal"></span></span>
-    <span id="zone">órbita estável</span>
-  </div>
-  <div id="dilation">
-    <span id="factor">×1,10</span>
-    <span id="factorTxt">enquanto <b>1 minuto</b> passa para você aqui, <b id="farMin">1 min 06 s</b> passam na Terra</span>
-    <div class="clocks">
-      <div class="clock you">
-        <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true">
-          <circle cx="26" cy="26" r="24" fill="none" stroke="rgba(212,168,92,0.35)" stroke-width="1.5"/>
-          <line id="handYou" x1="26" y1="26" x2="26" y2="7" stroke="var(--gold-bright)" stroke-width="2" stroke-linecap="round"/>
-          <circle cx="26" cy="26" r="2" fill="var(--gold-bright)"/>
-        </svg>
-        <span class="name">você</span><span class="t" id="tYou">00:00,0</span>
-      </div>
-      <div class="clock earth">
-        <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true">
-          <circle cx="26" cy="26" r="24" fill="none" stroke="rgba(111,168,199,0.35)" stroke-width="1.5"/>
-          <line id="handEarth" x1="26" y1="26" x2="26" y2="7" stroke="var(--plasma)" stroke-width="2" stroke-linecap="round"/>
-          <circle cx="26" cy="26" r="2" fill="var(--plasma)"/>
-        </svg>
-        <span class="name">terra</span><span class="t" id="tEarth">00:00,0</span>
-      </div>
-      <button id="reset" aria-label="Zerar relógios">zerar</button>
-    </div>
-  </div>
-</section>
-
-<div id="hint">arraste para orbitar · role para se aproximar</div>
 
 <script>
 (function(){
   "use strict";
-  var canvas = document.getElementById("gl");
-  var gl = canvas.getContext("webgl", {antialias:false, depth:false, alpha:false})
-        || canvas.getContext("experimental-webgl");
-  if (!gl){
-    document.getElementById("fallback").style.display = "grid";
-    return;
-  }
 
-  var FRAG = [
-    "precision highp float;",
-    "uniform vec2 uRes;",
-    "uniform float uTime;",
-    "uniform float uDist;",
-    "uniform float uYaw;",
-    "uniform float uPitch;",
-    "#define DISK_IN 2.8",
-    "#define DISK_OUT 12.0",
-    "#define STEPS 220",
-
-    "float hash13(vec3 p){ p = fract(p*0.1031); p += dot(p, p.yzx+33.33); return fract((p.x+p.y)*p.z); }",
-    "float hash11(float n){ return fract(sin(n)*43758.5453); }",
-    "float noise1(float x){ float i=floor(x); float f=fract(x); f=f*f*(3.0-2.0*f); return mix(hash11(i), hash11(i+1.0), f); }",
-
-    "vec3 stars(vec3 d){",
-    "  vec3 col = vec3(0.0);",
-    "  vec3 p = d * 42.0;",
-    "  vec3 id = floor(p);",
-    "  vec3 f = fract(p) - 0.5;",
-    "  float h = hash13(id);",
-    "  if (h > 0.952){",
-    "    vec3 sp = (vec3(hash13(id+7.1), hash13(id+3.7), hash13(id+9.3)) - 0.5)*0.66;",
-    "    float b = (h-0.952)/0.048;",
-    "    float st = smoothstep(0.10+0.10*b, 0.0, length(f-sp)) * (0.25+b*1.5);",
-    "    vec3 tint = mix(vec3(0.72,0.84,1.0), vec3(1.0,0.86,0.70), hash13(id+1.3));",
-    "    col += st * tint;",
-    "  }",
-    "  float band = exp(-abs(dot(d, normalize(vec3(0.30,1.0,0.14)))) * 4.5);",
-    "  col += band * vec3(0.040,0.046,0.070);",
-    "  return col;",
-    "}",
-
-    "vec3 diskColor(vec3 hit, vec3 rd){",
-    "  float r = max(length(hit.xz), 1e-3);",
-    "  float q = clamp((r - DISK_IN)/(DISK_OUT - DISK_IN), 0.0, 1.0);",
-    "  float ang = atan(hit.z, hit.x);",
-    "  float ph = ang + uTime * 7.5 * pow(r, -1.5);",
-    "  float streak = 0.66",
-    "    + 0.24*sin(ph*9.0 + r*7.0)",
-    "    + 0.16*sin(ph*23.0 - r*11.0 + 1.7)",
-    "    + 0.28*(noise1(r*3.1 + uTime*0.25) - 0.5);",
-    "  vec3 hot  = vec3(1.05,0.99,0.93);",
-    "  vec3 mid  = vec3(1.05,0.62,0.26);",
-    "  vec3 cool = vec3(0.55,0.22,0.10);",
-    "  vec3 c = mix(hot, mid, smoothstep(0.0,0.45,q));",
-    "  c = mix(c, cool, smoothstep(0.45,1.0,q));",
-    "  float bright = mix(2.6, 0.28, q);",
-    "  vec3 tang = vec3(-hit.z, 0.0, hit.x)/r;",
-    "  float beta = sqrt(0.5/max(r,0.7));",
-    "  float cosT = dot(tang, -normalize(rd));",
-    "  float dop = clamp(1.0/(1.0 - 0.9*beta*cosT), 0.55, 1.9);",
-    "  bright *= dop*dop*dop;",
-    "  c = mix(c, c*vec3(0.72,0.86,1.25), clamp((dop-1.0)*1.3, -0.30, 0.55));",
-    "  c *= bright * (sqrt(max(1.0 - 1.0/r, 0.0))*1.25 + 0.05);",
-    "  c *= smoothstep(DISK_IN, DISK_IN+0.25, r);",
-    "  return max(c*streak, 0.0);",
-    "}",
-
-    "void main(){",
-    "  vec2 uv = (2.0*gl_FragCoord.xy - uRes)/uRes.y;",
-    "  float cp = cos(uPitch), sp = sin(uPitch);",
-    "  float cy = cos(uYaw),  sy = sin(uYaw);",
-    "  vec3 ro = uDist * vec3(cp*sy, sp, cp*cy);",
-    "  vec3 fw = normalize(-ro);",
-    "  vec3 rt = normalize(cross(fw, vec3(0.0,1.0,0.0)));",
-    "  vec3 up = cross(rt, fw);",
-    "  vec3 rd = normalize(fw*1.25 + uv.x*rt + uv.y*up);",
-
-    "  vec3 p = ro;",
-    "  vec3 v = rd;",
-    "  vec3 hv = cross(p, v);",
-    "  float h2 = dot(hv, hv);",
-
-    "  vec3 col = vec3(0.0);",
-    "  float T = 1.0;",
-    "  bool captured = false;",
-    "  float escR = max(uDist*1.6, 40.0);",
-
-    "  for (int i=0;i<STEPS;i++){",
-    "    float r2 = dot(p,p);",
-    "    float r = sqrt(r2);",
-    "    if (r < 1.0){ captured = true; break; }",
-    "    if (r > escR && dot(p,v) > 0.0) break;",
-    "    float dt = clamp(0.09*r, 0.045, 1.7);",
-    "    vec3 a = -1.5 * h2 * p / (r2*r2*r);",
-    "    vec3 pn = p + v*dt + a*(0.5*dt*dt);",
-    "    vec3 vn = v + a*dt;",
-    "    if (p.y*pn.y < 0.0){",
-    "      float f = p.y/(p.y - pn.y);",
-    "      vec3 hit = mix(p, pn, f);",
-    "      float hr = length(hit.xz);",
-    "      if (hr > DISK_IN*0.98 && hr < DISK_OUT){",
-    "        vec3 dc = diskColor(hit, v);",
-    "        float q = clamp((hr-DISK_IN)/(DISK_OUT-DISK_IN), 0.0, 1.0);",
-    "        float al = clamp(0.9 - q*0.75, 0.08, 0.9);",
-    "        col += T * dc * al;",
-    "        T *= (1.0 - al);",
-    "        if (T < 0.02) break;",
-    "      }",
-    "    }",
-    "    p = pn; v = vn;",
-    "  }",
-    "  if (!captured && T > 0.02) col += T * stars(normalize(v));",
-    "  col = col/(1.0 + col);",
-    "  col = pow(col, vec3(0.4545));",
-    "  float vig = 1.0 - 0.32*dot(uv*0.5, uv*0.5);",
-    "  gl_FragColor = vec4(col*vig, 1.0);",
-    "}"
-  ].join("\n");
-
-  var VERT = "attribute vec2 aPos; void main(){ gl_Position = vec4(aPos,0.0,1.0); }";
-
-  function compile(type, src){
-    var s = gl.createShader(type);
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
-      console.error(gl.getShaderInfoLog(s));
-      return null;
+  var MODULES = [
+    {
+      id:"horizonte", status:"ready", track:1,
+      eyebrow:"Relatividade geral",
+      title:"Horizonte", titleEm:null,
+      desc:"Aproxime-se de um buraco negro real. Veja a luz se curvar ao redor dele e o seu relógio dessincronizar do relógio da Terra.",
+      hook:"o tempo que você mede depende de onde você está",
+      href:"/horizonte/",
+      scene:"blackhole"
+    },
+    {
+      id:"dupla-fenda", status:"ready", track:2,
+      eyebrow:"Mecânica quântica",
+      title:"A dupla ", titleEm:"fenda",
+      desc:"Atire elétrons um por um contra duas fendas. Depois tente descobrir por qual fenda cada um passou — e observe o padrão desmoronar.",
+      hook:"observar muda o que é observado",
+      href:"/dupla-fenda/",
+      scene:"doubleslit"
+    },
+    {
+      id:"cordas", status:"ready", track:3,
+      eyebrow:"Teoria das cordas",
+      title:"Cordas ", titleEm:"vibrantes",
+      desc:"Cada partícula do universo pode ser um modo de vibração da mesma corda. Toque harmônicos diferentes e sinta a física — e a especulação — por trás da ideia.",
+      hook:"uma nota diferente, uma partícula diferente",
+      href:"/cordas/",
+      scene:"strings"
+    },
+    {
+      id:"velocidade-luz", status:"ready", track:null,
+      eyebrow:"Relatividade especial",
+      title:"Quase à ", titleEm:"velocidade da luz",
+      desc:"Acelere uma nave até frações de c e veja o universo se deformar de verdade: aberração, Doppler relativístico e o paradoxo dos gêmeos nos seus próprios relógios.",
+      hook:"nada explicado, tudo calculado",
+      href:"/velocidade-luz/",
+      scene:"lightspeed"
+    },
+    {
+      id:"voo", status:"ready", track:null,
+      eyebrow:"Exploração livre",
+      title:"Voo ", titleEm:"espacial",
+      desc:"Pilote uma nave livremente entre o Sol e os planetas, depois se afaste até atravessar a vizinhança estelar e a escala das próprias galáxias — sem um único corte de câmera.",
+      hook:"do seu quintal cósmico até a escala das galáxias",
+      href:"/voo/",
+      scene:"spaceflight"
+    },
+    {
+      id:"ondas-gravitacionais", status:"soon", track:null,
+      eyebrow:"Astrofísica",
+      title:"Ondas no ", titleEm:"espaço-tempo",
+      desc:"Duas estrelas de nêutrons espiralam uma para a outra, distorcendo o próprio tecido do espaço — e você ouve o eco real captado pelo LIGO.",
+      hook:"em construção",
+      href:null,
+      scene:"gravwaves"
     }
-    return s;
-  }
-  var vs = compile(gl.VERTEX_SHADER, VERT);
-  var fs = compile(gl.FRAGMENT_SHADER, FRAG);
-  if (!vs || !fs){ document.getElementById("fallback").style.display = "grid"; return; }
-  var prog = gl.createProgram();
-  gl.attachShader(prog, vs); gl.attachShader(prog, fs);
-  gl.linkProgram(prog); gl.useProgram(prog);
+  ];
 
-  var buf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
-  var loc = gl.getAttribLocation(prog, "aPos");
-  gl.enableVertexAttribArray(loc);
-  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  var TRACK = MODULES.filter(function(m){ return m.track; }).sort(function(a,b){ return a.track-b.track; });
 
-  var U = {};
-  ["uRes","uTime","uDist","uYaw","uPitch"].forEach(function(n){ U[n] = gl.getUniformLocation(prog, n); });
-
-  /* ---------- state ---------- */
-  var RMIN = 1.02, RMAX = 30;
-  var state = {
-    r: 6.0,
-    yaw: 0.6,
-    pitch: 0.20,
-    tYou: 0, tEarth: 0,
-    massKm: 29.5, massLabel: "10 M☉"
-  };
-  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var timeScale = reduceMotion ? 0.12 : 1.0;
-
-  /* ---------- resize ---------- */
-  function resize(){
-    var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    var w = canvas.clientWidth, h = canvas.clientHeight;
-    var scale = Math.min(1, Math.sqrt(1200000/(w*h*dpr*dpr)));
-    canvas.width  = Math.max(1, Math.round(w*dpr*scale));
-    canvas.height = Math.max(1, Math.round(h*dpr*scale));
-    gl.viewport(0, 0, canvas.width, canvas.height);
-  }
-  window.addEventListener("resize", resize);
-  resize();
-
-  /* ---------- input ---------- */
-  var dragging = false, lastX = 0, lastY = 0;
-  canvas.addEventListener("pointerdown", function(e){
-    dragging = true; lastX = e.clientX; lastY = e.clientY;
-    canvas.classList.add("dragging");
-    canvas.setPointerCapture(e.pointerId);
-  });
-  window.addEventListener("pointerup", function(){ dragging = false; canvas.classList.remove("dragging"); });
-  window.addEventListener("pointermove", function(e){
-    if (!dragging) return;
-    state.yaw   += (e.clientX - lastX) * 0.005;
-    state.pitch += (e.clientY - lastY) * 0.004;
-    state.pitch = Math.max(-1.25, Math.min(1.25, state.pitch));
-    lastX = e.clientX; lastY = e.clientY;
-  });
-  canvas.addEventListener("wheel", function(e){
-    e.preventDefault();
-    setR(state.r * Math.exp(e.deltaY * 0.0012));
-  }, {passive:false});
-
-  var slider = document.getElementById("dist");
-  function sliderToR(s){ return RMIN * Math.pow(RMAX/RMIN, s/1000); }
-  function rToSlider(r){ return Math.round(1000 * Math.log(r/RMIN)/Math.log(RMAX/RMIN)); }
-  slider.addEventListener("input", function(){ setR(sliderToR(+slider.value), true); });
-
-  function setR(r, fromSlider){
-    state.r = Math.max(RMIN, Math.min(RMAX, r));
-    if (!fromSlider) slider.value = rToSlider(state.r);
-    updateReadouts();
-  }
-
-  /* ---------- mass presets ---------- */
-  var MASSES = {
-    stellar: {km: 29.5,      label: "10 M☉"},
-    sgra:    {km: 1.22e7,    label: "Sgr A*"},
-    m87:     {km: 1.92e10,   label: "M87*"}
-  };
-  var segBtns = document.querySelectorAll(".seg button");
-  segBtns.forEach(function(b){
-    b.addEventListener("click", function(){
-      segBtns.forEach(function(x){ x.classList.remove("on"); });
-      b.classList.add("on");
-      var m = MASSES[b.dataset.m];
-      state.massKm = m.km; state.massLabel = m.label;
-      updateReadouts();
-    });
+  /* ---------- trail ---------- */
+  var trailEl = document.getElementById("trail");
+  TRACK.forEach(function(m, i){
+    var a = document.createElement(m.href ? "a" : "div");
+    a.className = "trail-node " + (m.status==="ready" ? (i===0?"done":"now") : "");
+    if (m.href) a.href = m.href;
+    a.style.textDecoration = "none"; a.style.color = "inherit";
+    a.innerHTML = '<span class="trail-line" aria-hidden="true"></span>'
+      + '<span class="trail-dot"></span>'
+      + '<span class="trail-label">' + (i+1) + ' · ' + m.title + (m.titleEm||'') + '</span>';
+    trailEl.appendChild(a);
   });
 
-  /* ---------- readouts ---------- */
-  var elR = document.getElementById("rVal"), elKm = document.getElementById("kmVal");
-  var elZone = document.getElementById("zone"), elFactor = document.getElementById("factor");
-  var elFar = document.getElementById("farMin");
-  var fmt1 = function(x){ return x.toFixed(x < 10 ? 2 : 1).replace(".", ","); };
-
-  function fmtKm(km){
-    if (km >= 1.496e8) return (km/1.496e8).toFixed(1).replace(".", ",") + " UA";
-    if (km >= 1e6) return (km/1e6).toFixed(1).replace(".", ",") + " milhões de km";
-    return Math.round(km).toLocaleString("pt-BR") + " km";
-  }
-  function dilationFactor(){ return Math.sqrt(1 - 1/state.r); }
-
-  function updateReadouts(){
-    elR.textContent = "r = " + fmt1(state.r) + " r_s";
-    elKm.textContent = fmtKm(state.r * state.massKm) + " do centro (" + state.massLabel + ")";
-    var f = dilationFactor();
-    var ratio = 1/f;
-    elFactor.textContent = "×" + fmt1(ratio);
-    var totalS = 60*ratio;
-    var mm = Math.floor(totalS/60), ss = Math.round(totalS - mm*60);
-    if (ss === 60){ mm++; ss = 0; }
-    elFar.textContent = (mm > 0 ? mm + " min " : "") + String(ss).padStart(2,"0") + " s";
-    elZone.classList.remove("warn","mid");
-    if (state.r < 1.5){ elZone.textContent = "dentro da esfera de fótons"; elZone.classList.add("warn"); }
-    else if (state.r < 3){ elZone.textContent = "abaixo da ISCO — órbita instável"; elZone.classList.add("mid"); }
-    else { elZone.textContent = "órbita estável possível"; }
+  /* ---------- cards ---------- */
+  function cardHTML(m){
+    var badge = m.status==="ready"
+      ? '<span class="card-badge ready">aberta</span>'
+      : '<span class="card-badge soon">em construção</span>';
+    var titleHTML = m.title + (m.titleEm ? '<em>'+m.titleEm+'</em>' : '');
+    var hookIcon = m.status==="ready"
+      ? '<svg viewBox="0 0 12 12" fill="none"><path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      : '<svg viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.3" stroke="currentColor" stroke-width="1.3"/></svg>';
+    return ''
+      + '<div class="card-scene"><canvas data-scene="'+m.scene+'"></canvas>'+badge+'</div>'
+      + '<div class="card-body">'
+      + '<div class="card-eyebrow">'+m.eyebrow+'</div>'
+      + '<h3>'+titleHTML+'</h3>'
+      + '<p>'+m.desc+'</p>'
+      + '<div class="hook">'+hookIcon+' '+m.hook+'</div>'
+      + '</div>';
   }
 
-  /* ---------- clocks ---------- */
-  var handYou = document.getElementById("handYou"), handEarth = document.getElementById("handEarth");
-  var tYouEl = document.getElementById("tYou"), tEarthEl = document.getElementById("tEarth");
-  document.getElementById("reset").addEventListener("click", function(){ state.tYou = 0; state.tEarth = 0; });
-
-  function fmtClock(t){
-    var mm = Math.floor(t/60), ss = t - mm*60;
-    return String(mm).padStart(2,"0") + ":" + (ss < 10 ? "0" : "") + ss.toFixed(1).replace(".", ",");
-  }
-  function updateClocks(dt){
-    var f = dilationFactor();
-    state.tYou += dt;
-    state.tEarth += dt/f;
-    handYou.setAttribute("transform", "rotate(" + (state.tYou*6 % 360) + " 26 26)");
-    handEarth.setAttribute("transform", "rotate(" + (state.tEarth*6 % 360) + " 26 26)");
-    tYouEl.textContent = fmtClock(state.tYou);
-    tEarthEl.textContent = fmtClock(state.tEarth);
-  }
-
-  /* ---------- info panel ---------- */
-  var infoBtn = document.getElementById("infoBtn"), info = document.getElementById("info");
-  var infoBtnLabel = document.getElementById("infoBtnLabel");
-  function stopInfoPulse(){ infoBtn.classList.add("seen"); }
-  infoBtn.addEventListener("click", function(){
-    var open = info.classList.toggle("open");
-    info.setAttribute("aria-hidden", String(!open));
-    infoBtn.setAttribute("aria-expanded", String(open));
-    infoBtnLabel.textContent = open ? "fechar" : "entenda a física";
-    stopInfoPulse();
+  var openGrid = document.getElementById("openGrid"), soonGrid = document.getElementById("soonGrid");
+  var openCount = 0, soonCount = 0;
+  MODULES.forEach(function(m){
+    var el = document.createElement(m.href ? "a" : "div");
+    el.className = "card" + (m.status!=="ready" ? " locked" : "");
+    if (m.href){ el.href = m.href; }
+    else { el.setAttribute("tabindex","0"); el.setAttribute("role","group"); el.setAttribute("aria-label", m.title+(m.titleEm||'')+" — em construção"); }
+    el.innerHTML = cardHTML(m);
+    if (m.status==="ready"){ openGrid.appendChild(el); openCount++; }
+    else { soonGrid.appendChild(el); soonCount++; }
   });
+  document.getElementById("openCount").textContent = openCount + (openCount===1?" sala":" salas");
+  document.getElementById("soonCount").textContent = soonCount + (soonCount===1?" sala":" salas");
 
-  /* ---------- welcome overlay (first visit) ---------- */
-  var welcome = document.getElementById("welcome");
-  var WKEY = "fisicavisual_horizonte_seen";
-  try{
-    if (localStorage.getItem(WKEY)) welcome.classList.add("hidden");
-  } catch(e){}
-  function dismissWelcome(remember){
-    welcome.classList.add("hidden");
-    if (remember){ try{ localStorage.setItem(WKEY, "1"); } catch(e){} }
-  }
-  document.getElementById("welcomeGo").addEventListener("click", function(){ dismissWelcome(true); });
-  document.getElementById("welcomeSkip").addEventListener("click", function(){ dismissWelcome(true); });
-  welcome.addEventListener("click", function(e){ if (e.target === welcome) dismissWelcome(true); });
-  document.addEventListener("keydown", function(e){
-    if (e.key === "Escape" && !welcome.classList.contains("hidden")) dismissWelcome(true);
-  });
+  /* ---------- background starfield (canvas2d, cheap) ---------- */
+  (function(){
+    var c = document.getElementById("stars");
+    var ctx = c.getContext("2d");
+    var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var stars = [];
+    function resize(){
+      c.width = innerWidth * Math.min(devicePixelRatio,1.5);
+      c.height = innerHeight * Math.min(devicePixelRatio,1.5);
+      c.style.width = innerWidth+"px"; c.style.height = innerHeight+"px";
+      var n = Math.floor((innerWidth*innerHeight)/9000);
+      stars = [];
+      for (var i=0;i<n;i++){
+        stars.push({
+          x: Math.random()*c.width, y: Math.random()*c.height,
+          r: Math.random()*1.3 + 0.25,
+          p: Math.random()*Math.PI*2,
+          s: Math.random()*0.015 + 0.006
+        });
+      }
+    }
+    window.addEventListener("resize", resize);
+    resize();
+    function draw(t){
+      ctx.clearRect(0,0,c.width,c.height);
+      for (var i=0;i<stars.length;i++){
+        var st = stars[i];
+        var tw = reduceMotion ? 0.7 : 0.55 + 0.45*Math.sin(st.p + t*st.s*60);
+        ctx.globalAlpha = tw*0.85;
+        ctx.fillStyle = "#EDEAE2";
+        ctx.beginPath();
+        ctx.arc(st.x, st.y, st.r*Math.min(devicePixelRatio,1.5), 0, 7);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      if (!reduceMotion) requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+  })();
 
-  /* ---------- loop ---------- */
-  var simTime = 0, last = performance.now();
-  function frame(now){
-    var dt = Math.min((now - last)/1000, 0.1);
-    last = now;
-    simTime += dt * timeScale;
-    updateClocks(dt);
-    gl.uniform2f(U.uRes, canvas.width, canvas.height);
-    gl.uniform1f(U.uTime, simTime);
-    gl.uniform1f(U.uDist, state.r);
-    gl.uniform1f(U.uYaw, state.yaw);
-    gl.uniform1f(U.uPitch, state.pitch);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-    requestAnimationFrame(frame);
+  /* ---------- tiny card scenes (canvas2d, ambient, cheap) ---------- */
+  function initScene(canvas, kind){
+    var ctx = canvas.getContext("2d");
+    var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var w,h,dpr;
+    function resize(){
+      dpr = Math.min(devicePixelRatio,1.5);
+      w = canvas.clientWidth; h = canvas.clientHeight;
+      canvas.width = w*dpr; canvas.height = h*dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    var goldC = getComputedStyle(document.documentElement).getPropertyValue('--gold').trim() || "#D4A85C";
+    var plasmaC = getComputedStyle(document.documentElement).getPropertyValue('--plasma').trim() || "#6FA8C7";
+
+    function blackhole(t){
+      ctx.clearRect(0,0,w,h);
+      var cx=w*0.55, cy=h*0.55, r=Math.min(w,h)*0.16;
+      var grad = ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r*2.4);
+      grad.addColorStop(0, goldC+"cc"); grad.addColorStop(0.35, goldC+"33"); grad.addColorStop(1,"transparent");
+      ctx.save();
+      ctx.translate(cx,cy); ctx.rotate(0.5);
+      for (var ring=0; ring<2; ring++){
+        ctx.beginPath();
+        ctx.ellipse(0,0, r*(2.1+ring*0.5), r*(0.5+ring*0.12), 0, 0, Math.PI*2);
+        ctx.strokeStyle = goldC + (ring===0?"aa":"55");
+        ctx.lineWidth = 2-ring*0.7;
+        ctx.stroke();
+      }
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.fillStyle = "#020207"; ctx.fill();
+    }
+
+    var slitPhase = 0;
+    function doubleslit(t){
+      ctx.clearRect(0,0,w,h);
+      var midX = w*0.42;
+      ctx.strokeStyle = plasmaC+"55"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(midX,0); ctx.lineTo(midX,h*0.38); ctx.moveTo(midX,h*0.46); ctx.lineTo(midX,h*0.54); ctx.moveTo(midX,h*0.62); ctx.lineTo(midX,h); ctx.stroke();
+      for (var i=0;i<26;i++){
+        var ph = (t*0.4 + i*0.31) % 1;
+        var x = midX*0.15 + ph*(w-midX*0.15);
+        var yy = h*0.5 + Math.sin(i*12.9)*h*0.06;
+        var past = x > midX;
+        var yy2 = past ? h*0.5 + (Math.sin(i*7.7+i)*h*0.32) * Math.min(1,(x-midX)/(w-midX)) : yy;
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = plasmaC;
+        ctx.beginPath(); ctx.arc(x, past?yy2:yy, 1.6, 0, 7); ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    }
+
+    function strings(t){
+      ctx.clearRect(0,0,w,h);
+      ctx.strokeStyle = goldC+"cc"; ctx.lineWidth=1.6;
+      ctx.beginPath();
+      for (var x=0;x<=w;x+=4){
+        var y = h/2 + Math.sin(x*0.05 + t*1.6)*h*0.22*Math.sin(x/w*Math.PI);
+        if (x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+    function lightspeed(t){
+      ctx.clearRect(0,0,w,h);
+      var cx=w/2, cy=h/2;
+      for (var i=0;i<40;i++){
+        var a = i*0.42 + t*0.3;
+        var rr = ((i*13 + t*90) % Math.max(w,h));
+        var x = cx + Math.cos(a)*rr, y = cy + Math.sin(a)*rr*0.6;
+        ctx.globalAlpha = Math.max(0, 1-rr/Math.max(w,h));
+        ctx.fillStyle = plasmaC;
+        ctx.beginPath(); ctx.arc(x,y,1.3,0,7); ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    }
+    function gravwaves(t){
+      ctx.clearRect(0,0,w,h);
+      var cx=w/2, cy=h/2;
+      ctx.strokeStyle = goldC+"66";
+      for (var i=1;i<=5;i++){
+        var r = (i*14 + (t*22)%14);
+        ctx.globalAlpha = 1-(i/6);
+        ctx.beginPath(); ctx.ellipse(cx,cy,r*1.4,r*0.6,0.4,0,Math.PI*2); ctx.stroke();
+      }
+      ctx.globalAlpha=1;
+    }
+
+    var flightOrbits = [
+      {r:0.22, speed:0.9,  size:1.1, color:"#9fbfff"},
+      {r:0.30, speed:0.65, size:1.5, color:plasmaC},
+      {r:0.38, speed:0.48, size:1.3, color:goldC},
+      {r:0.46, speed:0.34, size:1.0, color:"#ff8064"}
+    ];
+    function spaceflight(t){
+      ctx.clearRect(0,0,w,h);
+      var cx=w*0.5, cy=h*0.52, base=Math.min(w,h);
+      var sunR = base*0.07;
+      var grad = ctx.createRadialGradient(cx,cy,0,cx,cy,sunR*3);
+      grad.addColorStop(0, goldC+"ee"); grad.addColorStop(0.4, goldC+"55"); grad.addColorStop(1,"transparent");
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(cx,cy,sunR*3,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = goldC;
+      ctx.beginPath(); ctx.arc(cx,cy,sunR,0,Math.PI*2); ctx.fill();
+      flightOrbits.forEach(function(o){
+        var rr = base*o.r;
+        ctx.strokeStyle = plasmaC+"22"; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.ellipse(cx,cy,rr,rr*0.42,0.28,0,Math.PI*2); ctx.stroke();
+        var a = t*o.speed;
+        var ex = cx + Math.cos(a)*rr*Math.cos(0.28) - Math.sin(a)*rr*0.42*Math.sin(0.28);
+        var ey = cy + Math.cos(a)*rr*Math.sin(0.28) + Math.sin(a)*rr*0.42*Math.cos(0.28);
+        ctx.fillStyle = o.color;
+        ctx.beginPath(); ctx.arc(ex,ey,o.size,0,Math.PI*2); ctx.fill();
+      });
+    }
+
+    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight};
+    var fn = fns[kind] || function(){};
+    var t0 = performance.now();
+    function loop(now){
+      fn((now-t0)/1000);
+      if (!reduceMotion) requestAnimationFrame(loop);
+    }
+    if (reduceMotion){ fn(0.6); } else { requestAnimationFrame(loop); }
   }
-  setR(6.0);
-  requestAnimationFrame(frame);
+
+  document.querySelectorAll("[data-scene]").forEach(function(c){ initScene(c, c.dataset.scene); });
 })();
 </script>

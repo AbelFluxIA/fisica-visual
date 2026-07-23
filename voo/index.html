@@ -155,6 +155,36 @@ canvas{display:block;}
 #welcome .skip:hover{color:var(--text);}
 #welcome .skip:focus-visible{outline:2px solid var(--gold);}
 
+/* ---------- Big Bang moment (special one-time marker at the cosmic-layer travel limit) ---------- */
+#bigBangMoment{
+  position:fixed;inset:0;z-index:22;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center, rgba(255,243,214,0.22), rgba(2,2,7,0.72));
+  backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);padding:24px;
+}
+#bigBangMoment.show{display:flex;}
+#bigBangMoment .card{
+  max-width:440px;width:100%;padding:30px 32px 26px;text-align:left;
+  animation:welcomeIn .6s cubic-bezier(.2,.8,.2,1);
+  border-color:rgba(255,224,150,0.4);
+}
+#bigBangMoment .eyebrow{color:var(--gold-bright);}
+#bigBangMoment h2{font-family:var(--serif-it);font-style:italic;font-weight:500;font-size:30px;margin:10px 0 14px;color:#fff3d6;text-shadow:0 0 20px rgba(255,224,150,0.5);}
+#bigBangMoment p{font-size:14px;line-height:1.6;color:var(--text);margin:0 0 12px;}
+#bigBangMoment p.dim{color:var(--dim);font-size:12.5px;}
+#bigBangMoment .actions{display:flex;align-items:center;gap:14px;margin-top:6px;flex-wrap:wrap;}
+#bigBangMoment .go{
+  background:var(--plasma);border:none;border-radius:8px;color:var(--bg);font-family:var(--mono);
+  font-size:12.5px;font-weight:600;letter-spacing:0.03em;padding:11px 20px;cursor:pointer;
+}
+#bigBangMoment .go:hover{background:var(--plasma-bright);}
+#bigBangMoment .go:focus-visible{outline:2px solid var(--text);outline-offset:2px;}
+#bigBangMoment .skip{
+  background:transparent;border:none;color:var(--dim);font-family:var(--mono);font-size:11.5px;
+  cursor:pointer;text-decoration:underline;text-underline-offset:3px;
+}
+#bigBangMoment .skip:hover{color:var(--text);}
+#bigBangMoment .skip:focus-visible{outline:2px solid var(--gold);}
+
 /* ---------- field notebook ---------- */
 #info{
   top:60px;right:16px;bottom:16px;width:min(400px,calc(100vw - 32px));
@@ -187,6 +217,23 @@ canvas{display:block;}
 #hud .near{font-size:11px;color:var(--dim);white-space:nowrap;max-width:34vw;overflow:hidden;text-overflow:ellipsis;}
 #hud .near b{color:var(--plasma-bright);}
 
+/* ---------- lookback-time readout (cosmic layer only) ----------
+   Hidden by default; appears once the camera crosses into the galactic
+   layer's outer half and grows more prominent (see .bigbang) right at
+   the Big Bang moment. Deliberately styled like an instrument reading,
+   not a headline — the drama comes from the number and the scene, not
+   from shouting UI. */
+#lookbackHud{
+  top:64px;left:50%;transform:translateX(-50%) translateY(-6px);
+  padding:6px 16px;z-index:5;text-align:center;pointer-events:none;
+  opacity:0;transition:opacity .5s ease, transform .5s ease;
+}
+#lookbackHud.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#lookbackHud .eyebrow{display:block;font-size:9px;margin-bottom:2px;}
+#lookbackHud b{font-family:var(--mono);font-size:13px;color:var(--gold-bright);letter-spacing:0.02em;}
+#lookbackHud.bigbang{background:rgba(255,243,214,0.16);border-color:rgba(255,224,150,0.55);}
+#lookbackHud.bigbang b{color:#fff3d6;text-shadow:0 0 12px rgba(255,224,150,0.8);}
+
 #speedo{
   bottom:16px;right:16px;padding:11px 15px;z-index:5;
   font-family:var(--mono);text-align:right;min-width:150px;pointer-events:none;
@@ -203,6 +250,32 @@ canvas{display:block;}
 }
 #ctlHint b{color:var(--gold-bright);font-weight:600;}
 #ctlHint.hidden{display:none;}
+
+/* ---------- navigation HUD: "GPS" — radar + panic-button recenter ----------
+   Reported pain point: "eu literalmente me perdi". This stays visible at
+   all times (unlike ctlHint, which hides on mobile) as a permanent, low-key
+   orientation aid: a small top-down radar of nearby bodies relative to the
+   camera, plus a one-click way back to a known reference view. */
+#navHud{
+  top:186px;left:16px;padding:10px 12px 12px;z-index:5;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+#navHead{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%;}
+#navHere{
+  font-family:var(--mono);font-size:9.5px;color:var(--dim);letter-spacing:0.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+}
+#navHere b{color:var(--plasma-bright);font-weight:600;}
+#navHome{
+  display:flex;align-items:center;gap:5px;background:rgba(212,168,92,0.12);
+  border:1px solid rgba(212,168,92,0.4);border-radius:20px;color:var(--gold-bright);
+  font-family:var(--mono);font-size:10px;letter-spacing:0.02em;padding:5px 10px;cursor:pointer;
+  white-space:nowrap;
+}
+#navHome svg{width:10px;height:10px;flex-shrink:0;}
+#navHome:hover{background:rgba(212,168,92,0.2);}
+#navHome:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+#radar{display:block;border-radius:50%;background:radial-gradient(circle,rgba(111,168,199,0.08),rgba(2,2,7,0.5) 70%);}
 
 /* ---------- POI marker + card ---------- */
 .poi-marker{
@@ -243,6 +316,30 @@ canvas{display:block;}
   font-family:var(--mono);font-size:11px;padding:9px 12px;cursor:pointer;
 }
 #poiCard .close:hover{color:var(--text);}
+
+/* ---------- orbit panel (expanded curiosities shown during "exploration
+   orbit" mode) — same visual family as #poiCard but roomier, since it
+   carries more facts and is meant to be read at leisure while the
+   camera slowly circles the object rather than mid-flight ---------- */
+#orbitPanel{
+  top:76px;right:16px;bottom:auto;
+  width:min(320px,calc(100vw - 32px));max-height:calc(100vh - 108px);
+  padding:16px 20px 18px;z-index:7;display:none;overflow-y:auto;
+}
+#orbitPanel.open{display:block;}
+#orbitPanel .eyebrow{color:var(--gold);}
+#orbitPanel h3{font-family:var(--serif-it);font-style:italic;font-weight:500;font-size:22px;margin:6px 0 10px;color:var(--gold-bright);}
+#orbitPanel .facts{display:flex;flex-direction:column;gap:8px;margin:0 0 14px;}
+#orbitPanel .facts div{font-size:12.5px;line-height:1.5;color:var(--text);}
+#orbitPanel .facts b{display:block;color:var(--plasma-bright);font-family:var(--mono);font-weight:600;font-size:10px;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:1px;}
+#orbitPanel .prose{font-size:12.5px;line-height:1.58;color:var(--dim);margin:0 0 14px;}
+#orbitPanel .actions{display:flex;gap:8px;}
+#orbitPanel .close{
+  flex:1;background:rgba(212,168,92,0.12);border:1px solid rgba(212,168,92,0.4);border-radius:7px;color:var(--gold-bright);
+  font-family:var(--mono);font-size:11px;letter-spacing:0.02em;padding:10px 12px;cursor:pointer;text-align:center;
+}
+#orbitPanel .close:hover{background:rgba(212,168,92,0.2);}
+#orbitPanel .close:focus-visible{outline:2px solid var(--gold);}
 
 /* ---------- loading ---------- */
 #loading{
@@ -293,6 +390,117 @@ canvas{display:block;}
   #poiCard{bottom:150px;width:calc(100vw - 24px);}
   #speedo{bottom:160px;}
 }
+
+/* ---------- small phones: the HUD must never dominate the 3D scene ----------
+   Below ~640px every panel that was designed for desktop real estate gets
+   reduced to its essential signal only: icons over labels, numbers over
+   prose, and generous use of `display:none` on anything secondary. The
+   goal is that on a 375px-wide screen the canvas — not the chrome — is
+   still what your eye lands on. */
+@media (max-width:640px){
+  /* top-left back link: icon + short word, pulled in tight */
+  #backlink{top:10px;left:10px;padding:6px 10px;font-size:9.5px;gap:4px;}
+  #backlink svg{width:9px;height:9px;}
+
+  /* title card: shrink hard and move out of the way of the top bar */
+  #hdr{top:44px;left:10px;max-width:132px;padding:7px 10px 6px;border-radius:8px;}
+  #hdr .eyebrow{font-size:8px;letter-spacing:0.12em;}
+  #hdr h1{font-size:15px;margin:2px 0 0;line-height:1.05;}
+
+  /* info ("entenda a física") button: icon-only pill, no label, so it
+     can't collide with the scale/HUD bar on narrow screens */
+  #infoBtn{top:10px;right:10px;padding:8px;border-radius:50%;gap:0;}
+  #infoBtn #infoBtnLabel{display:none;}
+  #infoBtn svg{width:13px;height:13px;}
+
+  /* scale/nearest-object HUD: drop to a slim single-purpose strip below
+     the top button row instead of overlapping it, hide the secondary
+     "nearest object" readout entirely (it's still available via the
+     radar + poi markers) to keep this a one-line glance, not a panel */
+  #hud{
+    top:52px;left:50%;transform:translateX(-50%);
+    padding:5px 10px;gap:6px;max-width:calc(100vw - 76px);
+    border-radius:20px;
+  }
+  #lookbackHud{top:84px;padding:5px 12px;}
+  #lookbackHud .eyebrow{font-size:8px;}
+  #lookbackHud b{font-size:11px;}
+  #hud .layer{font-size:9.5px;}
+  #hud .near{display:none;}
+  #hud .sep{display:none;}
+
+  #speedo{bottom:96px;right:8px;padding:6px 9px;min-width:0;border-radius:8px;}
+  #speedo .lbl{font-size:7.5px;letter-spacing:0.08em;}
+  #speedo .val{font-size:12px;margin-top:1px;}
+  #speedo .bar{margin-top:4px;width:64px;}
+
+  #poiCard{bottom:96px;width:calc(100vw - 20px);padding:12px 14px 14px;left:50%;}
+  #poiCard h3{font-size:17px;margin:4px 0 6px;}
+  #poiCard .facts{gap:3px;margin:0 0 9px;}
+  #poiCard .facts div{font-size:11px;}
+  #poiCard .prose{font-size:11.5px;margin:0 0 9px;}
+
+  #orbitPanel{top:auto;bottom:96px;left:50%;right:auto;transform:translateX(-50%);width:calc(100vw - 20px);max-height:56vh;padding:12px 14px 14px;}
+  #orbitPanel h3{font-size:18px;margin:4px 0 8px;}
+  #orbitPanel .facts{gap:6px;margin:0 0 11px;}
+  #orbitPanel .facts div{font-size:11.5px;}
+  #orbitPanel .prose{font-size:11.5px;margin:0 0 11px;}
+
+  #welcome{padding:14px;}
+  #welcome .card{padding:18px 16px 16px;max-height:calc(100vh - 28px);}
+  #welcome h2{font-size:18px;margin:8px 0 10px;}
+  #welcome ol{gap:7px;margin:11px 0 15px;}
+  #welcome ol li{font-size:12px;}
+
+  /* touch controls: smaller stick/buttons so they read as controller
+     affordances at the screen edge, not oversized UI eating the scene */
+  .tstick{width:82px;height:82px;bottom:14px;left:14px;}
+  .tstick .knob{width:34px;height:34px;top:24px;left:24px;}
+  .tvert{bottom:14px;right:14px;gap:6px;}
+  .tbtn{width:40px;height:40px;font-size:13px;}
+  .tlook{width:42vw;height:52vh;}
+
+  /* nav/GPS HUD: shrink and tuck under the header card; radar itself
+     shrinks too so it reads as a compact instrument, not a panel */
+  #navHud{top:auto;bottom:112px;left:8px;padding:7px 8px 8px;gap:5px;}
+  #navHere{font-size:8px;max-width:96px;}
+  #navHome{padding:4px 8px;font-size:9px;gap:3px;}
+  #navHome svg{width:8px;height:8px;}
+  #radar{width:64px;height:64px;}
+}
+
+/* ---------- smallest phones (iPhone SE and similar ~375px or less) ----------
+   One more notch down: collapse the title card to a single line and stop
+   showing full sentences anywhere in the permanent chrome. */
+@media (max-width:420px){
+  #hdr{max-width:112px;padding:6px 8px 5px;top:42px;}
+  #hdr .eyebrow{display:none;}
+  #hdr h1{font-size:13px;}
+
+  #hud{top:46px;padding:4px 9px;max-width:calc(100vw - 64px);}
+  #hud .layer{font-size:8.5px;letter-spacing:0.03em;}
+
+  #backlink{padding:5px 8px;font-size:0;gap:0;}
+  #backlink svg{width:9px;height:9px;}
+
+  #infoBtn{padding:7px;}
+
+  #speedo{bottom:88px;padding:5px 8px;}
+  #speedo .val{font-size:11px;}
+  #speedo .bar{width:52px;}
+
+  #poiCard{bottom:88px;padding:10px 12px 12px;}
+  #poiCard h3{font-size:15px;}
+
+  .tstick{width:72px;height:72px;bottom:10px;left:10px;}
+  .tstick .knob{width:30px;height:30px;top:21px;left:21px;}
+  .tvert{bottom:10px;right:10px;}
+  .tbtn{width:36px;height:36px;font-size:12px;}
+
+  #navHud{bottom:98px;left:6px;padding:6px 7px 7px;}
+  #navHere{display:none;}
+  #radar{width:52px;height:52px;}
+}
 @media (prefers-reduced-motion:reduce){
   *{transition:none !important;}
   #infoBtn .pulse{animation:none;display:none;}
@@ -300,7 +508,7 @@ canvas{display:block;}
 }
 </style>
 
-<a id="backlink" href="../"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>observatório</a>
+<a id="backlink" href="/salas/"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>outras salas</a>
 
 <canvas id="scene" aria-label="Cena 3D navegável do sistema solar, vizinhança estelar e escala galáctica."></canvas>
 
@@ -318,6 +526,11 @@ canvas{display:block;}
   <span class="near">mais próximo: <b id="nearName">Sol</b></span>
 </div>
 
+<div id="lookbackHud" class="panel" aria-live="polite">
+  <span class="eyebrow">você está vendo luz de</span>
+  <b id="lookbackVal">agora</b>
+</div>
+
 <div id="speedo" class="panel">
   <div class="lbl">velocidade de voo</div>
   <div class="val" id="speedVal">0 un/s</div>
@@ -327,6 +540,17 @@ canvas{display:block;}
 <div id="ctlHint" class="panel">
   <b>WASD/setas</b> mover · <b>mouse</b> (arraste) olhar · <b>scroll</b> acelerar/desacelerar<br>
   <b>Q/E</b> subir/descer · <b>espaço</b> parar · clique num marcador para saber mais
+</div>
+
+<div id="navHud" class="panel">
+  <div id="navHead">
+    <span id="navHere">você está perto de: <b id="navNearest">Sol</b></span>
+    <button id="navHome" type="button" aria-label="Recentralizar — voltar para uma vista geral do sistema solar">
+      <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7L7 2.5 12 7M3.5 5.8V11.5h7V5.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      recentralizar
+    </button>
+  </div>
+  <canvas id="radar" width="104" height="104" aria-label="Radar: sua posição relativa ao Sol e aos planetas próximos"></canvas>
 </div>
 
 <div id="touchCtl">
@@ -349,6 +573,16 @@ canvas{display:block;}
   </div>
 </div>
 
+<div id="orbitPanel" class="panel" role="dialog" aria-labelledby="orbitName">
+  <span class="eyebrow" id="orbitEyebrow">Órbita de exploração</span>
+  <h3 id="orbitName">—</h3>
+  <div class="facts" id="orbitFacts"></div>
+  <p class="prose" id="orbitProse"></p>
+  <div class="actions">
+    <button class="close" id="orbitLeave">sair da órbita · continuar voo livre</button>
+  </div>
+</div>
+
 <div id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
   <div class="card panel">
     <span class="eyebrow">Exploração livre · Voo espacial</span>
@@ -357,7 +591,8 @@ canvas{display:block;}
     <ol>
       <li><b>WASD</b> (ou setas) move a nave; arraste o <b>mouse</b> para olhar ao redor; o <b>scroll</b> acelera ou freia — em celular, use o manche virtual no canto.</li>
       <li>Marcadores dourados são <b>pontos de interesse</b>. Clique num deles para ver fatos reais e viajar até lá com a câmera.</li>
-      <li>Ao se afastar bastante, a cena troca de camada de escala sozinha — observe o indicador no topo mudar de "Sistema Solar" para "vizinhança estelar" e depois "escala galáctica".</li>
+      <li>Ao se afastar bastante, a cena troca de camada de escala sozinha — observe o indicador no topo mudar de "Sistema Solar" para "vizinhança estelar", depois "escala galáctica" e, no limite, uma dramatização visual do próprio Big Bang.</li>
+      <li>Perdido? O radar no canto e o botão <b>"recentralizar"</b> sempre te trazem de volta a uma vista geral do sistema solar.</li>
       <li>Toque em <b>"entenda a física"</b> para ver o que aqui é real (texturas, tamanhos) e o que é artisticamente comprimido ou estilizado (distâncias, estrelas, galáxias).</li>
     </ol>
     <div class="actions">
@@ -368,14 +603,17 @@ canvas{display:block;}
 </div>
 
 <aside id="info" class="panel" aria-hidden="true">
-  <h2>Três camadas, um único voo contínuo</h2>
-  <p>O sistema solar, as estrelas vizinhas e as galáxias distantes existem em escalas cuja diferença chega a <b>trilhões de vezes</b>. Não dá para desenhar isso tudo num só espaço com unidades reais — ou os planetas somem quando você se afasta, ou os erros de arredondamento do computador quebram a cena em distâncias grandes. A solução usada aqui, inspirada em documentários como <i>Cosmic Eye</i> e no <i>Eyes on the Solar System</i> da NASA/JPL: três "camadas" independentes, cada uma centrada na mesma origem, que aparecem e desaparecem em transição suave conforme você se afasta — nunca um corte abrupto, sempre a sensação de que o mesmo voo continua.</p>
+  <h2>Quatro camadas, um único voo contínuo</h2>
+  <p>O sistema solar, as estrelas vizinhas, as galáxias distantes e a própria escala cosmológica existem em escalas cuja diferença chega a <b>trilhões de vezes</b>. Não dá para desenhar isso tudo num só espaço com unidades reais — ou os planetas somem quando você se afasta, ou os erros de arredondamento do computador quebram a cena em distâncias grandes. A solução usada aqui, inspirada em documentários como <i>Cosmic Eye</i> e no <i>Eyes on the Solar System</i> da NASA/JPL: quatro "camadas" independentes, cada uma centrada na mesma origem, que aparecem e desaparecem em transição suave conforme você se afasta — nunca um corte abrupto, sempre a sensação de que o mesmo voo continua.</p>
   <h2>O Sistema Solar: brinquedo fiel nas proporções, livre nas distâncias</h2>
   <p>Os tamanhos relativos entre o Sol, os planetas e a Lua são <b>proporcionais de verdade</b> (numa escala comprimida para caber na tela, mas a razão entre eles é real). As <b>distâncias</b>, porém, foram artisticamente encurtadas — se fossem reais, a Terra estaria a milhares de raios solares do Sol e a viagem entre planetas seria, na prática, horas de vazio absoluto. Comprimimos o espaço vazio para que voar de um planeta a outro seja interessante, não tedioso.</p>
   <h2>Vizinhança estelar e escala galáctica: arte que comunica escala</h2>
   <p>Ao se afastar do sistema solar, você entra num campo de estrelas distribuídas proceduralmente (não são constelações reais) coloridas por classe espectral simplificada — azuis e brancas quentes, amarelas como o Sol, vermelhas frias — e nebulosas de gradiente que existem para dar sensação de profundidade e cor, não para representar uma nebulosa específica. Mais além, a camada galáctica mostra uma Via Láctea estilizada e outras "galáxias" simplificadas como manchas espirais distantes. Nada disso é um catálogo astronômico: é uma metáfora visual da imensidão.</p>
+  <h2>A camada cosmológica: uma dramatização explícita da "viagem no tempo"</h2>
+  <p>Se afastar ainda mais, além da escala galáctica, leva a uma quarta camada onde a cena muda de aparência: menos galáxias visíveis, tons cada vez mais quentes e densos, até um brilho intenso no limite máximo de distância — uma representação estilizada do Big Bang. O HUD mostra um número crescente de "bilhões de anos atrás" conforme você se afasta, terminando em 13,8 bilhões de anos, a idade real do universo.</p>
+  <p class="note"><b>Isto é uma dramatização, não uma simulação.</b> A ideia real por trás dela — luz que demorou para chegar até nós é, por definição, mais antiga — é verdadeira: quanto mais distante um objeto, mais "velha" é a luz que vemos dele. Mas na realidade esse efeito é sutil (desvio para o vermelho, mudança gradual de composição do universo observado) e não produz uma "parede de luz branca" nem faz a cor do céu mudar visivelmente conforme você anda alguns quilômetros. Aqui, a transformação visual e o número de "anos atrás" crescendo são uma licença dramática — uma forma de dar corpo e clímax emocional à ideia de profundidade no tempo, não um cálculo físico de como seria essa viagem.</p>
   <h3>Como isso é calculado</h3>
-  <p class="note">As <b>texturas</b> dos planetas, do Sol, da Lua e do céu estelar são reais — mapas de superfície baseados em imagens de sondas e observatórios da NASA, redistribuídos por Solar System Scope. Os <b>tamanhos relativos</b> entre corpos (ex.: Júpiter bem maior que a Terra, que por sua vez é maior que Mercúrio) seguem as proporções reais de raio. As <b>distâncias</b> entre órbitas, a velocidade da nave e o tempo de viagem, porém, são inteiramente artísticos: nesta simulação você atravessa o sistema solar inteiro em segundos a minutos, enquanto numa nave real, na mesma velocidade relativa exibida no velocímetro, a viagem de aqui até o planeta mais distante levaria — se as distâncias fossem as reais do sistema solar (bilhões de km) — muitos anos. O campo estelar, as nebulosas e as galáxias das camadas externas são <b>representações artísticas</b>, não um catálogo de posições reais.</p>
+  <p class="note">As <b>texturas</b> dos planetas, do Sol, da Lua e do céu estelar são reais — mapas de superfície baseados em imagens de sondas e observatórios da NASA, redistribuídos por Solar System Scope. Os <b>tamanhos relativos</b> entre corpos (ex.: Júpiter bem maior que a Terra, que por sua vez é maior que Mercúrio) seguem as proporções reais de raio, assim como as comparações de <b>gravidade e peso</b> mostradas nos cartões de cada corpo. As <b>distâncias</b> entre órbitas, a velocidade da nave e o tempo de viagem, porém, são inteiramente artísticos: nesta simulação você atravessa o sistema solar inteiro em segundos a minutos, enquanto numa nave real, na mesma velocidade relativa exibida no velocímetro, a viagem de aqui até o planeta mais distante levaria — se as distâncias fossem as reais do sistema solar (bilhões de km) — muitos anos. O campo estelar, as nebulosas e as galáxias das camadas externas são <b>representações artísticas</b>, não um catálogo de posições reais. O número de "bilhões de anos atrás" na camada cosmológica é calculado como uma função monotônica e crescente da distância percorrida, calibrada para terminar exatamente nos <b>13,8 bilhões de anos</b> reais da idade do universo no limite máximo de voo — os números finais são cientificamente corretos, mas o mapeamento distância→tempo em si é uma escolha de design, não uma fórmula de cosmologia real.</p>
   <div class="credit">Texturas planetárias e do céu estelar: <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener">Solar System Scope</a>, baseadas em imagens da NASA, licenciadas sob <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</div>
   <h3>O que ainda não sabemos</h3>
   <ul class="qs">
@@ -391,6 +629,19 @@ canvas{display:block;}
   <h2>carregando o cosmos…</h2>
   <div class="bar"><i id="loadBar"></i></div>
   <div class="pct" id="loadPct">0%</div>
+</div>
+
+<div id="bigBangMoment" role="dialog" aria-modal="true" aria-labelledby="bigBangTitle">
+  <div class="card panel">
+    <span class="eyebrow">≈ 13,8 bilhões de anos atrás</span>
+    <h2 id="bigBangTitle">O Big Bang</h2>
+    <p>Você chegou ao limite artístico desta sala: o ponto que, nesta dramatização, representa o início observável do universo — o momento mais antigo para o qual temos qualquer evidência, capturado hoje como a radiação cósmica de fundo.</p>
+    <p class="dim">Isto não é uma simulação literal de "voltar no tempo": é uma estilização visual para dar uma sensação de escala e origem. O painel "entenda a física" explica exatamente onde termina o real e começa a licença artística.</p>
+    <div class="actions">
+      <button class="go" id="bigBangBack">voltar para casa</button>
+      <button class="skip" id="bigBangClose">continuar explorando aqui</button>
+    </div>
+  </div>
 </div>
 
 <script type="importmap">
@@ -435,6 +686,21 @@ var LAYER1_FADE_IN = 260;   // stellar layer starts fading in
 var LAYER1_FULL    = 520;   // solar layer fully faded out, stellar fully in
 var LAYER2_FADE_IN = 1500;  // galactic layer starts fading in
 var LAYER2_FULL    = 3200;  // stellar fully out, galactic fully in
+
+/* ------------------------------------------------------------
+   4th layer — "deep time" / cosmological zone (feature: viagem no
+   tempo ao se afastar). Flying out past the galactic layer stylizes
+   the scene into a younger, denser, hotter-looking early universe,
+   climaxing in an intense glow at COSMIC_LIMIT standing in for the
+   Big Bang itself. This is an explicit DRAMATIZATION, not a literal
+   simulation of looking back through time — spelled out in the field
+   notebook (#info) so nobody mistakes the stylization for the real
+   (real but much subtler) cosmological redshift/lookback-time effect.
+   ------------------------------------------------------------ */
+var LAYER3_FADE_IN = 3800;   // cosmic layer starts blending in over the galactic one
+var LAYER3_FULL    = 5200;   // galactic fully out, cosmic fully in
+var COSMIC_LIMIT    = 8000;  // camera travel limit — the "Big Bang" moment
+var COSMIC_HARD_STOP = 8200; // camera position is clamped here, just past the limit
 
 /* ============================================================
    RENDERER / SCENE / CAMERA
@@ -534,7 +800,8 @@ scene.add(sunLight);
 var solarGroup    = new THREE.Group();
 var stellarGroup  = new THREE.Group();
 var galacticGroup = new THREE.Group();
-scene.add(solarGroup, stellarGroup, galacticGroup);
+var cosmicGroup   = new THREE.Group(); // 4th layer: stylized "deep time" / early-universe zone
+scene.add(solarGroup, stellarGroup, galacticGroup, cosmicGroup);
 
 /* ============================================================
    POINTS OF INTEREST registry — filled in as bodies are built.
@@ -572,15 +839,16 @@ var sunGlow = makeGlowSprite('255,214,140', SUN_R*7, 0.9);
 solarGroup.add(sunGlow);
 
 POIS.push({
-  name:'Sol', mesh:sunMesh, radius:SUN_R, layer:'solar',
+  name:'Sol', mesh:sunMesh, radius:SUN_R, layer:'solar', orbitDist: SUN_R*4.5,
   eyebrow:'Estrela · classe G2V',
   facts:[
     {k:'raio real', v:'≈ 696.000 km (109 vezes o raio da Terra)'},
-    {k:'temperatura de superfície', v:'≈ 5.500 °C'},
-    {k:'idade', v:'≈ 4,6 bilhões de anos'},
-    {k:'massa', v:'99,86% de toda a massa do sistema solar'}
+    {k:'temperatura de superfície', v:'≈ 5.500 °C — e ≈ 15 milhões °C no núcleo'},
+    {k:'gravidade na "superfície"', v:'27,9 vezes a da Terra — a 70 kg na Terra corresponderiam quase 1.950 kg de peso aqui'},
+    {k:'caberiam quantas Terras dentro?', v:'≈ 1,3 milhão de Terras, em volume'},
+    {k:'idade', v:'≈ 4,6 bilhões de anos — já queimou pouco mais da metade do hidrogênio do núcleo'}
   ],
-  prose:'Uma estrela anã amarela de meia-idade — já queimou cerca de metade do seu combustível de hidrogênio. Sem ela, nada aqui teria luz, calor ou uma órbita para seguir.'
+  prose:'Uma estrela anã amarela de meia-idade. A cada segundo, converte cerca de 600 milhões de toneladas de hidrogênio em hélio por fusão nuclear — e a luz que sai do núcleo agora leva entre 10 mil e 170 mil anos só para chegar à superfície, de tão densa que é a estrela por dentro. Sem ela, nada aqui teria luz, calor ou uma órbita para seguir.'
 });
 
 /* ============================================================
@@ -595,42 +863,96 @@ POIS.push({
 var PLANETS = [
   { id:'mercury', name:'Mercúrio', tex:'2k_mercury.jpg', fb:0x9c9285, radius:1.1, orbit:22,  speed:0.09, tilt:0.001,
     eyebrow:'Planeta rochoso · o mais próximo do Sol',
-    facts:[{k:'raio real',v:'2.439 km (38% da Terra)'},{k:'distância real do Sol',v:'≈ 58 milhões de km (0,39 UA)'},{k:'temperatura',v:'−180 °C a 430 °C — a maior variação do sistema'},{k:'luas',v:'nenhuma'}],
-    prose:'Sem atmosfera para reter calor, Mercúrio congela à noite e queima de dia — a maior amplitude térmica de qualquer planeta do sistema solar.' },
+    facts:[
+      {k:'raio real',v:'2.439 km (38% da Terra)'},
+      {k:'distância real do Sol',v:'≈ 58 milhões de km (0,39 UA)'},
+      {k:'gravidade',v:'38% da terrestre — a 70 kg na Terra corresponderiam ≈ 27 kg aqui'},
+      {k:'caberiam quantos Mercúrios numa Terra?',v:'≈ 18, em volume'},
+      {k:'temperatura',v:'−180 °C a 430 °C — a maior variação de qualquer planeta do sistema'}
+    ],
+    prose:'Sem atmosfera para reter calor, Mercúrio congela à noite e queima de dia — a maior amplitude térmica do sistema solar. Um "dia" completo (nascer do sol ao próximo nascer do sol) dura 176 dias terrestres, quase o dobro do seu próprio ano de 88 dias.' },
   { id:'venus', name:'Vênus', tex:'2k_venus_surface.jpg', cloudTex:'2k_venus_atmosphere.jpg', fb:0xd9b98a, radius:1.9, orbit:34, speed:0.065, tilt:3.096,
     eyebrow:'Planeta rochoso · o mais quente',
-    facts:[{k:'raio real',v:'6.052 km (95% da Terra)'},{k:'distância real do Sol',v:'≈ 108 milhões de km (0,72 UA)'},{k:'temperatura de superfície',v:'≈ 465 °C — mais quente que Mercúrio'},{k:'luas',v:'nenhuma'}],
-    prose:'Uma atmosfera esmagadora de CO₂ (92 vezes a pressão terrestre) causa um efeito estufa descontrolado — Vênus é mais quente que Mercúrio, mesmo estando mais longe do Sol.' },
+    facts:[
+      {k:'raio real',v:'6.052 km (95% da Terra)'},
+      {k:'distância real do Sol',v:'≈ 108 milhões de km (0,72 UA)'},
+      {k:'gravidade',v:'90% da terrestre — a 70 kg na Terra corresponderiam ≈ 63 kg aqui'},
+      {k:'caberiam quantas Terras dentro?',v:'≈ 0,86 — é quase do mesmo tamanho que a Terra'},
+      {k:'temperatura de superfície',v:'≈ 465 °C — mais quente que Mercúrio, mesmo estando mais longe do Sol'}
+    ],
+    prose:'Uma atmosfera esmagadora de CO₂ (92 vezes a pressão terrestre) causa um efeito estufa descontrolado. E o dia em Vênus é mais longo que o seu próprio ano: leva 243 dias terrestres para girar uma vez no próprio eixo, mas só 225 dias para completar uma volta ao redor do Sol — e gira ao contrário da maioria dos planetas.' },
   { id:'earth', name:'Terra', tex:'2k_earth_daymap.jpg', nightTex:'2k_earth_nightmap.jpg', cloudTex:'2k_earth_clouds.jpg', fb:0x2f6a9e, radius:2.0, orbit:48, speed:0.05, tilt:0.409,
     eyebrow:'Planeta rochoso · o nosso',
-    facts:[{k:'raio real',v:'6.371 km'},{k:'distância real do Sol',v:'≈ 150 milhões de km (1 UA, por definição)'},{k:'temperatura média',v:'≈ 15 °C'},{k:'luas',v:'1 (a Lua)'}],
-    prose:'O único mundo confirmado com vida em todo o universo conhecido — e o único cuja atmosfera tem oxigênio livre em grande quantidade, produto de bilhões de anos de fotossíntese.' },
+    facts:[
+      {k:'raio real',v:'6.371 km'},
+      {k:'distância real do Sol',v:'≈ 150 milhões de km (1 UA, por definição)'},
+      {k:'gravidade',v:'a referência: 9,8 m/s² — aqui, 70 kg pesam exatamente 70 kg'},
+      {k:'água',v:'71% da superfície é oceano, mas é menos de 0,1% da massa total do planeta'},
+      {k:'temperatura média',v:'≈ 15 °C'}
+    ],
+    prose:'O único mundo confirmado com vida em todo o universo conhecido — e o único cuja atmosfera tem oxigênio livre em grande quantidade, produto de bilhões de anos de fotossíntese. Se a história da Terra fosse comprimida num único ano-calendário, humanos com escrita apareceriam nos últimos segundos de 31 de dezembro.' },
   { id:'mars', name:'Marte', tex:'2k_mars.jpg', fb:0xb35c3a, radius:1.3, orbit:66, speed:0.038, tilt:0.440,
     eyebrow:'Planeta rochoso · o planeta vermelho',
-    facts:[{k:'raio real',v:'3.390 km (53% da Terra)'},{k:'distância real do Sol',v:'≈ 228 milhões de km (1,52 UA)'},{k:'temperatura média',v:'≈ −65 °C'},{k:'luas',v:'2 (Fobos e Deimos)'}],
-    prose:'A cor vermelha vem de óxido de ferro (ferrugem) na poeira da superfície. Tem o maior vulcão do sistema solar, o Monte Olimpo, com quase 22 km de altura — quase 2,5 vezes o Everest.' },
+    facts:[
+      {k:'raio real',v:'3.390 km (53% da Terra)'},
+      {k:'distância real do Sol',v:'≈ 228 milhões de km (1,52 UA)'},
+      {k:'gravidade',v:'38% da terrestre — a 70 kg na Terra corresponderiam ≈ 27 kg aqui'},
+      {k:'caberiam quantos Martes numa Terra?',v:'≈ 6,6, em volume'},
+      {k:'temperatura média',v:'≈ −65 °C'}
+    ],
+    prose:'A cor vermelha vem de óxido de ferro (ferrugem) na poeira da superfície. Tem o maior vulcão do sistema solar, o Monte Olimpo, com quase 22 km de altura — quase 2,5 vezes o Everest — e um cânion, o Valles Marineris, longo o bastante para atravessar os Estados Unidos de costa a costa.' },
   { id:'jupiter', name:'Júpiter', tex:'2k_jupiter.jpg', fb:0xc9a687, radius:6.4, orbit:110, speed:0.021, tilt:0.055,
     eyebrow:'Gigante gasoso · o maior planeta',
-    facts:[{k:'raio real',v:'69.911 km (11 vezes a Terra)'},{k:'distância real do Sol',v:'≈ 778 milhões de km (5,2 UA)'},{k:'luas conhecidas',v:'95 confirmadas (Io, Europa, Ganimedes, Calisto entre as maiores)'},{k:'A Grande Mancha Vermelha',v:'uma tempestade maior que a Terra, ativa há séculos'}],
-    prose:'Tão massivo que seu centro de gravidade com o Sol fica ligeiramente fora da superfície solar. Sua gravidade também protege os planetas internos, desviando muitos cometas e asteroides.' },
+    facts:[
+      {k:'raio real',v:'69.911 km (11 vezes a Terra)'},
+      {k:'distância real do Sol',v:'≈ 778 milhões de km (5,2 UA)'},
+      {k:'gravidade',v:'2,5 vezes a terrestre — a 70 kg na Terra corresponderiam ≈ 177 kg aqui (se houvesse onde pisar)'},
+      {k:'caberiam quantas Terras dentro?',v:'≈ 1.321, em volume'},
+      {k:'A Grande Mancha Vermelha',v:'uma tempestade maior que a Terra inteira, observada continuamente há mais de 150 anos'}
+    ],
+    prose:'Tão massivo que seu centro de gravidade com o Sol fica ligeiramente fora da superfície solar — tecnicamente, o Sol também "orbita" um pouco por causa de Júpiter. Sua gravidade também protege os planetas internos, desviando muitos cometas e asteroides que poderiam atingi-los. Tem 95 luas confirmadas, incluindo Europa, que provavelmente esconde um oceano de água líquida sob uma crosta de gelo.' },
   { id:'saturn', name:'Saturno', tex:'2k_saturn.jpg', ringTex:'2k_saturn_ring_alpha.png', fb:0xd8c297, radius:5.4, orbit:150, speed:0.0155, tilt:0.466,
     eyebrow:'Gigante gasoso · o anelado',
-    facts:[{k:'raio real',v:'58.232 km (9 vezes a Terra)'},{k:'distância real do Sol',v:'≈ 1,43 bilhão de km (9,5 UA)'},{k:'densidade',v:'menor que a da água — flutuaria numa banheira gigante'},{k:'luas conhecidas',v:'mais de 140 confirmadas'}],
-    prose:'Os anéis são feitos quase inteiramente de gelo de água, em pedaços que vão de grãos de poeira a blocos do tamanho de uma casa — e têm menos de 1 km de espessura, apesar dos milhares de km de largura.' },
+    facts:[
+      {k:'raio real',v:'58.232 km (9 vezes a Terra)'},
+      {k:'distância real do Sol',v:'≈ 1,43 bilhão de km (9,5 UA)'},
+      {k:'gravidade',v:'1,07 vezes a terrestre — a 70 kg na Terra corresponderiam ≈ 75 kg aqui'},
+      {k:'caberiam quantas Terras dentro?',v:'≈ 764, em volume'},
+      {k:'densidade',v:'menor que a da água — em teoria, flutuaria inteiro numa banheira gigante'}
+    ],
+    prose:'Os anéis são feitos quase inteiramente de gelo de água, em pedaços que vão de grãos de poeira a blocos do tamanho de uma casa — e têm menos de 1 km de espessura, apesar dos milhares de km de largura: proporcionalmente, mais finos que uma folha de papel comparada ao tamanho de um campo de futebol. Tem mais de 140 luas confirmadas, entre elas Titã, com rios e lagos de metano líquido.' },
   { id:'uranus', name:'Urano', tex:'2k_uranus.jpg', fb:0x9fd6e0, radius:3.3, orbit:186, speed:0.0108, tilt:1.706,
     eyebrow:'Gigante de gelo · o planeta deitado',
-    facts:[{k:'raio real',v:'25.362 km (4 vezes a Terra)'},{k:'distância real do Sol',v:'≈ 2,87 bilhões de km (19,2 UA)'},{k:'inclinação axial',v:'≈ 98° — gira praticamente "deitado"'},{k:'temperatura',v:'≈ −224 °C, o planeta mais frio do sistema'}],
-    prose:'Provavelmente foi tombado de lado por uma colisão antiga. Seus polos passam décadas seguidas em luz solar direta ou escuridão total, por causa dessa inclinação extrema.' },
+    facts:[
+      {k:'raio real',v:'25.362 km (4 vezes a Terra)'},
+      {k:'distância real do Sol',v:'≈ 2,87 bilhões de km (19,2 UA)'},
+      {k:'gravidade',v:'89% da terrestre — a 70 kg na Terra corresponderiam ≈ 62 kg aqui'},
+      {k:'caberiam quantas Terras dentro?',v:'≈ 63, em volume'},
+      {k:'inclinação axial',v:'≈ 98° — gira praticamente "deitado", rolando ao redor do Sol'}
+    ],
+    prose:'Provavelmente foi tombado de lado por uma colisão antiga com um corpo do tamanho da Terra. Seus polos passam décadas seguidas em luz solar direta ou escuridão total por causa dessa inclinação extrema — cada polo tem um "dia" e uma "noite" de 42 anos.' },
   { id:'neptune', name:'Netuno', tex:'2k_neptune.jpg', fb:0x3f5fc0, radius:3.2, orbit:220, speed:0.0087, tilt:0.494,
     eyebrow:'Gigante de gelo · o mais distante',
-    facts:[{k:'raio real',v:'24.622 km (3,9 vezes a Terra)'},{k:'distância real do Sol',v:'≈ 4,50 bilhões de km (30,1 UA)'},{k:'ventos',v:'os mais rápidos do sistema solar — até 2.100 km/h'},{k:'luas conhecidas',v:'16, a maior é Tritão'}],
-    prose:'Foi o primeiro planeta descoberto por previsão matemática, não observação direta — perturbações na órbita de Urano indicaram sua existência antes de ser visto, em 1846.' }
+    facts:[
+      {k:'raio real',v:'24.622 km (3,9 vezes a Terra)'},
+      {k:'distância real do Sol',v:'≈ 4,50 bilhões de km (30,1 UA)'},
+      {k:'gravidade',v:'1,14 vezes a terrestre — a 70 kg na Terra corresponderiam ≈ 80 kg aqui'},
+      {k:'caberiam quantas Terras dentro?',v:'≈ 57, em volume'},
+      {k:'ventos',v:'os mais rápidos do sistema solar — rajadas de até 2.100 km/h'}
+    ],
+    prose:'Foi o primeiro planeta descoberto por previsão matemática, não observação direta — perturbações na órbita de Urano indicaram sua existência antes de ser visto, em 1846. Netuno completou sua primeira órbita ao Sol desde a descoberta apenas em 2011: um "ano netuniano" inteiro depois.' }
 ];
 
 var EARTH_MOON = { name:'Lua', tex:'2k_moon.jpg', fb:0xaaa79c, radius:0.55, orbit:4.2, speed:0.6,
   eyebrow:'Satélite natural da Terra',
-  facts:[{k:'raio real',v:'1.737 km (27% da Terra)'},{k:'distância real da Terra',v:'≈ 384.400 km'},{k:'origem provável',v:'colisão entre a Terra jovem e um corpo do tamanho de Marte'},{k:'curiosidade',v:'sempre mostra a mesma face para a Terra (rotação sincronizada)'}],
-  prose:'Estabiliza a inclinação axial da Terra ao longo de milhões de anos, o que ajuda a manter um clima relativamente estável — sem a Lua, o eixo terrestre provavelmente oscilaria de forma caótica.'
+  facts:[
+    {k:'raio real',v:'1.737 km (27% da Terra)'},
+    {k:'distância real da Terra',v:'≈ 384.400 km'},
+    {k:'gravidade',v:'16,6% da terrestre — a 70 kg na Terra corresponderiam ≈ 11,6 kg aqui'},
+    {k:'origem provável',v:'colisão entre a Terra jovem e um corpo do tamanho de Marte, há ≈ 4,5 bilhões de anos'},
+    {k:'curiosidade',v:'sempre mostra a mesma face para a Terra — rotação sincronizada (não tem "lado escuro", tem lado que nunca vemos)'}
+  ],
+  prose:'Estabiliza a inclinação axial da Terra ao longo de milhões de anos, o que ajuda a manter um clima relativamente estável — sem a Lua, o eixo terrestre provavelmente oscilaria de forma caótica. Ela também está se afastando da Terra a cerca de 3,8 cm por ano — daqui a bilhões de anos, eclipses solares totais deixarão de ser possíveis.'
 };
 
 var planetMeshes = []; // {mesh, orbitGroup, def, cloudMesh?, nightMesh?}
@@ -774,24 +1096,41 @@ POIS.push({ name: EARTH_MOON.name, mesh: moonMesh, radius: EARTH_MOON.radius, la
     return tex;
   }
 
+  /* Nebula sprites are billboards that always face the camera — a large
+     scale combined with a fixed opacity means that once the camera gets
+     close enough (which happens naturally during normal flight, since
+     these sit well inside the stellar layer's flight range), the sprite's
+     quad fills the entire viewport like a solid coloured wall. Fixed
+     visually by: (a) a much smaller world-space size relative to normal
+     cruising distances, (b) a per-frame opacity that fades with camera
+     distance to the nebula's own center (see updateNebulae() in the main
+     loop) instead of a constant material opacity, and (c) a hard cap far
+     below 1 so stars are always at least faintly visible through it. */
   var nebulaDefs = [
-    { hue1:300, hue2:260, pos:[620,140,-480], size:900 },  // magenta/violet
-    { hue1:190, hue2:150, pos:[-900,-220,700], size:1100 } // teal/emerald
+    { hue1:300, hue2:260, pos:[620,140,-480], size:260 },  // magenta/violet
+    { hue1:190, hue2:150, pos:[-900,-220,700], size:300 }  // teal/emerald
   ];
+  window.__nebulae = [];
   nebulaDefs.forEach(function(nd){
     var tex = makeNebulaTexture(nd.hue1, nd.hue2);
-    var mat = new THREE.SpriteMaterial({ map: tex, transparent:true, opacity:0.55, blending:THREE.AdditiveBlending, depthWrite:false });
+    var mat = new THREE.SpriteMaterial({ map: tex, transparent:true, opacity:0.32, blending:THREE.AdditiveBlending, depthWrite:false });
     var spr = new THREE.Sprite(mat);
     spr.position.set(nd.pos[0], nd.pos[1], nd.pos[2]);
     spr.scale.set(nd.size, nd.size, 1);
     stellarGroup.add(spr);
+    window.__nebulae.push({ sprite: spr, size: nd.size, maxOpacity: 0.32 });
   });
 
   POIS.push({
-    name:'Nebulosa (representação artística)', mesh:null, worldPos:new THREE.Vector3(620,140,-480), radius:60, layer:'stellar',
+    name:'Nebulosa (representação artística)', mesh:null, worldPos:new THREE.Vector3(620,140,-480), radius:60, orbitDist:180, layer:'stellar',
     eyebrow:'Vizinhança estelar · ilustrativo',
-    facts:[{k:'o que é de verdade',v:'nebulosas reais são nuvens de gás e poeira onde estrelas nascem ou morrem'},{k:'o que é aqui',v:'um gradiente de cor procedural, sem correspondência com um objeto catalogado'}],
-    prose:'Cores vibrantes como estas em fotos reais geralmente vêm de imageamento em falsa cor de diferentes comprimentos de onda (emissão de hidrogênio, oxigênio, enxofre) — não é assim que o olho humano veria a olho nu.'
+    facts:[
+      {k:'o que é de verdade',v:'nebulosas reais são nuvens de gás e poeira interestelar — berçários onde novas estrelas se formam, ou os restos espalhados de estrelas que morreram'},
+      {k:'escala real',v:'uma nebulosa típica tem dezenas de anos-luz de diâmetro — luz levaria décadas só para atravessá-la'},
+      {k:'o que é aqui',v:'um gradiente de cor procedural gerado por canvas, sem correspondência com um objeto catalogado real'},
+      {k:'cores reais vs. aqui',v:'em fotos reais, cores vibrantes quase sempre vêm de imageamento em falsa cor (mapeando comprimentos de onda invisíveis ao olho, como emissão de hidrogênio ou oxigênio, para RGB visível)'}
+    ],
+    prose:'A olho nu, através de um telescópio, a maioria das nebulosas pareceria uma mancha cinza-esverdeada fraca — nossos olhos não são sensíveis o bastante a essas luzes fracas para ver cor no escuro. As cores espetaculares que você vê em fotos astronômicas são reais no sentido de que cada canal de cor corresponde a um comprimento de onda de verdade emitido pelo gás, mas a combinação em RGB visível é uma escolha artística dos astrônomos que processam a imagem.'
   });
 })();
 
@@ -854,10 +1193,81 @@ POIS.push({ name: EARTH_MOON.name, mesh: moonMesh, radius: EARTH_MOON.radius, la
   });
 
   POIS.push({
-    name:'Via Láctea (vista estilizada)', mesh:null, worldPos:new THREE.Vector3(0,0,0), radius:2000, layer:'galactic',
+    name:'Via Láctea (vista estilizada)', mesh:null, worldPos:new THREE.Vector3(0,0,0), radius:2000, orbitDist:2600, layer:'galactic',
     eyebrow:'Escala galáctica · ilustrativo',
-    facts:[{k:'estrelas na Via Láctea',v:'estimativa de 100 a 400 bilhões'},{k:'diâmetro real',v:'≈ 100.000 anos-luz'},{k:'nossa posição real',v:'num braço espiral secundário, a ≈ 27.000 anos-luz do centro'}],
-    prose:'Aqui você está "por fora" olhando a galáxia de longe — algo que nenhuma sonda humana jamais fez de verdade. A imagem usada é uma textura de céu estelar estilizada para sugerir a forma de um disco espiral, não uma fotografia real da Via Láctea vista de fora.'
+    facts:[
+      {k:'estrelas na Via Láctea',v:'estimativa de 100 a 400 bilhões'},
+      {k:'diâmetro real',v:'≈ 100.000 anos-luz — luz leva 100 mil anos para atravessá-la de ponta a ponta'},
+      {k:'nossa posição real',v:'num braço espiral secundário (braço de Órion), a ≈ 27.000 anos-luz do centro'},
+      {k:'velocidade orbital do Sol',v:'≈ 828.000 km/h ao redor do centro galáctico — e ainda assim leva ≈ 230 milhões de anos para dar uma volta completa'},
+      {k:'destino de colisão',v:'a galáxia de Andrômeda está se aproximando e deve colidir com a Via Láctea em ≈ 4 a 4,5 bilhões de anos'}
+    ],
+    prose:'Aqui você está "por fora" olhando a galáxia de longe — algo que nenhuma sonda humana jamais fez de verdade; toda imagem real da Via Láctea "de fora" que você já viu é uma ilustração ou simulação, não uma fotografia. A imagem usada aqui é uma textura de céu estelar estilizada para sugerir a forma de um disco espiral, não um retrato real.'
+  });
+})();
+
+/* ============================================================
+   COSMIC LAYER (4th layer) — "viagem no tempo" stylization.
+   ------------------------------------------------------------
+   Flying out past the galactic layer doesn't reveal a literal deeper
+   universe with real coordinates (nothing here is a catalog, same as
+   the stellar/galactic layers) — instead the SCENE ITSELF gradually
+   transforms as a dramatization of "looking at older light": fewer,
+   smaller distant galaxy-like smears (standing in for a universe with
+   less time to have formed structure), replaced increasingly by a
+   dense, hot, reddish-to-white particle field, climaxing in a single
+   intense core of light at COSMIC_LIMIT — the stylized Big Bang.
+   ============================================================ */
+(function buildCosmicLayer(){
+  // dense hot "early universe" particle field — denser and warmer than
+  // the stellar starfield, meant to read as thicker/younger, not as
+  // individually meaningful stars
+  var COUNT = 2400;
+  var positions = new Float32Array(COUNT*3);
+  var colors = new Float32Array(COUNT*3);
+  var sizes = new Float32Array(COUNT);
+  for (var i=0;i<COUNT;i++){
+    var r = 3600 + Math.pow(Math.random(), 0.5) * 4200;
+    var theta = Math.random()*Math.PI*2;
+    var phi = Math.acos(2*Math.random()-1);
+    positions[i*3]   = r*Math.sin(phi)*Math.cos(theta);
+    positions[i*3+1] = r*Math.cos(phi)*0.5;
+    positions[i*3+2] = r*Math.sin(phi)*Math.sin(theta);
+    // hot palette: white-yellow through orange to deep red, no cool colors
+    var heat = Math.random();
+    var col = new THREE.Color().setHSL(0.11 - heat*0.09, 0.85, 0.55 + heat*0.25);
+    colors[i*3]=col.r; colors[i*3+1]=col.g; colors[i*3+2]=col.b;
+    sizes[i] = Math.random()*2.6 + 0.8;
+  }
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colors,3));
+  geo.setAttribute('size', new THREE.BufferAttribute(sizes,1));
+  var mat = new THREE.PointsMaterial({
+    size:3, vertexColors:true, transparent:true, opacity:0.9,
+    sizeAttenuation:true, depthWrite:false, blending:THREE.AdditiveBlending
+  });
+  cosmicGroup.add(new THREE.Points(geo, mat));
+
+  // the "Big Bang" core: an intense glow sprite sitting at the origin,
+  // invisible/negligible until the camera nears COSMIC_LIMIT, where
+  // updateCosmicLayer() (main loop) ramps its opacity and scale up so
+  // arriving at the limit reads as flying toward a wall of light.
+  var bigBangGlow = makeGlowSprite('255,244,214', 5200, 1);
+  bigBangGlow.material.opacity = 0;
+  cosmicGroup.add(bigBangGlow);
+  window.__bigBangGlow = bigBangGlow;
+
+  POIS.push({
+    name:'O limite observável (estilização)', mesh:null, worldPos:new THREE.Vector3(0,0,0), radius:400, orbitDist:COSMIC_LIMIT-600, layer:'cosmic',
+    eyebrow:'Camada cosmológica · dramatização didática',
+    facts:[
+      {k:'o que é de verdade',v:'quanto mais longe um objeto está, mais antiga é a luz que vemos dele — ela levou todo esse tempo para chegar até nós'},
+      {k:'idade do universo',v:'≈ 13,8 bilhões de anos, medida a partir da radiação cósmica de fundo'},
+      {k:'o que é aqui',v:'uma dramatização visual: a cena muda de cor/densidade conforme você se afasta, para SUGERIR a ideia de "olhar para trás no tempo" — não é como a luz antiga realmente apareceria'},
+      {k:'o real é mais sutil',v:'na vida real, luz muito antiga fica esticada para comprimentos de onda mais longos (desvio para o vermelho) — não vira uma parede de luz branca'}
+    ],
+    prose:'Este ponto marca o limite artístico desta sala, não uma borda física do universo. O universo observável real não tem uma "parede" visível — tem um limite de informação: a luz de além de um certo ponto ainda não teve tempo de nos alcançar. O brilho intenso aqui é uma licença dramática para dar um clímax visual e emocional a essa ideia, explicada em detalhe no painel "como isso é calculado".'
   });
 })();
 
@@ -887,11 +1297,17 @@ function updateMarkers(){
   var camDist = camera.position.length();
   POIS.forEach(function(poi){
     if (poi.mesh){ poi.mesh.getWorldPosition(_wv); } else { _wv.copy(poi.worldPos); }
-    // visibility: only show markers belonging to layers that are meaningfully visible
+    // visibility: only show markers belonging to layers that are meaningfully
+    // visible. Bug fix: the 'cosmic' layer POI shares world position (0,0,0)
+    // with the Sun and the Milky Way POI — without an explicit visibility
+    // rule here it stayed visible/clickable at ANY distance (default `true`),
+    // silently stealing clicks meant for the Sun's marker since both project
+    // to the same screen point near the start of a flight.
     var visible = true;
     if (poi.layer === 'solar' && camDist > LAYER1_FULL) visible = false;
     if (poi.layer === 'stellar' && (camDist < LAYER1_FADE_IN*0.5 || camDist > LAYER2_FULL)) visible = false;
-    if (poi.layer === 'galactic' && camDist < LAYER2_FADE_IN*0.6) visible = false;
+    if (poi.layer === 'galactic' && (camDist < LAYER2_FADE_IN*0.6 || camDist > LAYER3_FADE_IN)) visible = false;
+    if (poi.layer === 'cosmic' && camDist < LAYER3_FADE_IN*0.7) visible = false;
 
     var proj = _wv.clone().project(camera);
     var inFront = proj.z < 1;
@@ -917,7 +1333,7 @@ var poiProse = document.getElementById('poiProse');
 var poiGoBtn = document.getElementById('poiGo');
 var poiCloseBtn = document.getElementById('poiClose');
 var activePoi = null;
-var travelTarget = null; // {pos:Vector3, lookAt:Vector3} eased toward each frame
+var travelTarget = null; // {pos:Vector3, lookAt:Vector3, orbitPoi?} eased toward each frame
 
 function openPoi(poi){
   activePoi = poi;
@@ -936,13 +1352,93 @@ poiCloseBtn.addEventListener('click', function(){ poiCard.classList.remove('open
 poiGoBtn.addEventListener('click', function(){
   if (!activePoi) return;
   var target = activePoi.mesh ? activePoi.mesh.getWorldPosition(new THREE.Vector3()) : activePoi.worldPos.clone();
-  var dist = Math.max(activePoi.radius*4.2, 6);
+  var dist = activePoi.orbitDist || Math.max(activePoi.radius*4.2, 6);
   var dir = camera.position.clone().sub(target);
   if (dir.lengthSq() < 0.0001) dir.set(0,0.3,1);
   dir.normalize().multiplyScalar(dist);
-  travelTarget = { pos: target.clone().add(dir), look: target.clone() };
+  // arriving at a POI now leads into "exploration orbit" mode (see
+  // enterOrbit()/updateOrbit() below) rather than just stopping — the
+  // camera settles into a slow, safe orbit around the body instead of
+  // floating free, while the expanded curiosities panel is shown.
+  travelTarget = { pos: target.clone().add(dir), look: target.clone(), orbitPoi: activePoi };
   poiCard.classList.remove('open');
 });
+
+/* ============================================================
+   EXPLORATION ORBIT MODE — after the assisted travel-to animation
+   reaches a POI, the camera doesn't just stop dead: it settles into a
+   slow automatic orbit around the object at a fixed safe distance
+   (like a satellite observing, never drifting closer than the body's
+   collision radius), while an expanded curiosities panel stays open.
+   The user can still drag mouse/touch to rotate the *viewing angle*
+   manually — that adjusts pitch/orbit-angle offsets on top of the
+   automatic orbit rather than fighting it. "sair da órbita" hands
+   control back to normal free flight from the camera's current spot.
+   ============================================================ */
+var orbitPanel = document.getElementById('orbitPanel');
+var orbitName = document.getElementById('orbitName');
+var orbitEyebrow = document.getElementById('orbitEyebrow');
+var orbitFacts = document.getElementById('orbitFacts');
+var orbitProse = document.getElementById('orbitProse');
+var orbitLeaveBtn = document.getElementById('orbitLeave');
+var orbitState = null; // {poi, dist, angle, tilt}
+var _orbitCenter = new THREE.Vector3();
+
+function enterOrbit(poi){
+  var centerNow = poi.mesh ? poi.mesh.getWorldPosition(_orbitCenter.clone()) : poi.worldPos.clone();
+  var away = camera.position.clone().sub(centerNow);
+  var dist = poi.orbitDist || Math.max(poi.radius*4.2, 6);
+  orbitState = {
+    poi: poi,
+    dist: dist,
+    angle: Math.atan2(away.z, away.x) || 0,
+    tilt: 0.18,
+    userYawOffset: 0,
+    userTiltOffset: 0
+  };
+  speed = 0;
+
+  orbitName.textContent = poi.name;
+  orbitEyebrow.textContent = (poi.eyebrow || '') + ' · órbita de exploração';
+  orbitFacts.innerHTML = '';
+  (poi.facts||[]).forEach(function(f){
+    var d = document.createElement('div');
+    d.innerHTML = '<b>'+f.k+'</b>'+f.v;
+    orbitFacts.appendChild(d);
+  });
+  orbitProse.textContent = poi.prose || '';
+  orbitPanel.classList.add('open');
+}
+function leaveOrbit(){
+  orbitState = null;
+  orbitPanel.classList.remove('open');
+}
+orbitLeaveBtn.addEventListener('click', leaveOrbit);
+
+/* drive the automatic orbit each frame: the body's world position is
+   re-sampled every frame (planets keep moving along their own orbits),
+   the camera is placed at a fixed distance from it, and slow automatic
+   revolution is added on top of whatever offset the user has dragged
+   in — so free-look during orbit feels like "looking around" rather
+   than "steering", which is the point of a hands-off observation mode. */
+function updateOrbit(dt){
+  if (!orbitState) return;
+  var poi = orbitState.poi;
+  var center = poi.mesh ? poi.mesh.getWorldPosition(_orbitCenter) : poi.worldPos;
+
+  if (!REDUCE_MOTION) orbitState.angle += dt*0.12;
+  var ang = orbitState.angle + orbitState.userYawOffset;
+  var tilt = orbitState.tilt + orbitState.userTiltOffset;
+  var horiz = Math.cos(tilt);
+  var x = center.x + Math.cos(ang)*orbitState.dist*horiz;
+  var z = center.z + Math.sin(ang)*orbitState.dist*horiz;
+  var y = center.y + Math.sin(tilt)*orbitState.dist;
+
+  camera.position.set(x,y,z);
+  camera.lookAt(center);
+  euler.setFromQuaternion(camera.quaternion);
+  yaw = euler.y; pitch = euler.x;
+}
 
 /* ============================================================
    FLIGHT CONTROLS — WASD + mouse-look (pointer lock optional) +
@@ -956,9 +1452,15 @@ euler.setFromQuaternion(camera.quaternion);
 yaw = euler.y; pitch = euler.x;
 
 var keys = {};
+var MOVE_KEYS = {KeyW:1,KeyA:1,KeyS:1,KeyD:1,ArrowUp:1,ArrowDown:1,ArrowLeft:1,ArrowRight:1,KeyQ:1,KeyE:1};
 window.addEventListener('keydown', function(e){
   keys[e.code] = true;
   if (e.code === 'Space'){ speed = 0; e.preventDefault(); }
+  // taking manual flight control (WASD/arrows/Q/E) while in exploration
+  // orbit hands control back to free flight immediately, same as the
+  // explicit "sair da órbita" button — matches how most flight/space
+  // games treat "the player touched the stick" as an implicit cancel.
+  if (orbitState && MOVE_KEYS[e.code]){ leaveOrbit(); }
 });
 window.addEventListener('keyup', function(e){ keys[e.code] = false; });
 
@@ -980,6 +1482,14 @@ window.addEventListener('pointermove', function(e){
   if (!dragging) return;
   var dx = e.clientX-lastX, dy = e.clientY-lastY;
   lastX = e.clientX; lastY = e.clientY;
+  if (orbitState){
+    // during exploration orbit, dragging steers the *viewing angle*
+    // around the object (offsets on top of the automatic revolution)
+    // instead of the free-flight camera yaw/pitch.
+    orbitState.userYawOffset -= dx*0.0034;
+    orbitState.userTiltOffset = Math.max(-1.3, Math.min(1.3, orbitState.userTiltOffset - dy*0.0034));
+    return;
+  }
   yaw -= dx*0.0026;
   pitch -= dy*0.0026;
   pitch = Math.max(-1.5, Math.min(1.5, pitch));
@@ -998,6 +1508,11 @@ document.addEventListener('pointerlockchange', function(){
   }
 });
 function onLockedMove(e){
+  if (orbitState){
+    orbitState.userYawOffset -= e.movementX*0.0028;
+    orbitState.userTiltOffset = Math.max(-1.3, Math.min(1.3, orbitState.userTiltOffset - e.movementY*0.0028));
+    return;
+  }
   yaw -= e.movementX*0.0022;
   pitch -= e.movementY*0.0022;
   pitch = Math.max(-1.5, Math.min(1.5, pitch));
@@ -1046,6 +1561,11 @@ tlook.addEventListener('pointermove', function(e){
   if (!lookActive || e.pointerId!==lookId) return;
   var dx = e.clientX-lookLastX, dy=e.clientY-lookLastY;
   lookLastX=e.clientX; lookLastY=e.clientY;
+  if (orbitState){
+    orbitState.userYawOffset -= dx*0.0038;
+    orbitState.userTiltOffset = Math.max(-1.3, Math.min(1.3, orbitState.userTiltOffset - dy*0.0038));
+    return;
+  }
   yaw -= dx*0.0032; pitch -= dy*0.0032;
   pitch = Math.max(-1.5, Math.min(1.5, pitch));
 });
@@ -1114,45 +1634,217 @@ function updateCamera(dt){
     speed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed - stickVec.y*160*dt));
     yaw -= stickVec.x*1.6*dt;
   }
+
+  resolveCollisions();
+  clampCosmicLimit();
+}
+
+/* the "edge of the observable universe" travel limit: rather than an
+   invisible wall, the camera is gently clamped to COSMIC_HARD_STOP
+   (just past where the Big Bang glow reaches full intensity) and speed
+   bleeds off, so arriving at the limit feels like drifting to a stop
+   in front of an overwhelming light rather than hitting a hard wall. */
+var bigBangReached = false;
+function clampCosmicLimit(){
+  var d = camera.position.length();
+  if (d > COSMIC_HARD_STOP){
+    camera.position.setLength(COSMIC_HARD_STOP);
+    speed *= 0.5;
+  }
+  if (d > COSMIC_LIMIT*0.995 && !bigBangReached){
+    bigBangReached = true;
+    announceBigBang();
+  }
+}
+
+/* ============================================================
+   COLLISION — the Sun and every planet are solid: previously the
+   camera flew straight through them like a ghost. Simple sphere
+   collision: every frame, after movement, check the camera's distance
+   to each solar-layer body's CURRENT world position (planets orbit, so
+   this can't be precomputed) against that body's visual radius plus a
+   small safety margin. If the camera has penetrated the sphere, clamp
+   it back out to the surface along the same line from the body's
+   center — this both stops further inward motion and lets the player
+   slide/orbit around the surface, which reads more like "bumping into
+   a solid object" than a hard freeze. Also zeroes forward speed so the
+   ship doesn't keep trying to ram through every subsequent frame.
+   ============================================================ */
+var COLLISION_MARGIN = 0.6; // world units of breathing room outside the visual radius
+var _collV = new THREE.Vector3();
+function resolveCollisions(){
+  for (var i=0;i<POIS.length;i++){
+    var poi = POIS[i];
+    if (poi.layer !== 'solar' || !poi.mesh || !poi.radius) continue;
+    poi.mesh.getWorldPosition(_collV);
+    // the sun's glow sprite (SUN_R*7) is much larger than its solid mesh —
+    // stopping the camera at the mesh radius still leaves it deep inside the
+    // dense, near-opaque center of the glow, washing the whole view orange.
+    // Push out to clear the glow's bright core, not just the physical body.
+    var margin = poi.name === 'Sol' ? SUN_R * 2.2 : COLLISION_MARGIN;
+    var minDist = poi.radius + margin;
+    var dx = camera.position.x - _collV.x;
+    var dy = camera.position.y - _collV.y;
+    var dz = camera.position.z - _collV.z;
+    var distSq = dx*dx + dy*dy + dz*dz;
+    if (distSq < minDist*minDist && distSq > 0.000001){
+      var dist = Math.sqrt(distSq);
+      var push = minDist/dist;
+      camera.position.x = _collV.x + dx*push;
+      camera.position.y = _collV.y + dy*push;
+      camera.position.z = _collV.z + dz*push;
+      speed *= 0.15; // bleed off most speed on impact rather than a hard wall-stop
+    }
+  }
 }
 
 /* smooth assisted travel toward a POI (never an instant teleport) */
+var _travelCenter = new THREE.Vector3();
 function updateTravel(dt){
   if (!travelTarget) return;
   var toPos = travelTarget.pos;
+  var lookPos = travelTarget.look;
+  // if traveling toward a POI that orbits (a planet/moon), re-anchor the
+  // destination to its CURRENT world position every frame — otherwise a
+  // fixed point in space drifts away from a moving planet and arrival
+  // (d < threshold) could take much longer than intended, or never
+  // trigger cleanly while the body keeps orbiting out from under it.
+  if (travelTarget.orbitPoi && travelTarget.orbitPoi.mesh){
+    var center = travelTarget.orbitPoi.mesh.getWorldPosition(_travelCenter);
+    var offset = travelTarget.pos.clone().sub(travelTarget.look);
+    toPos = center.clone().add(offset);
+    lookPos = center;
+  }
   var d = camera.position.distanceTo(toPos);
   var easing = REDUCE_MOTION ? 6.5 : 2.4;
   var t = 1 - Math.exp(-easing*dt);
   camera.position.lerp(toPos, t);
 
-  var desiredDir = travelTarget.look.clone().sub(camera.position).normalize();
+  var desiredDir = lookPos.clone().sub(camera.position).normalize();
   var desiredYaw = Math.atan2(-desiredDir.x, -desiredDir.z);
   var desiredPitch = Math.asin(Math.max(-1,Math.min(1,desiredDir.y)));
   yaw += (desiredYaw-yaw)*Math.min(1, t*1.6);
   pitch += (desiredPitch-pitch)*Math.min(1, t*1.6);
 
-  if (d < 0.15){ travelTarget = null; speed *= 0.3; }
+  if (d < 0.4){
+    var orbitPoi = travelTarget.orbitPoi;
+    travelTarget = null;
+    speed *= 0.3;
+    if (orbitPoi){ enterOrbit(orbitPoi); }
+  }
 }
+
+/* deep-space background tint: interpolates from the normal near-black
+   space color toward a warm white as the camera nears COSMIC_LIMIT,
+   selling the "approaching a wall of light" climax without needing a
+   postprocessing pipeline — scene.background is just a flat color. */
+var SPACE_BG = new THREE.Color(0x020207);
+var BIGBANG_BG = new THREE.Color(0xfff3d6);
+var _bgTmp = new THREE.Color();
 
 function updateLayers(){
   var d = camera.position.length();
 
   var solarOpacity = 1 - smoothstep(LAYER1_FADE_IN, LAYER1_FULL, d);
   var stellarOpacity = smoothstep(LAYER1_FADE_IN*0.55, LAYER1_FADE_IN, d) * (1 - smoothstep(LAYER2_FADE_IN, LAYER2_FULL, d));
-  var galacticOpacity = smoothstep(LAYER2_FADE_IN, LAYER2_FULL, d);
+  var galacticOpacity = smoothstep(LAYER2_FADE_IN, LAYER2_FULL, d) * (1 - smoothstep(LAYER3_FADE_IN, LAYER3_FULL, d));
+  var cosmicOpacity = smoothstep(LAYER3_FADE_IN, LAYER3_FULL, d);
 
   setGroupOpacity(solarGroup, solarOpacity);
   setGroupOpacity(stellarGroup, stellarOpacity);
-  setGroupOpacity(galacticGroup, Math.max(galacticOpacity, d>LAYER1_FULL ? 0.08 : 0));
+  setGroupOpacity(galacticGroup, Math.max(galacticOpacity, d>LAYER1_FULL && d<LAYER3_FADE_IN ? 0.08 : 0));
+  setGroupOpacity(cosmicGroup, Math.max(cosmicOpacity, 0.001));
 
   solarGroup.visible = solarOpacity > 0.002;
   stellarGroup.visible = stellarOpacity > 0.002 || galacticOpacity>0;
   galacticGroup.visible = true;
+  cosmicGroup.visible = d > LAYER2_FADE_IN;
+
+  // Big Bang core glow: negligible until close to the limit, then ramps
+  // up fast so the final approach reads as flying into a wall of light.
+  if (window.__bigBangGlow){
+    var bbT = smoothstep(COSMIC_LIMIT*0.72, COSMIC_LIMIT*0.985, d);
+    window.__bigBangGlow.material.opacity = bbT;
+    var s = 5200 * (0.5 + bbT*1.4);
+    window.__bigBangGlow.scale.set(s,s,1);
+  }
+
+  // background tint shifts warm as we approach the limit
+  var bgT = smoothstep(COSMIC_LIMIT*0.55, COSMIC_LIMIT*0.99, d);
+  _bgTmp.copy(SPACE_BG).lerp(BIGBANG_BG, bgT);
+  scene.background = _bgTmp;
 
   var layerLabel = 'Sistema Solar';
   if (d >= LAYER1_FADE_IN && d < LAYER2_FADE_IN) layerLabel = 'Vizinhança estelar';
-  if (d >= LAYER2_FADE_IN) layerLabel = 'Escala galáctica';
+  if (d >= LAYER2_FADE_IN && d < LAYER3_FADE_IN) layerLabel = 'Escala galáctica';
+  if (d >= LAYER3_FADE_IN) layerLabel = 'Camada cosmológica';
   layerNameEl.textContent = layerLabel;
+
+  updateLookback(d);
+}
+
+/* ============================================================
+   LOOKBACK-TIME READOUT — "você está vendo luz de X bilhões de anos
+   atrás". Grows monotonically with distance from 0 (at the start of
+   the cosmic layer) up to 13.8 billion years (the real age of the
+   universe, from the cosmic microwave background) at COSMIC_LIMIT.
+   The mapping itself is a stylization (see #info panel for the
+   honest caveat) — but the NUMBERS displayed are the real, correct
+   age of the universe and a monotonically increasing fraction of it,
+   not invented figures.
+   ============================================================ */
+var UNIVERSE_AGE_GYR = 13.8;
+var lookbackEl = document.getElementById('lookbackVal');
+var lookbackWrap = document.getElementById('lookbackHud');
+function updateLookback(d){
+  if (!lookbackEl) return;
+  if (d < LAYER2_FADE_IN){
+    if (lookbackWrap) lookbackWrap.classList.remove('show');
+    return;
+  }
+  if (lookbackWrap) lookbackWrap.classList.add('show');
+  var t = smoothstep(LAYER2_FADE_IN, COSMIC_LIMIT, d); // 0..1
+  var gyr = t*UNIVERSE_AGE_GYR;
+  var label;
+  if (t > 0.995){
+    label = 'o Big Bang · ≈ 13,8 bilhões de anos atrás';
+    if (lookbackWrap) lookbackWrap.classList.add('bigbang');
+  } else {
+    label = '≈ ' + gyr.toFixed(gyr<1?2:1) + ' bilhões de anos atrás';
+    if (lookbackWrap) lookbackWrap.classList.remove('bigbang');
+  }
+  lookbackEl.textContent = label;
+}
+
+/* Bug fix (nebula "solid wall" glitch): nebula sprites are camera-facing
+   billboards, so a naive fixed opacity means flying close to one fills
+   the whole screen with an opaque blob — exactly the complaint reported
+   ("mancha sólida cobrindo a tela inteira"). setGroupOpacity() above
+   already re-applies each nebula's *base* opacity every frame (scaled by
+   which layer is visible), so we run this afterwards and multiply a
+   second, distance-based fade on top: opacity ramps up as the camera
+   approaches from far away (so it's not invisible), but ramps back DOWN
+   again once the camera gets closer than ~1.4x the sprite's visual size
+   (so passing through/near it never whites out the view), and is hard
+   capped at each nebula's maxOpacity so stars are always at least
+   faintly visible through it from any distance. */
+var _nebV = new THREE.Vector3();
+function updateNebulae(){
+  var list = window.__nebulae;
+  if (!list) return;
+  for (var i=0;i<list.length;i++){
+    var n = list[i];
+    var d = camera.position.distanceTo(n.sprite.getWorldPosition(_nebV));
+    // fade IN as camera crosses from far-away into the nebula's neighborhood
+    var fadeIn = smoothstep(n.size*4.2, n.size*1.8, d);
+    // fade OUT again once camera is close enough that the billboard would
+    // otherwise dominate the frame; never fully 0 so stars stay visible
+    // as a soft haze rather than the field going pitch black mid-nebula.
+    var closeFactor = smoothstep(n.size*0.4, n.size*1.3, d); // 0 when very close, 1 once far enough
+    var distanceFactor = Math.min(fadeIn, closeFactor);
+    var finalOpacity = n.maxOpacity * distanceFactor;
+    n.sprite.material.opacity = Math.min(n.sprite.material.opacity, finalOpacity);
+  }
 }
 
 function smoothstep(a,b,x){
@@ -1185,8 +1877,116 @@ function updateNearest(){
     var d = camera.position.distanceTo(pos);
     if (d < bestD){ bestD = d; best = poi; }
   });
-  if (best) nearNameEl.textContent = best.name;
+  if (best){
+    nearNameEl.textContent = best.name;
+    if (navNearestEl) navNearestEl.textContent = best.name;
+  }
 }
+
+/* ============================================================
+   NAVIGATION HUD ("GPS") — the user reported literally getting lost.
+   Two permanent aids:
+     1. a small top-down radar (canvas2d) showing the camera's position
+        relative to the Sun/origin, the direction the camera is facing,
+        and nearby solar-layer bodies as dots — an old-school "space
+        game" radar rather than a literal 3D minimap, since a 2D radial
+        readout is much faster to parse at a glance than a 3D inset.
+     2. a single "recentralizar" panic button that eases the camera
+        back to a known reference framing of the whole solar system,
+        for whenever free-flight has left the player disoriented.
+   ============================================================ */
+var radarCanvas = document.getElementById('radar');
+var radarCtx = radarCanvas ? radarCanvas.getContext('2d') : null;
+var navNearestEl = document.getElementById('navNearest');
+var navHomeBtn = document.getElementById('navHome');
+
+/* radar range scales with which layer the camera is currently in, so
+   the dots stay meaningfully spread out instead of clumping at the
+   center once the player has flown out past the solar system. */
+function radarRange(){
+  var d = camera.position.length();
+  if (d < LAYER1_FULL) return SOLAR_MAX*1.15;
+  if (d < LAYER2_FULL) return LAYER2_FADE_IN*1.3;
+  return LAYER2_FULL*2.4;
+}
+
+function updateRadar(){
+  if (!radarCtx) return;
+  var w = radarCanvas.width, h = radarCanvas.height;
+  var cx = w/2, cy = h/2, R = Math.min(w,h)/2 - 4;
+  radarCtx.clearRect(0,0,w,h);
+
+  // range rings
+  radarCtx.strokeStyle = 'rgba(212,168,92,0.18)';
+  radarCtx.lineWidth = 1;
+  [0.34,0.67,1].forEach(function(f){
+    radarCtx.beginPath(); radarCtx.arc(cx,cy,R*f,0,Math.PI*2); radarCtx.stroke();
+  });
+
+  var range = radarRange();
+
+  // camera forward direction projected onto the XZ plane, for a heading wedge
+  camera.getWorldDirection(tmpForward);
+  var headingAngle = Math.atan2(tmpForward.x, -tmpForward.z);
+  radarCtx.save();
+  radarCtx.translate(cx,cy);
+  radarCtx.rotate(headingAngle);
+  radarCtx.fillStyle = 'rgba(111,168,199,0.16)';
+  radarCtx.beginPath();
+  radarCtx.moveTo(0,0);
+  radarCtx.arc(0,0,R,-Math.PI/2-0.34,-Math.PI/2+0.34);
+  radarCtx.closePath();
+  radarCtx.fill();
+  radarCtx.restore();
+
+  // bodies: project each solar-layer POI's XZ offset from the camera onto
+  // the radar disc (camera-relative, so it always reads as "around me").
+  // Only solar-system bodies are plotted — stellar/galactic POIs are too
+  // sparse and far apart to read meaningfully on a single fixed-range dial.
+  POIS.filter(function(poi){ return poi.layer === 'solar'; }).forEach(function(poi){
+    var pos = poi.mesh ? poi.mesh.getWorldPosition(_wv) : poi.worldPos;
+    var dx = pos.x - camera.position.x;
+    var dz = pos.z - camera.position.z;
+    var dist = Math.sqrt(dx*dx+dz*dz);
+    var rr = Math.min(R, (dist/range)*R);
+    var ang = Math.atan2(dx,-dz) - headingAngle + Math.PI/2;
+    var px = cx + Math.cos(ang)*rr;
+    var py = cy - Math.sin(ang)*rr;
+    var isSun = poi.name === 'Sol';
+    radarCtx.fillStyle = isSun ? '#E8C27E' : 'rgba(143,195,222,0.85)';
+    radarCtx.beginPath();
+    radarCtx.arc(px,py, isSun?2.6:1.6, 0, Math.PI*2);
+    radarCtx.fill();
+  });
+
+  // camera marker: fixed at center, small triangle pointing "up" (screen
+  // forward) since the whole radar is drawn camera-relative/heading-locked
+  radarCtx.fillStyle = '#EDEAE2';
+  radarCtx.beginPath();
+  radarCtx.moveTo(cx, cy-4.5);
+  radarCtx.lineTo(cx-3.2, cy+3.5);
+  radarCtx.lineTo(cx+3.2, cy+3.5);
+  radarCtx.closePath();
+  radarCtx.fill();
+}
+
+/* "recentralizar": the panic button. Reuses the same eased travelTarget
+   machinery as POI travel (never an instant teleport, always a smooth
+   flight), aimed at a fixed, known-good reference framing of the whole
+   solar system — the same spot the camera starts at on page load. */
+var HOME_POSITION = new THREE.Vector3(0, 60, 190);
+var HOME_LOOK = new THREE.Vector3(0, 0, 0);
+if (navHomeBtn){
+  navHomeBtn.addEventListener('click', function(){
+    if (orbitState) leaveOrbit();
+    travelTarget = { pos: HOME_POSITION.clone(), look: HOME_LOOK.clone() };
+  });
+}
+
+/* minimal read-only debug surface: harmless in production, lets QA/tests
+   (and curious users in devtools) inspect live scene state without
+   touching gameplay code paths. */
+window.__voo = { camera: camera, POIS: POIS, scene: scene, THREE: THREE };
 
 var frameCount = 0;
 function animate(){
@@ -1194,6 +1994,8 @@ function animate(){
 
   if (travelTarget){
     updateTravel(dt);
+  } else if (orbitState){
+    updateOrbit(dt);
   } else {
     updateCamera(dt);
   }
@@ -1208,9 +2010,10 @@ function animate(){
   sunMesh.rotation.y += dt*0.02;
 
   updateLayers();
+  updateNebulae();
 
   frameCount++;
-  if (frameCount % 3 === 0){ updateMarkers(); updateNearest(); }
+  if (frameCount % 3 === 0){ updateMarkers(); updateNearest(); updateRadar(); }
 
   speedValEl.textContent = Math.round(speed) + ' un/s';
   speedBarEl.style.width = Math.min(100, (speed/MAX_SPEED)*100) + '%';
@@ -1246,10 +2049,34 @@ function dismissWelcome(remember){
 document.getElementById('welcomeGo').addEventListener('click', function(){ dismissWelcome(true); });
 document.getElementById('welcomeSkip').addEventListener('click', function(){ dismissWelcome(true); });
 welcome.addEventListener('click', function(e){ if (e.target === welcome) dismissWelcome(true); });
+
+/* ============================================================
+   BIG BANG MOMENT — one-time special marker shown the first time the
+   camera reaches the cosmic-layer travel limit (see clampCosmicLimit()
+   in the main loop). Not shown again once dismissed for this session,
+   so it reads as a milestone rather than a recurring nag.
+   ============================================================ */
+var bigBangMoment = document.getElementById('bigBangMoment');
+function announceBigBang(){
+  bigBangMoment.classList.add('show');
+  speed = 0;
+}
+document.getElementById('bigBangClose').addEventListener('click', function(){
+  bigBangMoment.classList.remove('show');
+});
+document.getElementById('bigBangBack').addEventListener('click', function(){
+  bigBangMoment.classList.remove('show');
+  if (orbitState) leaveOrbit();
+  travelTarget = { pos: HOME_POSITION.clone(), look: HOME_LOOK.clone() };
+});
+bigBangMoment.addEventListener('click', function(e){ if (e.target === bigBangMoment) bigBangMoment.classList.remove('show'); });
+
 document.addEventListener('keydown', function(e){
   if (e.key === 'Escape'){
     if (!welcome.classList.contains('hidden')) dismissWelcome(true);
+    else if (bigBangMoment.classList.contains('show')) bigBangMoment.classList.remove('show');
     else if (poiCard.classList.contains('open')){ poiCard.classList.remove('open'); activePoi=null; }
+    else if (orbitState) leaveOrbit();
     else if (document.pointerLockElement === canvas) document.exitPointerLock();
   }
 });
