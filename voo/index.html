@@ -113,10 +113,59 @@ canvas{display:block;}
 #roomsBtn svg{width:11px;height:11px;flex-shrink:0;}
 #roomsBtn:hover{color:var(--gold-bright);border-color:rgba(212,168,92,0.4);}
 #roomsBtn:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+
+/* "tour guiado" pill — same visual family as #roomsBtn, sits right next
+   to it in #topLeftBar. Turns gold/active while a tour is running so its
+   own state is legible at a glance, matching how #soundBtn communicates
+   on/off. */
+#tourBtn{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--dim);text-decoration:none;padding:7px 12px;border:1px solid var(--line);border-radius:20px;
+  background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  cursor:pointer;transition:color .2s,border-color .2s,background .2s;white-space:nowrap;
+}
+#tourBtn svg{width:11px;height:11px;flex-shrink:0;}
+#tourBtn:hover{color:var(--gold-bright);border-color:rgba(212,168,92,0.4);}
+#tourBtn:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+#tourBtn.active{color:var(--gold-bright);border-color:rgba(212,168,92,0.55);background:rgba(212,168,92,0.14);}
 @media (max-width:640px){
   #topLeftBar{top:10px;left:10px;gap:5px;}
   #roomsBtn{padding:6px 8px;font-size:0;gap:0;}
   #roomsBtn svg{width:12px;height:12px;}
+  #tourBtn{padding:6px 8px;font-size:0;gap:0;}
+  #tourBtn svg{width:12px;height:12px;}
+}
+
+/* ---------- guided tour HUD: caption + progress, shown only while a
+   tour is active. Sits top-center so it doesn't collide with #hdr
+   (top-left) or #hud (top-center-ish but lower/smaller) — see the
+   media queries further down for how it stacks on small screens. ------ */
+#tourHud{
+  display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  z-index:8;width:min(420px,calc(100vw - 32px));padding:12px 16px 13px;
+}
+#tourHud.show{display:block;}
+#tourHudTop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
+#tourHudTop .eyebrow{margin:0;}
+#tourExit{
+  background:transparent;border:1px solid var(--line);border-radius:20px;color:var(--dim);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;
+  padding:5px 10px;cursor:pointer;white-space:nowrap;transition:color .2s,border-color .2s;
+}
+#tourExit:hover{color:var(--text);border-color:rgba(212,168,92,0.4);}
+#tourExit:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+#tourCaption{
+  font-family:var(--serif-it);font-style:italic;font-weight:500;font-size:14.5px;line-height:1.4;
+  color:var(--text);margin:0 0 9px;min-height:1.4em;
+}
+#tourProgress{display:flex;align-items:center;gap:10px;}
+#tourProgress .bar{flex:1;height:3px;border-radius:2px;background:var(--line-soft);overflow:hidden;}
+#tourProgress .bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--plasma),var(--gold));transition:width .4s ease;}
+#tourStopLabel{font-family:var(--mono);font-size:9.5px;letter-spacing:0.04em;color:var(--dim);white-space:nowrap;}
+@media (max-width:640px){
+  #tourHud{top:52px;padding:10px 13px 11px;width:calc(100vw - 20px);}
+  #tourCaption{font-size:13px;}
 }
 
 #hdr{top:60px;left:16px;padding:14px 18px 12px;max-width:280px;pointer-events:none;}
@@ -368,6 +417,28 @@ canvas{display:block;}
 }
 #orbitPanel .close:hover{background:rgba(212,168,92,0.2);}
 #orbitPanel .close:focus-visible{outline:2px solid var(--gold);}
+
+/* "bridge" button — only shown on the black hole's orbit card, hands off
+   to /horizonte/ (the dedicated room with the real lensing shader). Kept
+   visually distinct (own gradient, own icon) from the plain "close"
+   button below it, since it does something fundamentally different:
+   navigates away, rather than staying in this room. */
+#orbitPanel .bridge{
+  display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:11px 13px;
+  border-radius:9px;text-decoration:none;
+  background:linear-gradient(135deg,rgba(111,168,199,0.18),rgba(196,87,74,0.16));
+  border:1px solid rgba(212,168,92,0.35);
+  transition:border-color .2s,background .2s;
+}
+#orbitPanel .bridge[hidden]{display:none;}
+#orbitPanel .bridge:hover{border-color:rgba(212,168,92,0.6);background:linear-gradient(135deg,rgba(111,168,199,0.26),rgba(196,87,74,0.24));}
+#orbitPanel .bridge:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+#orbitPanel .bridge .bico{font-size:15px;color:var(--plasma-bright);flex-shrink:0;filter:drop-shadow(0 0 4px rgba(111,168,199,0.6));}
+#orbitPanel .bridge .btext{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;}
+#orbitPanel .bridge .btitle{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:0.02em;color:var(--gold-bright);}
+#orbitPanel .bridge .bsub{font-size:10.5px;line-height:1.3;color:var(--dim);}
+#orbitPanel .bridge .barrow{font-size:15px;color:var(--gold-bright);flex-shrink:0;transition:transform .2s;}
+#orbitPanel .bridge:hover .barrow{transform:translateX(3px);}
 
 /* ---------- loading ---------- */
 #loading{
@@ -687,7 +758,12 @@ canvas{display:block;}
 @media (max-height:420px) and (orientation:landscape){
   #topLeftBar{top:8px;left:8px;}
   #hdr{display:none;}
-  #hud{top:8px;max-width:calc(100vw - 340px);padding:5px 10px;gap:8px;}
+  /* pinned into the gap between #topLeftBar (left, variable width — 2
+     pills today, 3 with "tour guiado") and #infoBtn/#soundBtn (right,
+     ~90px together in this breakpoint) rather than centered — a centered
+     #hud with only a max-width can still get pushed left under a wider
+     left-hand bar, since centering doesn't know how wide that bar is. */
+  #hud{top:8px;left:auto;right:92px;transform:none;max-width:calc(100vw - 480px);padding:5px 10px;gap:8px;}
   #hud .near{display:none;}
   #lookbackHud{top:40px;padding:4px 10px;}
   #infoBtn{top:8px;padding:6px;}
@@ -723,6 +799,19 @@ canvas{display:block;}
 <div id="topLeftBar">
   <a id="backlink" href="/salas/"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>outras salas</a>
   <button id="roomsBtn" type="button" aria-haspopup="dialog" aria-controls="roomsModal"><svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="1.5" y="1.5" width="3.7" height="3.7" rx="0.8" stroke="currentColor" stroke-width="1.1"/><rect x="6.8" y="1.5" width="3.7" height="3.7" rx="0.8" stroke="currentColor" stroke-width="1.1"/><rect x="1.5" y="6.8" width="3.7" height="3.7" rx="0.8" stroke="currentColor" stroke-width="1.1"/><rect x="6.8" y="6.8" width="3.7" height="3.7" rx="0.8" stroke="currentColor" stroke-width="1.1"/></svg>salas</button>
+  <button id="tourBtn" type="button" aria-pressed="false"><svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 9.5L5 3l1.3 2.8L9 3l1 6.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/><circle cx="2" cy="9.5" r="0.9" fill="currentColor"/><circle cx="10" cy="9.5" r="0.9" fill="currentColor"/></svg>tour guiado</button>
+</div>
+
+<div id="tourHud" class="panel" aria-live="polite">
+  <div id="tourHudTop">
+    <span class="eyebrow">tour guiado · a guia</span>
+    <button id="tourExit" type="button" aria-label="Sair do tour guiado e voltar ao voo livre">sair do tour</button>
+  </div>
+  <p id="tourCaption"></p>
+  <div id="tourProgress">
+    <div class="bar"><i id="tourProgressBar"></i></div>
+    <span id="tourStopLabel"></span>
+  </div>
 </div>
 
 <canvas id="scene" aria-label="Cena 3D navegável do sistema solar, vizinhança estelar e escala galáctica."></canvas>
@@ -836,6 +925,11 @@ canvas{display:block;}
   <h3 id="orbitName">—</h3>
   <div class="facts" id="orbitFacts"></div>
   <p class="prose" id="orbitProse"></p>
+  <a class="bridge" id="orbitBridge" href="/horizonte/" hidden>
+    <span class="bico" aria-hidden="true">●</span>
+    <span class="btext"><span class="btitle">visitar o Horizonte</span><span class="bsub">a sala dedicada — lente gravitacional real, dilatação do tempo</span></span>
+    <span class="barrow" aria-hidden="true">→</span>
+  </a>
   <div class="actions">
     <button class="close" id="orbitLeave">sair da órbita · continuar voo livre</button>
   </div>
@@ -1466,6 +1560,111 @@ POIS.push({ name: EARTH_MOON.name, mesh: moonMesh, radius: EARTH_MOON.radius, la
     ],
     prose:'Aqui você está "por fora" olhando a galáxia de longe — algo que nenhuma sonda humana jamais fez de verdade; toda imagem real da Via Láctea "de fora" que você já viu é uma ilustração ou simulação, não uma fotografia. A imagem usada aqui é uma textura de céu estelar estilizada para sugerir a forma de um disco espiral, não um retrato real.'
   });
+
+  /* ------------------------------------------------------------
+     BLACK HOLE — a real, navigable POI in the galactic layer, and the
+     bridge into /horizonte/ (the dedicated black hole room). This is
+     deliberately NOT the full raymarched Schwarzschild shader that
+     /horizonte/ runs (too expensive to also run on top of the rest of
+     this already-heavy 3D scene) — it's a cheap, honest Three.js stand-in:
+     a solid black event-horizon sphere, a stylized hot accretion disc
+     (torus with a canvas gradient texture, warm white->orange->deep red,
+     with a thin bright inner edge suggesting the ISCO), and a soft
+     lensing-glow sprite behind it. See enterOrbit()'s extra "explorar de
+     perto" button (wired further below, near openPoi/enterOrbit) for how
+     this POI's card differs from every other one — it's the one card in
+     this whole room that hands off to a different page. ------------ */
+  var BH_POS = new THREE.Vector3(-1600, 380, -1300); // ~2117 units out — inside the galactic layer's visible range, well clear of the Milky Way disc and the other distant galaxy sprites
+  var BH_R = 46; // event horizon visual radius (world units) — large enough to read as a real body from cruising distance in this layer, not to scale with anything (a real stellar-mass event horizon is km-scale; this is art, same license as the rest of this layer)
+
+  var bhGroup = new THREE.Group();
+  bhGroup.position.copy(BH_POS);
+  galacticGroup.add(bhGroup);
+
+  // event horizon: a plain black sphere. No texture, no lighting response
+  // needed — the whole point of an event horizon is that nothing escapes
+  // it, so "flat black" is the physically honest choice, not a shortcut.
+  var bhMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  var bhMesh = new THREE.Mesh(new THREE.SphereGeometry(BH_R, 48, 48), bhMat);
+  bhGroup.add(bhMesh);
+
+  // accretion disc: a flattened torus with a canvas-gradient texture running
+  // radially white-hot at the inner edge (standing in for the ISCO, the
+  // innermost stable orbit — see /horizonte/ for the real calculation) out
+  // through orange to a dim, cooler red at the outer edge — a simplified,
+  // honest color cue for "hotter/faster close in, cooler/slower further
+  // out", without claiming to compute real Doppler beaming like the
+  // dedicated room does.
+  function makeAccretionDiscTexture(){
+    var c = document.createElement('canvas'); c.width = 512; c.height = 64;
+    var ctx = c.getContext('2d');
+    var g = ctx.createLinearGradient(0, 0, 512, 0);
+    g.addColorStop(0.00, 'rgba(20,8,4,0)');
+    g.addColorStop(0.08, 'rgba(255,244,214,0.95)');
+    g.addColorStop(0.22, 'rgba(255,196,120,0.9)');
+    g.addColorStop(0.5,  'rgba(255,130,60,0.65)');
+    g.addColorStop(0.78, 'rgba(196,70,40,0.35)');
+    g.addColorStop(1.00, 'rgba(120,30,20,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 512, 64);
+    // faint turbulent banding so the disc doesn't read as a flat gradient ring
+    ctx.globalCompositeOperation = 'overlay';
+    for (var i=0;i<40;i++){
+      ctx.fillStyle = 'rgba(255,255,255,'+(Math.random()*0.06)+')';
+      var bw = 4+Math.random()*10;
+      ctx.fillRect(Math.random()*512, 0, bw, 64);
+    }
+    var tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping;
+    return tex;
+  }
+  var discTex = makeAccretionDiscTexture();
+  var discGeo = new THREE.RingGeometry(BH_R*1.35, BH_R*3.3, 96, 1);
+  // remap the ring's radial UV (0=inner edge, 1=outer edge) onto the
+  // gradient texture's U axis — RingGeometry's default UVs are planar
+  // (based on raw vertex position), not radial, so without this the
+  // gradient would run the wrong direction across the ring.
+  var discPos = discGeo.attributes.position;
+  var discUv = discGeo.attributes.uv;
+  for (var vi=0; vi<discPos.count; vi++){
+    var vx = discPos.getX(vi), vz = discPos.getZ ? discPos.getZ(vi) : 0;
+    var vy = discPos.getY(vi);
+    var rr = Math.sqrt(vx*vx + vy*vy); // ring lies in local XY before rotation below
+    var u = (rr - BH_R*1.35) / (BH_R*3.3 - BH_R*1.35);
+    discUv.setXY(vi, u, 0.5);
+  }
+  discUv.needsUpdate = true;
+  var discMat2 = new THREE.MeshBasicMaterial({
+    map: discTex, transparent:true, side:THREE.DoubleSide,
+    blending: THREE.AdditiveBlending, depthWrite:false
+  });
+  var discMesh = new THREE.Mesh(discGeo, discMat2);
+  discMesh.rotation.x = Math.PI/2 - 0.5; // tilt so it reads in 3D from most approach angles, not a flat top-down ring
+  bhGroup.add(discMesh);
+  window.__bhDisc = discMesh;
+
+  // soft lensing-glow: a large, dim additive sprite behind/around the
+  // horizon standing in for gravitational lensing of the starfield —
+  // a cheap approximation (a static glow), not the real ray-traced bend
+  // the dedicated /horizonte/ room computes. Being explicit about that
+  // trade-off in the POI card's own text (below) is the honest move.
+  var bhGlow = makeGlowSprite('120,150,255', BH_R*9, 0.35);
+  bhGroup.add(bhGlow);
+
+  POIS.push({
+    name:'Buraco negro', mesh:bhMesh, worldPos:BH_POS.clone(), radius:BH_R*1.15, layer:'galactic',
+    orbitDist: BH_R*7, collidable:true,
+    eyebrow:'Relatividade geral · prévia visual',
+    isBlackHole:true,
+    facts:[
+      {k:'o que é de verdade',v:'uma região do espaço com gravidade tão intensa que nada — nem a luz — consegue escapar dela uma vez cruzado o horizonte de eventos'},
+      {k:'horizonte de eventos',v:'não é uma superfície física, é um limite matemático: o ponto sem volta. A esfera preta aqui representa essa fronteira, não "matéria sólida"'},
+      {k:'disco de acreção',v:'gás e poeira que espiralam para dentro antes de cruzar o horizonte, aquecendo a milhões de graus por atrito e brilhando intensamente — é a parte de um buraco negro que às vezes conseguimos fotografar'},
+      {k:'singularidade',v:'no centro, a relatividade geral prevê densidade infinita — sinal de que a própria teoria para de funcionar ali, não uma descrição literal'},
+      {k:'como sabemos que existem',v:'detectamos pela gravidade que exercem sobre estrelas próximas, por ondas gravitacionais de colisões (LIGO) e, em 2019, pela primeira imagem direta de um disco de acreção (Event Horizon Telescope)'}
+    ],
+    prose:'Esta é uma representação visual estilizada — honesta na ideia, livre na renderização — feita para caber junto com o resto desta cena 3D sem pesar demais. A versão de verdade, com luz sendo curvada em tempo real pela gravidade (lente gravitacional calculada, não desenhada) e dilatação do tempo funcionando de verdade conforme você se aproxima, existe na sala dedicada "Horizonte" — veja o botão abaixo, na órbita de exploração.'
+  });
 })();
 
 /* ============================================================
@@ -1611,18 +1810,28 @@ function openPoi(poi){
   poiCard.classList.add('open');
 }
 poiCloseBtn.addEventListener('click', function(){ poiCard.classList.remove('open'); activePoi = null; });
-poiGoBtn.addEventListener('click', function(){
-  if (!activePoi) return;
-  var target = activePoi.mesh ? activePoi.mesh.getWorldPosition(new THREE.Vector3()) : activePoi.worldPos.clone();
-  var dist = activePoi.orbitDist || Math.max(activePoi.radius*4.2, 6);
+/* Shared assisted-travel launcher — both the manual "viajar até aqui"
+   button below AND the guided tour (see GuidedTour further down) build
+   their travelTarget through this one function, per spec ("reutilize a
+   função de travel existente" rather than inventing a parallel camera
+   system for the tour). Arriving always leads into exploration-orbit
+   mode (enterOrbit()), same as it always has; onArrive is an optional
+   extra callback the tour uses to know when a leg has completed. */
+function travelToPoi(poi, onArrive){
+  var target = poi.mesh ? poi.mesh.getWorldPosition(new THREE.Vector3()) : poi.worldPos.clone();
+  var dist = poi.orbitDist || Math.max(poi.radius*4.2, 6);
   var dir = camera.position.clone().sub(target);
   if (dir.lengthSq() < 0.0001) dir.set(0,0.3,1);
   dir.normalize().multiplyScalar(dist);
+  travelTarget = { pos: target.clone().add(dir), look: target.clone(), orbitPoi: poi, onArrive: onArrive };
+}
+poiGoBtn.addEventListener('click', function(){
+  if (!activePoi) return;
   // arriving at a POI now leads into "exploration orbit" mode (see
   // enterOrbit()/updateOrbit() below) rather than just stopping — the
   // camera settles into a slow, safe orbit around the body instead of
   // floating free, while the expanded curiosities panel is shown.
-  travelTarget = { pos: target.clone().add(dir), look: target.clone(), orbitPoi: activePoi };
+  travelToPoi(activePoi);
   poiCard.classList.remove('open');
 });
 
@@ -1643,6 +1852,7 @@ var orbitEyebrow = document.getElementById('orbitEyebrow');
 var orbitFacts = document.getElementById('orbitFacts');
 var orbitProse = document.getElementById('orbitProse');
 var orbitLeaveBtn = document.getElementById('orbitLeave');
+var orbitBridge = document.getElementById('orbitBridge');
 var orbitState = null; // {poi, dist, angle, tilt}
 var _orbitCenter = new THREE.Vector3();
 
@@ -1669,8 +1879,13 @@ function enterOrbit(poi){
     orbitFacts.appendChild(d);
   });
   orbitProse.textContent = poi.prose || '';
+  if (orbitBridge){ orbitBridge.hidden = !poi.isBlackHole; }
   orbitPanel.classList.add('open');
   if (typeof SoundEngine !== 'undefined') SoundEngine.startPoiDrone(poi);
+  // dismiss any guide tip that might already be showing — it lives in the
+  // same bottom-right corner as this panel's action buttons (including
+  // the black hole's bridge button) and would otherwise sit on top of them.
+  if (typeof GuideTips !== 'undefined') GuideTips.hide();
   enterOrbitVisuals();
 }
 function leaveOrbit(){
@@ -1679,7 +1894,17 @@ function leaveOrbit(){
   if (typeof SoundEngine !== 'undefined') SoundEngine.stopPoiDrone();
   leaveOrbitVisuals();
 }
-orbitLeaveBtn.addEventListener('click', leaveOrbit);
+/* wraps leaveOrbit() for every call-site that represents an EXPLICIT user
+   action (the "sair da órbita" button, the panic-stop button, "recentralizar",
+   the rooms menu, Escape) — as opposed to leaveOrbit() calls the guided tour
+   makes itself while automatically advancing between stops. Only the user-
+   initiated wrapper also cancels an active tour, so the tour's own internal
+   transitions never trip their own cancellation. */
+function leaveOrbitByUser(){
+  leaveOrbit();
+  if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
+}
+orbitLeaveBtn.addEventListener('click', leaveOrbitByUser);
 
 /* drive the automatic orbit each frame: the body's world position is
    re-sampled every frame (planets keep moving along their own orbits),
@@ -1727,6 +1952,11 @@ window.addEventListener('keydown', function(e){
   // explicit "sair da órbita" button — matches how most flight/space
   // games treat "the player touched the stick" as an implicit cancel.
   if (orbitState && MOVE_KEYS[e.code]){ leaveOrbit(); }
+  // same "the player touched the stick" logic cancels an active guided
+  // tour — never an inescapable cutscene (spec requirement). Works
+  // whether the tour is mid-flight-between-stops or parked in orbit at
+  // one, since MOVE_KEYS covers both moments.
+  if (MOVE_KEYS[e.code] && typeof GuidedTour !== 'undefined') GuidedTour.cancel();
 });
 window.addEventListener('keyup', function(e){ keys[e.code] = false; });
 
@@ -1763,6 +1993,13 @@ canvas.addEventListener('pointerdown', function(e){
     touchDragActive = true; touchStartY = e.clientY; touchDragY = 0;
     if (dragHintEl) dragHintEl.classList.remove('show');
   }
+  // dragging while the guided tour is mid-flight between stops (not yet
+  // parked in an exploration orbit) reads as "I want to fly manually" —
+  // cancel back to free flight. While PARKED in orbit at a stop, dragging
+  // is left alone: that's the same "look around" gesture orbit mode
+  // already supports without breaking automatic revolution, and cancelling
+  // the tour on it would punish someone just glancing around.
+  if (!orbitState && typeof GuidedTour !== 'undefined') GuidedTour.cancel();
 });
 window.addEventListener('pointerup', function(e){
   dragging = false; canvas.classList.remove('dragging');
@@ -1829,6 +2066,7 @@ canvas.addEventListener('wheel', function(e){
   e.preventDefault();
   var delta = -e.deltaY*0.06;
   speed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed+delta));
+  if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
 }, { passive:false });
 
 /* ---- touch controls (item 2 — redesigned) ----
@@ -1861,6 +2099,7 @@ function hardStop(){
   speed = 0;
   touchDragActive = false; touchDragY = 0;
   if (orbitState) leaveOrbit();
+  if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
 }
 stopBtn.addEventListener('pointerdown', function(e){ e.preventDefault(); hardStop(); });
 
@@ -1974,7 +2213,7 @@ var _collV = new THREE.Vector3();
 function resolveCollisions(){
   for (var i=0;i<POIS.length;i++){
     var poi = POIS[i];
-    if (poi.layer !== 'solar' || !poi.mesh || !poi.radius) continue;
+    if ((poi.layer !== 'solar' && !poi.collidable) || !poi.mesh || !poi.radius) continue;
     poi.mesh.getWorldPosition(_collV);
     // the sun's glow sprite (SUN_R*7) is much larger than its solid mesh —
     // stopping the camera at the mesh radius still leaves it deep inside the
@@ -2027,9 +2266,11 @@ function updateTravel(dt){
 
   if (d < 0.4){
     var orbitPoi = travelTarget.orbitPoi;
+    var onArrive = travelTarget.onArrive;
     travelTarget = null;
     speed *= 0.3;
     if (orbitPoi){ enterOrbit(orbitPoi); }
+    if (onArrive){ onArrive(); }
   }
 }
 
@@ -2286,6 +2527,7 @@ var HOME_LOOK = new THREE.Vector3(0, 0, 0);
 if (navHomeBtn){
   navHomeBtn.addEventListener('click', function(){
     if (orbitState) leaveOrbit();
+    if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
     travelTarget = { pos: HOME_POSITION.clone(), look: HOME_LOOK.clone() };
   });
 }
@@ -2374,6 +2616,7 @@ document.getElementById('bigBangClose').addEventListener('click', function(){
 document.getElementById('bigBangBack').addEventListener('click', function(){
   bigBangMoment.classList.remove('show');
   if (orbitState) leaveOrbit();
+  if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
   travelTarget = { pos: HOME_POSITION.clone(), look: HOME_LOOK.clone() };
 });
 bigBangMoment.addEventListener('click', function(e){ if (e.target === bigBangMoment) bigBangMoment.classList.remove('show'); });
@@ -2383,7 +2626,8 @@ document.addEventListener('keydown', function(e){
     if (!welcome.classList.contains('hidden')) dismissWelcome(true);
     else if (bigBangMoment.classList.contains('show')) bigBangMoment.classList.remove('show');
     else if (poiCard.classList.contains('open')){ poiCard.classList.remove('open'); activePoi=null; }
-    else if (orbitState) leaveOrbit();
+    else if (orbitState) leaveOrbitByUser();
+    else if (typeof GuidedTour !== 'undefined' && GuidedTour.isActive()) GuidedTour.cancel();
     else if (document.pointerLockElement === canvas) document.exitPointerLock();
   }
 });
@@ -2450,16 +2694,48 @@ var SoundEngine = (function(){
 
   var soundBtn = document.getElementById('soundBtn');
 
+  var floorGain = null; // constant, near-silent low bed — see startFloor() below
   function ensureCtx(){
     if (ctx) return ctx;
     try{
       var AC = window.AudioContext || window.webkitAudioContext;
       ctx = new AC();
       master = ctx.createGain();
-      master.gain.value = muted ? 0 : 0.55;
+      // start silent and ramp up (rather than an instant jump to 0.55)
+      // even on first creation — belt-and-suspenders against an audible
+      // tick if a browser ever begins processing before this line runs.
+      master.gain.value = 0;
       master.connect(ctx.destination);
+      if (!muted) master.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 0.6);
+      startFloor();
     }catch(e){ ctx = null; }
     return ctx;
+  }
+
+  /* ---------- continuous low floor ----------
+     The organ phrases below are intentionally sparse — 9-18s notes
+     separated by real silence, which is the Interstellar/Zimmer
+     character we're going for. But total digital silence between
+     phrases reads as broken audio ("indo e voltando" — user report),
+     not as musical space. A single, unwavering, very quiet low drone
+     fills that gap: never percussive, never a note in its own right,
+     just a floor the phrases rise out of and sink back into so the
+     ambience never fully cuts to nothing. */
+  function startFloor(){
+    if (!ctx || floorGain) return;
+    floorGain = ctx.createGain();
+    floorGain.gain.value = 0;
+    floorGain.connect(master);
+    floorGain.gain.linearRampToValueAtTime(0.018, ctx.currentTime + 4);
+    [1, 2].forEach(function(mult){
+      var o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = 65.41 * mult; // same C2 root as the organ voices
+      var og = ctx.createGain();
+      og.gain.value = mult === 1 ? 0.7 : 0.3;
+      o.connect(og); og.connect(floorGain);
+      o.start();
+    });
   }
 
   /* ---------- pipe-organ-ish voice ----------
@@ -2716,9 +2992,21 @@ var GuideTips = (function(){
   }
   if (closeBtn) closeBtn.addEventListener('click', hide);
 
+  // shared with poke() below — a tip (idle OR layer-change) should never
+  // pop up over a panel the user is actively reading, and in particular
+  // never over the exploration-orbit card, whose own action buttons
+  // (including the black hole's "visitar o Horizonte" bridge) live in
+  // the same bottom-right neighborhood #guideTip occupies.
+  function isUiBlocked(){
+    return poiCard.classList.contains('open') || orbitPanel.classList.contains('open')
+      || !welcome.classList.contains('hidden') || bigBangMoment.classList.contains('show')
+      || (document.getElementById('roomsModal')||{}).classList.contains('open');
+  }
+
   function onLayer(label){
     if (!label || seenLayers[label]) return;
     seenLayers[label] = true;
+    if (isUiBlocked()) return; // skip rather than pop up over an open panel
     var msg = LAYER_TIPS[label];
     if (msg) show(msg);
   }
@@ -2737,19 +3025,161 @@ var GuideTips = (function(){
     if (moved){ idleSince = Date.now(); lastPos.copy(p); return; }
     lastPos.copy(p);
     var idleFor = Date.now() - idleSince;
-    var blocked = poiCard.classList.contains('open') || orbitPanel.classList.contains('open')
-      || !welcome.classList.contains('hidden') || bigBangMoment.classList.contains('show')
-      || (document.getElementById('roomsModal')||{}).classList.contains('open');
-    if (idleFor > IDLE_AFTER_MS && !blocked){
+    if (idleFor > IDLE_AFTER_MS && !isUiBlocked()){
       show(IDLE_TIPS[Math.floor(Math.random()*IDLE_TIPS.length)]);
       idleSince = Date.now(); // avoid immediately re-triggering next check
     }
   }
 
   setInterval(poke, 4000);
-  return { poke: poke, onLayer: onLayer };
+  return { poke: poke, onLayer: onLayer, hide: hide };
 })();
 function onLayerChanged(label){ GuideTips.onLayer(label); }
+
+/* ============================================================
+   GUIDED TOUR — an optional, fully-skippable autopilot itinerary.
+   Reuses travelToPoi()/enterOrbit()/leaveOrbit() (the exact same assisted-
+   flight and exploration-orbit mechanics every manual "viajar até aqui"
+   already uses) rather than inventing a second camera system — each stop
+   is just travelToPoi(poi, onArrive) with onArrive advancing the tour
+   after a dwell period. Captions are written in the Guia's established
+   voice (see the cinematic intro at /index.html and GuideTips above):
+   warm, unhurried, a little reflective, never bossy.
+   ------------------------------------------------------------
+   Cancellation: NEVER an inescapable cutscene. Any manual flight input
+   (WASD/arrows/Q/E, mouse wheel, starting a drag while not parked in an
+   orbit) or any of the room's other "take me somewhere" actions
+   (recentralizar, PARAR, abrir "salas", Escape, the explicit "sair da
+   órbita" button) cancels immediately and hands control straight back —
+   see the GuidedTour.cancel() calls threaded through those handlers
+   above. The explicit "sair do tour" button in #tourHud does the same.
+   ============================================================ */
+var GuidedTour = (function(){
+  var hud = document.getElementById('tourHud');
+  var captionEl = document.getElementById('tourCaption');
+  var progressBarEl = document.getElementById('tourProgressBar');
+  var stopLabelEl = document.getElementById('tourStopLabel');
+  var tourBtn = document.getElementById('tourBtn');
+  var exitBtn = document.getElementById('tourExit');
+  if (!hud || !tourBtn) return { start:function(){}, cancel:function(){}, isActive:function(){return false;} };
+
+  // itinerary, resolved by POI name at start() time (POIS is fully built
+  // long before any button can be clicked, so this lookup is always safe).
+  // Order per spec: Sol -> Terra -> Saturno -> vizinhança estelar/nebulosa
+  // -> escala galáctica/buraco negro -> camada cosmológica/Big Bang.
+  var ITINERARY = [
+    { poiName:'Sol',
+      caption:'Vamos começar do começo: a estrela que segura tudo isso junto. Fique à vontade — em qualquer momento você pode retomar o controle.' },
+    { poiName:'Terra',
+      caption:'E aqui está o único lugar, em tudo que já observamos, onde sabemos que existe vida. Vale um minuto de silêncio, mesmo que rápido.' },
+    { poiName:'Saturno',
+      caption:'Agora um pouco mais longe: Saturno, e aqueles anéis — proporcionalmente mais finos que uma folha de papel. A física às vezes é mais estranha que a ficção.' },
+    { poiName:'Nebulosa (representação artística)',
+      caption:'Deixamos o sistema solar para trás. Cada ponto de luz aqui é, em espírito, uma estrela — e esta nuvem colorida é onde estrelas novas nascem, ou onde velhas estrelas terminam.' },
+    { poiName:'Buraco negro',
+      caption:'Escala de galáxias inteiras agora — e um objeto que dobra a própria luz ao seu redor. Isto é só uma prévia; a versão completa espera em outra sala.' },
+    { poiName:'O limite observável (estilização)',
+      caption:'E este é o limite desta jornada: uma dramatização do próprio início observável do universo, 13,8 bilhões de anos atrás. Obrigada por vir até aqui.' }
+  ];
+
+  var active = false;
+  var finishing = false; // true only during the brief closing-message window after the last stop, before the HUD auto-hides
+  var stepIndex = -1;
+  var dwellTimer = null;
+  var finishTimer = null;
+
+  function resolvePoi(name){
+    for (var i=0;i<POIS.length;i++){ if (POIS[i].name === name) return POIS[i]; }
+    return null;
+  }
+
+  function setHud(show){
+    hud.classList.toggle('show', show);
+    tourBtn.classList.toggle('active', show);
+    tourBtn.setAttribute('aria-pressed', String(show));
+  }
+
+  function updateProgress(){
+    var total = ITINERARY.length;
+    var n = stepIndex+1;
+    progressBarEl.style.width = (n/total*100)+'%';
+    stopLabelEl.textContent = 'parada '+n+' de '+total;
+  }
+
+  function goToStep(i){
+    if (i >= ITINERARY.length){ finish(); return; }
+    stepIndex = i;
+    var stop = ITINERARY[i];
+    var poi = resolvePoi(stop.poiName);
+    if (!poi){ goToStep(i+1); return; } // defensive: skip a stop that somehow doesn't resolve rather than breaking the whole tour
+    captionEl.textContent = stop.caption;
+    updateProgress();
+    if (orbitState) leaveOrbit();
+    travelToPoi(poi, scheduleDwell);
+  }
+
+  function scheduleDwell(){
+    if (!active) return;
+    if (dwellTimer) clearTimeout(dwellTimer);
+    // shorter pause at each stop under reduced-motion, matching how every
+    // other camera transition in this room already respects that setting.
+    var dwellMs = REDUCE_MOTION ? 4000 : 8000;
+    dwellTimer = setTimeout(function(){
+      if (!active) return;
+      leaveOrbit();
+      goToStep(stepIndex+1);
+    }, dwellMs);
+  }
+
+  function start(){
+    if (active) return;
+    if (finishTimer){ clearTimeout(finishTimer); finishTimer = null; }
+    if (orbitState) leaveOrbit(); // orbit, if any, is superseded by the tour's own first leg
+    active = true;
+    finishing = false;
+    setHud(true);
+    goToStep(0);
+  }
+
+  function finish(){
+    active = false;
+    finishing = true;
+    leaveOrbit();
+    captionEl.textContent = 'Fim do tour. O resto da exploração é seu — pilote livremente para onde quiser.';
+    stopLabelEl.textContent = 'concluído';
+    progressBarEl.style.width = '100%';
+    tourBtn.classList.remove('active');
+    tourBtn.setAttribute('aria-pressed', 'false');
+    // the closing line stays legible for a few seconds before the HUD
+    // itself fades away, instead of vanishing the instant the tour ends.
+    finishTimer = setTimeout(function(){ finishing = false; hud.classList.remove('show'); }, 6000);
+  }
+
+  function cancel(){
+    if (!active && !finishing) return;
+    var wasActive = active;
+    active = false;
+    finishing = false;
+    stepIndex = -1;
+    if (dwellTimer){ clearTimeout(dwellTimer); dwellTimer = null; }
+    if (finishTimer){ clearTimeout(finishTimer); finishTimer = null; }
+    setHud(false);
+    // hand control back IMMEDIATELY, mid-leg or mid-stop — never let a
+    // cancelled tour keep steering the camera on rails while the free-
+    // flight input the player just used silently does nothing.
+    if (wasActive){
+      if (travelTarget){ travelTarget = null; }
+      if (orbitState){ leaveOrbit(); }
+    }
+  }
+
+  tourBtn.addEventListener('click', function(){
+    if (active || finishing) cancel(); else start();
+  });
+  if (exitBtn) exitBtn.addEventListener('click', cancel);
+
+  return { start: start, cancel: cancel, isActive: function(){ return active || finishing; } };
+})();
 
 /* ============================================================
    MOBILE WELCOME COPY — swap the desktop mouse/keyboard instruction
@@ -2842,6 +3272,7 @@ function onLayerChanged(label){ GuideTips.onLayer(label); }
   function openModal(){
     modal.classList.add('open');
     if (orbitState) leaveOrbit();
+    if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
   }
   function closeModal(){ modal.classList.remove('open'); }
   btn.addEventListener('click', openModal);
