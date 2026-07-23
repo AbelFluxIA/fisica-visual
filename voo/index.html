@@ -637,6 +637,13 @@ canvas{display:block;}
 }
 #rotateOverlay h2{font-family:var(--serif-it);font-style:italic;font-weight:500;font-size:20px;margin:0;color:var(--text);max-width:280px;}
 #rotateOverlay p{font-family:var(--mono);font-size:11px;color:var(--dim);margin:0;max-width:260px;line-height:1.6;}
+#rotateOverlay p.rotate-hint-small{font-size:9.5px;opacity:0.7;margin-top:6px;}
+#rotateOverlay #rotateSkip{
+  margin-top:4px;background:transparent;border:1px solid var(--line);border-radius:20px;
+  color:var(--dim);font-family:var(--mono);font-size:10.5px;letter-spacing:0.04em;
+  padding:9px 18px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;
+}
+#rotateOverlay #rotateSkip:hover, #rotateOverlay #rotateSkip:focus-visible{color:var(--text);border-color:rgba(212,168,92,0.4);}
 @media (prefers-reduced-motion:reduce){
   #rotateOverlay .ricon.spin svg{animation:none;}
 }
@@ -809,6 +816,8 @@ canvas{display:block;}
   </div>
   <h2>gire seu celular para uma experiência melhor</h2>
   <p>o voo espacial precisa de mais espaço horizontal — vire a tela para o modo paisagem para continuar</p>
+  <p class="rotate-hint-small">se a rotação automática do seu aparelho estiver desligada, ou se a tela não girar sozinha, você ainda pode continuar assim:</p>
+  <button type="button" id="rotateSkip">continuar mesmo assim</button>
 </div>
 
 <div id="poiCard" class="panel" role="dialog" aria-labelledby="poiName">
@@ -2768,9 +2777,14 @@ function onLayerChanged(label){ GuideTips.onLayer(label); }
   if (!overlay) return;
   var portraitMedia = window.matchMedia('(orientation: portrait)');
   var coarseMedia = window.matchMedia('(pointer: coarse)');
+  var SKIP_KEY = 'fisicavisual_voo_rotate_skip';
+  var skipped = false;
+  try { skipped = sessionStorage.getItem(SKIP_KEY) === '1'; } catch(e){}
+
   function shouldBlock(){
     // only ever applies to small touch devices — never desktop, never a
     // touch-capable laptop with a big screen held in a tall window.
+    if (skipped) return false;
     return coarseMedia.matches && portraitMedia.matches && Math.min(innerWidth, innerHeight) < 620;
   }
   function refresh(){
@@ -2781,6 +2795,20 @@ function onLayerChanged(label){ GuideTips.onLayer(label); }
   if (portraitMedia.addEventListener) portraitMedia.addEventListener('change', refresh);
   else if (portraitMedia.addListener) portraitMedia.addListener(refresh);
   window.addEventListener('orientationchange', function(){ setTimeout(refresh, 120); });
+
+  // Escape hatch: if auto-rotate is off on the device, or orientation
+  // detection just doesn't fire correctly on a given browser (seen on
+  // iOS Chrome), this overlay would otherwise trap the visitor with no
+  // way forward. A visible manual override is mandatory — never block
+  // the whole experience behind a check that can silently misfire.
+  var skipBtn = document.getElementById('rotateSkip');
+  if (skipBtn){
+    skipBtn.addEventListener('click', function(){
+      skipped = true;
+      try { sessionStorage.setItem(SKIP_KEY, '1'); } catch(e){}
+      overlay.classList.remove('show');
+    });
+  }
 })();
 
 /* ============================================================
