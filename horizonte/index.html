@@ -227,18 +227,86 @@ input[type=range]:focus-visible{outline:2px solid var(--gold);outline-offset:4px
 }
 #fallback{position:fixed;inset:0;display:none;place-items:center;padding:24px;text-align:center;color:var(--dim);}
 
+/* ---------- mobile: header + deck must never dominate the scene ----------
+   Reported problem (real screenshot, Android portrait): header + bottom
+   deck together ate more than half the viewport height, leaving barely
+   any room to actually see the black hole. Below 640px both panels drop
+   to their essential-only signal — icons/numbers over prose, secondary
+   text hidden outright — and the deck gets a hard max-height with internal
+   scroll so it can never push the canvas out of view. */
 @media (max-width:640px){
-  #hdr{top:56px;max-width:210px;padding:12px 16px;}
-  #hdr h1{font-size:23px;}
+  #back{padding:6px 10px;font-size:9.5px;gap:4px;}
+  #back svg{width:9px;height:9px;}
+
+  /* title card: icon-row height only, no subtitle, tight max-width */
+  #hdr{top:44px;left:10px;max-width:168px;padding:8px 11px 7px;border-radius:9px;}
+  #hdr .eyebrow{font-size:8px;letter-spacing:0.14em;}
+  #hdr h1{font-size:17px;margin:2px 0 3px;line-height:1.02;}
   #hdr .sub{display:none;}
-  #deck{padding:13px 15px;gap:9px;}
-  #factor{font-size:24px;}
-  .clocks{margin-left:0;}
+  .seg button{padding:6px 3px;font-size:9.5px;}
+
+  #infoBtn{top:10px;right:10px;padding:8px;border-radius:50%;gap:0;}
+  #infoBtn #infoBtnLabel{display:none;}
+  #infoBtn svg{width:13px;height:13px;}
+
+  /* control deck: hard cap on height + internal scroll so the slider,
+     dilation readout and clocks never push the black hole off-screen.
+     Everything inside shrinks: labels go icon/number-only, clocks shrink,
+     the explanatory sentence truncates to just the multiplier. */
+  #deck{
+    padding:10px 12px 12px;gap:7px;bottom:8px;
+    width:calc(100vw - 16px);max-height:34vh;overflow-y:auto;border-radius:10px;
+  }
+  #deck .row{gap:8px;}
+  #deck label.eyebrow{font-size:8px;flex:0 0 auto;}
+  .readout{font-size:11px;}
+  #kmVal{font-size:9.5px;}
+  #zone{font-size:8.5px;padding:2px 7px;}
+  #dilation{gap:8px;}
+  #factor{font-size:19px;}
+  #factorTxt{font-size:10.5px;max-width:none;line-height:1.3;}
+  .clocks{margin-left:0;gap:10px;}
+  .clock svg{width:34px;height:34px;}
+  .clock .name{font-size:7.5px;}
+  .clock .t{font-size:10px;}
+  #reset{padding:4px 7px;font-size:9px;}
+
   #hint{display:none;}
-  #info{bottom:180px;}
-  #welcome .card{padding:24px 22px 22px;}
-  #welcome h2{font-size:21px;}
+  #info{bottom:8px;top:52px;padding:4px 16px 16px;}
+  #welcome .card{padding:20px 18px 18px;max-height:calc(100vh - 28px);overflow-y:auto;}
+  #welcome h2{font-size:19px;}
 }
+
+/* ---------- smallest phones (~375px and below) ----------
+   One more notch: the deck's explanatory sentence goes entirely, clocks
+   shrink further, header collapses to a single line. */
+@media (max-width:380px){
+  #hdr{max-width:140px;padding:6px 9px 5px;}
+  #hdr .eyebrow{display:none;}
+  #hdr h1{font-size:15px;margin:0;}
+  .seg button{padding:5px 2px;font-size:8.5px;}
+
+  #deck{max-height:32vh;padding:9px 10px 10px;}
+  #factorTxt{display:none;}
+  .clocks{gap:7px;}
+  .clock svg{width:30px;height:30px;}
+  #reset{padding:3px 6px;}
+}
+
+/* ---------- short landscape phones ----------
+   Width-based rules alone let the deck grow tall enough to eat most of a
+   short-but-wide screen. Target by height so a normal desktop window
+   with a short viewport is unaffected. */
+@media (max-height:420px) and (orientation:landscape){
+  #hdr{top:10px;left:10px;max-width:150px;padding:7px 10px 6px;}
+  #hdr .sub{display:none;}
+  #deck{bottom:6px;max-height:42vh;padding:8px 12px 10px;}
+  .clocks{gap:8px;}
+  .clock svg{width:32px;height:32px;}
+  #factorTxt{max-width:220px;}
+  #info{top:10px;bottom:10px;right:10px;}
+}
+
 @media (prefers-reduced-motion:reduce){
   *{transition:none !important;}
   #infoBtn .pulse{animation:none;display:none;}
