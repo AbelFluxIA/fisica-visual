@@ -127,22 +127,43 @@ body{
 #beginBtn:hover{background:rgba(212,168,92,0.24);border-color:rgba(212,168,92,0.75);transform:translateY(-1px);}
 #beginBtn:focus-visible{outline:2px solid #E8C27E;outline-offset:3px;}
 
-#skipBtn{
-  background:transparent;border:none;color:rgba(237,234,226,0.45);font-family:var(--mono);
-  font-size:10.5px;letter-spacing:0.06em;cursor:pointer;text-decoration:underline;
-  text-underline-offset:3px;padding:6px 10px;
+/* ---- prelude: two sequential prompts before captions start, timed to
+   the real silence-then-voice structure of the narration audio (0-15s
+   is instrumental only) — volume first, then rotate, mirroring the
+   /voo/ room's own rotate overlay in tone and iconography. ---- */
+#preludeWrap{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;z-index:3;
 }
-#skipBtn:hover{color:rgba(237,234,226,0.85);}
-#skipBtn:focus-visible{outline:2px solid #E8C27E;}
+.preludeStep{
+  position:absolute;display:flex;flex-direction:column;align-items:center;gap:14px;
+  opacity:0;transform:translateY(8px);transition:opacity .9s ease,transform .9s ease;
+  text-align:center;
+}
+.preludeStep.show{opacity:1;transform:translateY(0);}
+.preludeStep svg{width:44px;height:44px;color:#E8C27E;}
+.preludeStep p{
+  font-family:'Fraunces Italic',Georgia,serif;font-style:italic;font-weight:500;
+  font-size:clamp(17px,3vw,22px);color:#F5F1E6;margin:0;text-shadow:0 2px 20px rgba(0,0,0,0.5);
+}
+#preludeVolume svg path:last-child{animation:pulseIcon 1.8s ease-in-out infinite;}
+@keyframes pulseIcon{0%,100%{opacity:1;}50%{opacity:0.35;}}
+#preludeRotate svg{animation:rotateIcon 1.8s ease-in-out infinite;}
+@keyframes rotateIcon{0%,100%{transform:rotate(0deg);}45%,55%{transform:rotate(-90deg);}}
+@media (prefers-reduced-motion:reduce){
+  #preludeVolume svg path:last-child, #preludeRotate svg{animation:none;}
+}
 
-#skipCorner{
-  position:absolute;top:max(20px, env(safe-area-inset-top));right:max(20px, env(safe-area-inset-right));z-index:4;
-  background:rgba(13,15,24,0.5);border:1px solid rgba(255,255,255,0.12);border-radius:20px;
-  color:rgba(237,234,226,0.7);font-family:var(--mono);font-size:10.5px;letter-spacing:0.05em;
-  padding:8px 14px;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+/* ---- accelerate sequence: last 12s of the track (music tail, no more
+   captions) — a starfield rushing toward the viewer, echoing "it's
+   time to take command of your own journey" right before #beginBtn
+   appears. Separate canvas, only mounted/animated for this window. ---- */
+#accelerateStage{
+  position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none;
+  transition:opacity 1.2s ease;
 }
-#skipCorner:hover{color:#fff;border-color:rgba(255,255,255,0.3);}
-#skipCorner:focus-visible{outline:2px solid #E8C27E;}
+#accelerateStage.show{opacity:1;}
+#accelerateCanvas{width:100%;height:100%;display:block;}
 
 /* also-available link to the rooms hub, kept very quiet — this is the
    "outras salas" escape hatch required even from the cinematic intro */
@@ -164,7 +185,8 @@ body{
   #caption{font-size:clamp(17px,5.4vw,26px);max-width:88vw;}
   #introEyebrow{font-size:8px;letter-spacing:0.16em;top:max(20px, env(safe-area-inset-top));max-width:150px;line-height:1.5;}
   #beginBtn{padding:11px 22px;font-size:11.5px;}
-  #skipCorner{padding:6px 11px;font-size:9.5px;}
+  .preludeStep svg{width:36px;height:36px;}
+  .preludeStep p{font-size:clamp(15px,4.4vw,19px);}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -178,16 +200,27 @@ body{
 
 <span id="introEyebrow">física visual · uma introdução</span>
 
+<div id="preludeWrap">
+  <div id="preludeVolume" class="preludeStep show">
+    <svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M6 15v10h6l9 7V8l-9 7H6z" fill="currentColor"/><path d="M27 14a10 10 0 0 1 0 12M31.5 10a16 16 0 0 1 0 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <p>aumente o som</p>
+  </div>
+  <div id="preludeRotate" class="preludeStep">
+    <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><rect x="14" y="6" width="20" height="36" rx="3" stroke="currentColor" stroke-width="2"/><path d="M24 34.5v.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    <p>vire o celular</p>
+  </div>
+</div>
+
 <div id="captionWrap">
   <p id="caption"></p>
 </div>
 
+<div id="accelerateStage" aria-hidden="true"><canvas id="accelerateCanvas"></canvas></div>
+
 <div id="introControls">
   <button id="beginBtn" type="button">iniciar o voo</button>
-  <button id="skipBtn" type="button">pular introdução</button>
 </div>
 
-<button id="skipCorner" type="button">pular ›</button>
 <a id="salasLink" href="/salas/">ver todas as salas</a>
 
 <audio id="narration" src="assets/audio/intro-narration.mp3" preload="auto"></audio>
@@ -208,23 +241,41 @@ body{
      Duration per caption ~4-6s reading time, per spec.
      ============================================================ */
   var CAPTIONS = [
-    { at: 0.5,  dur: 5.0, text: "Você está pronto para explorar o espaço?" },
-    { at: 6.0,  dur: 5.5, text: "Eu sou a sua Guia, e o meu objetivo aqui é mostrar um pouco do cosmo." },
-    { at: 12.0, dur: 8.5, text: "Eu quero que você saia daqui com mais conhecimento, experiência — e principalmente, com a percepção de que diante da vastidão do universo, nossas opiniões, problemas e situações não são nada." },
-    { at: 21.0, dur: 8.5, text: "Mas, ao mesmo tempo, de como você é único. E que privilégio é estar vivo, poder experimentar tudo isso, num universo tão grande e magnífico." },
-    { at: 30.0, dur: 5.5, text: "Está pronto? Então vamos nessa." }
+    { at: 15.0,  dur: 4.0, text: "Bem-vindo à Exploração Espacial." },
+    { at: 19.0,  dur: 3.0, text: "Você está pronto para explorar o espaço?" },
+    { at: 22.0,  dur: 2.0, text: "Eu sou a sua Guia." },
+    { at: 24.0,  dur: 5.0, text: "Meu propósito aqui é simples: mostrar a você um pouco do cosmo." },
+    { at: 29.0,  dur: 4.0, text: "Mas antes de começarmos, preciso que você entenda uma coisa." },
+    { at: 33.0,  dur: 4.0, text: "Suas crenças, sua religião, sua política." },
+    { at: 37.0,  dur: 8.0, text: "As coisas que você defende com tudo o que tem, que te fazem discutir, que te fazem ter certeza de que está certo." },
+    { at: 45.0,  dur: 9.0, text: "Tudo que você já viveu, cada alegria, cada dor, cada decisão que pareceu o fim do mundo," },
+    { at: 54.0,  dur: 8.0, text: "aconteceu num grão de poeira, suspenso num raio de sol, perdido numa escuridão sem fim." },
+    { at: 62.0,  dur: 5.0, text: "Bilhões de estrelas, bilhões de mundos possíveis." },
+    { at: 67.0,  dur: 11.0, text: "E você, com tudo o que pensa, tudo o que acredita, tudo o que é, não é mais que um piscar de olhos na vida do universo." },
+    { at: 78.0,  dur: 8.0, text: "Diante disso, suas certezas, seus problemas, sua angústia, não são nada." },
+    { at: 86.0,  dur: 2.0, text: "Mas há uma ironia nisso." },
+    { at: 88.0,  dur: 10.0, text: "Porque o próprio fato de sermos tão pequenos, tão breves, tão improváveis, e ainda assim capazes de acreditar, de pensar, de duvidar, de amar," },
+    { at: 98.0,  dur: 7.0, text: "nos faz, de alguma forma, o universo tentando entender a si mesmo através de nós." },
+    { at: 105.0, dur: 5.0, text: "Você não é insignificante por ser pequeno." },
+    { at: 110.0, dur: 5.0, text: "Você é extraordinário por existir, apesar de ser pequeno." },
+    { at: 115.0, dur: 3.0, text: "Então ouça isto, e nunca esqueça." },
+    { at: 118.0, dur: 6.0, text: "Você é especial, único, irrepetível em toda a história do cosmo." },
+    { at: 124.0, dur: 4.0, text: "E é hora de assumir o comando da sua própria jornada." },
+    { at: 128.0, dur: 2.0, text: "Você está pronto?" },
+    { at: 130.0, dur: 2.5, text: "Então vamos nessa." }
   ];
-  var TOTAL_FALLBACK_DURATION = 36.5; // last caption's at+dur, plus a beat of silence before auto-advancing
+  var TOTAL_FALLBACK_DURATION = 132.5; // last caption's at+dur; the 12s music tail + accelerate sequence follow separately
 
   var captionEl = document.getElementById("caption");
   var eyebrowEl = document.getElementById("introEyebrow");
   var beginBtn = document.getElementById("beginBtn");
-  var skipBtn = document.getElementById("skipBtn");
-  var skipCorner = document.getElementById("skipCorner");
   var narration = document.getElementById("narration");
   var introStage = document.getElementById("introStage");
   var captionWrap = document.getElementById("captionWrap");
   var introControls = document.getElementById("introControls");
+  var preludeVolume = document.getElementById("preludeVolume");
+  var preludeRotate = document.getElementById("preludeRotate");
+  var accelerateStage = document.getElementById("accelerateStage");
 
   var currentCaptionIndex = -1;
   var finished = false;
@@ -233,6 +284,25 @@ body{
   var fallbackStart = null;
 
   eyebrowEl.classList.add("show");
+
+  /* ---- prelude: volume prompt first (music-only, 0-15s), then a
+     rotate prompt in the last couple seconds before the voice comes
+     in — matches the audio's own structure (measured: voice onset is
+     ~15.5-16s in, not a guess) rather than the narration itself. ---- */
+  var VOLUME_PROMPT_UNTIL = 13.0;
+  var ROTATE_PROMPT_FROM = 13.0;
+  var ROTATE_PROMPT_UNTIL = 16.0;
+  var preludeState = "volume"; // "volume" | "rotate" | "done"
+  function updatePrelude(t){
+    if (t < VOLUME_PROMPT_UNTIL){
+      if (preludeState !== "volume"){ preludeState = "volume"; preludeVolume.classList.add("show"); preludeRotate.classList.remove("show"); }
+    } else if (t < ROTATE_PROMPT_UNTIL){
+      if (preludeState !== "rotate"){ preludeState = "rotate"; preludeVolume.classList.remove("show"); preludeRotate.classList.add("show"); }
+    } else if (preludeState !== "done"){
+      preludeState = "done"; preludeVolume.classList.remove("show"); preludeRotate.classList.remove("show");
+    }
+  }
+  preludeVolume.classList.add("show");
 
   function showCaption(i){
     if (i === currentCaptionIndex) return;
@@ -261,6 +331,25 @@ body{
     return idx;
   }
 
+  /* ---- accelerate sequence: the last stretch of the track is a music
+     tail with no more speech (measured end of narration ~132s, track
+     ends ~144s) — captions stop, a starfield rush takes over, and the
+     begin button fades in right as it peaks. ---- */
+  var ACCELERATE_FROM = 132.0;
+  var accelerateStarted = false;
+  function checkAccelerate(t){
+    if (!accelerateStarted && t >= ACCELERATE_FROM){
+      accelerateStarted = true;
+      // the last caption (128-132.5s) can still be fading in exactly as
+      // the rush starts (132s) — clear it explicitly so the two never
+      // visually stack, rather than relying on captionIndexForTime()
+      // to naturally roll past it a beat later.
+      showCaption(-1);
+      accelerateStage.classList.add("show");
+      startAccelerateAnim();
+    }
+  }
+
   function revealControls(){
     beginBtn.classList.add("show");
   }
@@ -268,13 +357,16 @@ body{
   function finishIntro(){
     if (finished) return;
     finished = true;
+    checkAccelerate(9999); // ensure the rush is showing by the time controls appear
     revealControls();
   }
 
   /* ---- audio-synced path ---- */
   function onTimeUpdate(){
     var t = narration.currentTime;
+    updatePrelude(t);
     showCaption(captionIndexForTime(t));
+    checkAccelerate(t);
   }
   function onAudioEnded(){
     finishIntro();
@@ -288,7 +380,9 @@ body{
     fallbackStart = performance.now();
     function tick(){
       var t = (performance.now() - fallbackStart) / 1000;
+      updatePrelude(t);
       showCaption(captionIndexForTime(t));
+      checkAccelerate(t);
       if (t >= TOTAL_FALLBACK_DURATION){
         finishIntro();
         return;
@@ -327,15 +421,19 @@ body{
   // anyway — showCaption() is idempotent-safe either way.
   window.setTimeout(function(){ if (!usingAudioSync) startFallbackTimer(); }, 900);
 
-  /* ---- reduced motion: shorten the whole intro, keep it meaningful ---- */
+  /* ---- reduced motion: only the visual drift/rush is toned down (see
+     the starfield and accelerate-sequence code below) — the narration
+     is the point of this intro, so it always plays start to finish and
+     is never shortened or skippable, per spec. Only the fallback timer
+     (no-audio path) needs its own duration, matching the real track. ---- */
   if (REDUCE_MOTION){
-    // compress timings so a reduced-motion visit isn't forced to sit
-    // through 36s of camera drift it explicitly asked to minimize
-    CAPTIONS.forEach(function(c, i){ c.at = i*2.2; c.dur = 2.0; });
     TOTAL_FALLBACK_DURATION = CAPTIONS[CAPTIONS.length-1].at + CAPTIONS[CAPTIONS.length-1].dur + 1;
   }
 
-  /* ---- navigation: begin / skip both lead to /voo/ ---- */
+  /* ---- navigation: only the explicit "iniciar o voo" button (shown
+     once the narration finishes) leads to /voo/ — no skip, no Escape
+     shortcut, by design: the narration/track is meant to be heard in
+     full every time. ---- */
   function goToFlight(){
     introStage.classList.add("leaving");
     captionWrap.classList.add("leaving");
@@ -346,11 +444,6 @@ body{
     }, REDUCE_MOTION ? 80 : 720);
   }
   beginBtn.addEventListener("click", goToFlight);
-  skipBtn.addEventListener("click", goToFlight);
-  skipCorner.addEventListener("click", goToFlight);
-  document.addEventListener("keydown", function(e){
-    if (e.key === "Escape") goToFlight();
-  });
 
   /* ============================================================
      BACKGROUND — slow-drifting starfield with a distant warm core,
@@ -426,6 +519,79 @@ body{
     if (!REDUCE_MOTION || true) requestAnimationFrame(draw); // keep a low-cost rAF alive even reduced (twinkle only)
   }
   requestAnimationFrame(draw);
+
+  /* ============================================================
+     ACCELERATE SEQUENCE — the last ~12s of the track (music tail,
+     narration already finished). A classic hyperspace rush: points
+     race outward from the vanishing point, accelerating as the cue
+     plays out, echoing "it's time to take command of your own
+     journey" right before the begin button appears. Separate canvas
+     and rAF loop, only started once (see checkAccelerate above) so it
+     costs nothing during the spoken portion of the intro.
+     ============================================================ */
+  var accCanvas = document.getElementById("accelerateCanvas");
+  var accCtx = accCanvas.getContext("2d");
+  var accW, accH, accDpr;
+  function accResize(){
+    accDpr = Math.min(devicePixelRatio || 1, 2);
+    accW = innerWidth; accH = innerHeight;
+    accCanvas.width = accW*accDpr; accCanvas.height = accH*accDpr;
+    accCanvas.style.width = accW+"px"; accCanvas.style.height = accH+"px";
+    accCtx.setTransform(accDpr,0,0,accDpr,0,0);
+  }
+  window.addEventListener("resize", accResize);
+
+  var rushPoints = [];
+  function makeRushPoint(){
+    var ang = Math.random()*Math.PI*2;
+    return {
+      ang: ang,
+      r: Math.random()*40,
+      speed: 60 + Math.random()*70,
+      len: 4 + Math.random()*10,
+      color: Math.random() < 0.18 ? "232,194,126" : "225,232,245"
+    };
+  }
+  for (var ri=0; ri<(REDUCE_MOTION?60:220); ri++) rushPoints.push(makeRushPoint());
+
+  var accStarted = false;
+  var accT0 = null;
+  function startAccelerateAnim(){
+    if (accStarted) return;
+    accStarted = true;
+    accResize();
+    accT0 = performance.now();
+    if (REDUCE_MOTION){
+      // one settled frame conveying "rushing outward" without a sustained
+      // animation loop, per prefers-reduced-motion
+      accDraw(0.7);
+      return;
+    }
+    function loop(now){
+      var t = (now - accT0) / 1000;
+      accDraw(t);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+  function accDraw(t){
+    var cx = accW/2, cy = accH/2;
+    // ramps from a gentle drift up to a full rush over ~4s, then holds
+    // at max intensity for the rest of the 12s tail
+    var intensity = Math.min(1, t/4);
+    accCtx.fillStyle = "rgba(2,2,7,"+(REDUCE_MOTION?1:0.32)+")";
+    accCtx.fillRect(0,0,accW,accH);
+    rushPoints.forEach(function(p){
+      if (!REDUCE_MOTION) p.r += p.speed * intensity * (1/60);
+      var maxR = Math.max(accW,accH)*0.75;
+      if (p.r > maxR){ p.r = 0; p.ang = Math.random()*Math.PI*2; }
+      var x = cx + Math.cos(p.ang)*p.r, y = cy + Math.sin(p.ang)*p.r;
+      var x2 = cx + Math.cos(p.ang)*(p.r - p.len*(1+intensity*3)), y2 = cy + Math.sin(p.ang)*(p.r - p.len*(1+intensity*3));
+      accCtx.strokeStyle = "rgba("+p.color+","+(0.25+intensity*0.55)+")";
+      accCtx.lineWidth = 1 + intensity*1.2;
+      accCtx.beginPath(); accCtx.moveTo(x2,y2); accCtx.lineTo(x,y); accCtx.stroke();
+    });
+  }
 })();
 </script>
 

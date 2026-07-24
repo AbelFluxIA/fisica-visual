@@ -1,78 +1,77 @@
 # Narração da introdução — `intro-narration.mp3`
 
-Este diretório deve conter o arquivo de áudio da narração da tela de abertura
-do site (`/index.html`), referenciado pelo elemento:
+Arquivo real, em produção (24/07/2026) — narração em inglês gerada por IA
+pelo próprio usuário, com a trilha de Interstellar de fundo. Duração real:
+143,9s (~2:24).
 
 ```html
 <audio id="narration" src="assets/audio/intro-narration.mp3" preload="auto"></audio>
 ```
 
-## O que gravar
+## Estrutura real do áudio (medida por análise de volume RMS, não estimada)
 
-- **Arquivo esperado:** `intro-narration.mp3` (nome e caminho exatos — o HTML já
-  aponta para cá; se salvar com outro nome, atualize o `src` no `<audio>` de
-  `/root/fisica-visual/index.html`).
-- **Voz:** feminina.
-- **Tom:** futurístico, impactante, mas contido — mais "voz de guia que já viu
-  o suficiente do universo para não precisar gritar" do que "trailer de
-  blockbuster". As legendas na tela já carregam o peso emocional; a narração
-  deve reforçar, não competir.
-- **Idioma da gravação:** inglês (ver roteiro em inglês abaixo). O site é em
-  português e as legendas na tela permanecem em português — a narração em
-  inglês toca por cima delas como uma camada estilística separada (como uma
-  trilha narrada em documentário estrangeiro legendado). Se preferir gravar em
-  português para ter locução e legenda no mesmo idioma, o roteiro em português
-  abaixo já está pronto para isso também — é só usar essa versão como roteiro
-  de gravação em vez da versão em inglês.
-- **Ferramenta sugerida:** ElevenLabs ou qualquer TTS/gravação de voz
-  equivalente.
-- **Duração alvo:** cerca de 35 segundos no total, para bater com o
-  temporizador de fallback do JS (`TOTAL_FALLBACK_DURATION` em `/index.html`).
-  Se a narração real ficar com duração bem diferente, ajuste as marcações de
-  tempo (`at`, em segundos) no array `CAPTIONS` do script da intro para
-  ressincronizar cada legenda com o áudio.
+- **0–15s**: só a trilha instrumental (batida crescente), sem voz. A intro
+  mostra o prompt "aumente o som" (0–13s) e depois "vire o celular" (13–16s)
+  nessa janela.
+- **~15,5–16s**: a voz entra (salto de volume medido de -28dB para -19dB).
+- **15–132s**: narração completa, 21 falas transcritas e traduzidas (ver
+  tabela abaixo).
+- **132–144s**: cauda instrumental, sem fala — a intro entra na sequência de
+  "acelerando entre as estrelas" (`#accelerateStage` em `/index.html`) até o
+  botão "iniciar o voo" aparecer.
+
+## Roteiro real (transcrito do áudio via Whisper, tempos em segundos desde o início do arquivo)
+
+| Início | Fim | Inglês (narrado) | Português (legenda em produção) |
+|---|---|---|---|
+| 15,0 | 19,0 | Welcome to Space Exploration. | Bem-vindo à Exploração Espacial. |
+| 19,0 | 22,0 | Are you ready to explore space? | Você está pronto para explorar o espaço? |
+| 22,0 | 24,0 | I'm your guide. | Eu sou a sua Guia. |
+| 24,0 | 29,0 | My purpose here is simple, to show you a little of the cosmos. | Meu propósito aqui é simples: mostrar a você um pouco do cosmo. |
+| 29,0 | 33,0 | But before we begin, I need you to understand something. | Mas antes de começarmos, preciso que você entenda uma coisa. |
+| 33,0 | 37,0 | Your beliefs, your religion, your politics. | Suas crenças, sua religião, sua política. |
+| 37,0 | 45,0 | The things you defend with everything you have, that make you argue, that make you certain you're right. | As coisas que você defende com tudo o que tem, que te fazem discutir, que te fazem ter certeza de que está certo. |
+| 45,0 | 54,0 | Everything you've ever lived, every joy, every pain, every decision that felt like the end of the world, | Tudo que você já viveu, cada alegria, cada dor, cada decisão que pareceu o fim do mundo, |
+| 54,0 | 62,0 | happened on a grain of dust, suspended in a sunbeam, lost in a darkness with no end. | aconteceu num grão de poeira, suspenso num raio de sol, perdido numa escuridão sem fim. |
+| 62,0 | 67,0 | Billions of stars, billions of possible worlds. | Bilhões de estrelas, bilhões de mundos possíveis. |
+| 67,0 | 78,0 | And you, with everything you think, everything you believe, everything you are, are nothing more than a blink in the lifetime of the universe. | E você, com tudo o que pensa, tudo o que acredita, tudo o que é, não é mais que um piscar de olhos na vida do universo. |
+| 78,0 | 86,0 | Against that, your certainties, your problems, your anguish, are nothing. | Diante disso, suas certezas, seus problemas, sua angústia, não são nada. |
+| 86,0 | 88,0 | But there's an irony in that. | Mas há uma ironia nisso. |
+| 88,0 | 98,0 | Because the very fact that we are this small, this brief, this improbable, and still capable of believing, of thinking, of doubting, of loving, | Porque o próprio fato de sermos tão pequenos, tão breves, tão improváveis, e ainda assim capazes de acreditar, de pensar, de duvidar, de amar, |
+| 98,0 | 105,0 | makes us, in some way, the universe trying to understand itself through us. | nos faz, de alguma forma, o universo tentando entender a si mesmo através de nós. |
+| 105,0 | 110,0 | You are not insignificant because you are small. | Você não é insignificante por ser pequeno. |
+| 110,0 | 115,0 | You are extraordinary because you exist despite being small. | Você é extraordinário por existir, apesar de ser pequeno. |
+| 115,0 | 118,0 | So hear this and never forget it. | Então ouça isto, e nunca esqueça. |
+| 118,0 | 124,0 | You are special, unique, unrepeatable in the entire history of the cosmos. | Você é especial, único, irrepetível em toda a história do cosmo. |
+| 124,0 | 128,0 | And it's time to take command of your own journey. | E é hora de assumir o comando da sua própria jornada. |
+| 128,0 | 130,0 | Are you ready? | Você está pronto? |
+| 130,0 | 132,0 | Then let's go. | Então vamos nessa. |
+
+Esses são os valores exatos usados no array `CAPTIONS` de `/root/fisica-visual/index.html`.
 
 ## Como a sincronização funciona
 
-O JavaScript da intro tenta tocar este arquivo assim que a página carrega. Se
-o áudio existir e tocar normalmente, as legendas sincronizam com o evento
-`timeupdate` do elemento `<audio>`, usando as marcações `at`/`dur` (em
-segundos) definidas no array `CAPTIONS`. Se o áudio não existir, falhar ao
-carregar, ou o autoplay for bloqueado pelo navegador, um temporizador em
-JavaScript assume automaticamente e avança as legendas nos mesmos tempos
-aproximados — a intro funciona (com legendas silenciosas) mesmo sem este
-arquivo. Enquanto este README existir sem o mp3 ao lado, é esse modo de
-fallback que está ativo em produção.
+O JavaScript da intro toca este arquivo assim que a página carrega. As
+legendas sincronizam com o evento `timeupdate` do elemento `<audio>`, usando
+as marcações `at`/`dur` (em segundos) do array `CAPTIONS`. Se o áudio falhar
+ao carregar ou o autoplay for bloqueado, um temporizador em JavaScript assume
+automaticamente e avança as legendas nos mesmos tempos — a intro funciona
+(com legendas silenciosas) mesmo sem o arquivo.
 
-## Roteiro em português (texto exibido nas legendas da tela)
+**Não há botão de pular a intro** (removido a pedido do usuário — a trilha e
+a narração são para serem ouvidas por completo todas as vezes). O único
+caminho adiante é o botão "iniciar o voo", que só aparece quando a narração
+termina (evento `ended` do áudio) ou, na sequência de aceleração, ao fim da
+cauda instrumental.
 
-Este é o texto exato que aparece como legenda, na ordem, com o tempo alvo de
-início (`at`) e duração de leitura (`dur`) usados hoje no código:
+## Se for regravar/trocar o áudio
 
-1. **[0,5s – 5,0s]** "Você está pronto para explorar o espaço?"
-2. **[6,0s – 5,5s]** "Eu sou a sua Guia, e o meu objetivo aqui é mostrar um pouco do cosmo."
-3. **[12,0s – 8,5s]** "Eu quero que você saia daqui com mais conhecimento, experiência — e principalmente, com a percepção de que diante da vastidão do universo, nossas opiniões, problemas e situações não são nada."
-4. **[21,0s – 8,5s]** "Mas, ao mesmo tempo, de como você é único. E que privilégio é estar vivo, poder experimentar tudo isso, num universo tão grande e magnífico."
-5. **[30,0s – 5,5s]** "Está pronto? Então vamos nessa."
-
-## Roteiro em inglês (script for recording, if recording in English per the brief)
-
-A natural-sounding English translation of the same script, preserving the
-meaning and pacing intended above — use this as the recording script if
-narrating in English over the Portuguese on-screen captions:
-
-1. "Are you ready to explore space?"
-2. "I'm your Guide, and my purpose here is to show you a little of the cosmos."
-3. "I want you to leave here with more knowledge, more experience — and above all, with the realization that against the vastness of the universe, our opinions, our problems, our situations are nothing."
-4. "But at the same time, how unique you are. And what a privilege it is to be alive — to be able to experience all of this, in a universe so vast and so magnificent."
-5. "Are you ready? Then let's go."
-
-## Depois de gravar
-
-1. Salve o arquivo final como `intro-narration.mp3` nesta pasta
-   (`/root/fisica-visual/assets/audio/intro-narration.mp3`).
-2. Abra `/root/fisica-visual/index.html` e confirme que a narração toca e as
-   legendas acompanham o áudio (não o temporizador de fallback).
-3. Se a duração real da gravação divergir muito de ~35s, ajuste os valores
-   `at`/`dur` no array `CAPTIONS` dentro do `<script>` da intro para
-   realinhar cada legenda com o momento certo da fala.
+1. Substitua `intro-narration.mp3` nesta pasta.
+2. Se a nova narração tiver timing diferente, retranscreva (Whisper local
+   já está instalado em `/tmp/whisperenv` neste ambiente — `whisper arquivo.mp3
+   --model medium --language English --output_format json`) e ajuste os
+   valores `at`/`dur` do array `CAPTIONS`, mais `VOLUME_PROMPT_UNTIL`,
+   `ROTATE_PROMPT_FROM/UNTIL` e `ACCELERATE_FROM` em `/root/fisica-visual/index.html`
+   para bater com a nova estrutura de silêncio→voz→cauda instrumental do
+   áudio (meça com `ffmpeg -ss T -t 1 -i arquivo.mp3 -af volumedetect -f null -`
+   em pontos candidatos para achar a transição real, não estime de ouvido).
