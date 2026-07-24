@@ -404,6 +404,7 @@ canvas{display:block;}
   padding:16px 20px 18px;z-index:7;display:none;overflow-y:auto;
 }
 #orbitPanel.open{display:block;}
+#orbitPanel .orbitHead{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 #orbitPanel .eyebrow{color:var(--gold);}
 #orbitPanel h3{font-family:var(--serif-it);font-style:italic;font-weight:500;font-size:22px;margin:6px 0 10px;color:var(--gold-bright);}
 #orbitPanel .facts{display:flex;flex-direction:column;gap:8px;margin:0 0 14px;}
@@ -417,6 +418,54 @@ canvas{display:block;}
 }
 #orbitPanel .close:hover{background:rgba(212,168,92,0.2);}
 #orbitPanel .close:focus-visible{outline:2px solid var(--gold);}
+
+/* minimize toggle — lives in the panel's own top row beside the eyebrow,
+   same round-chip pattern as #soundBtn/#navHome (small circular hit
+   target, chevron icon). Flips to point up while minimized only in the
+   sense that the pill itself (below) is what's visible then; this button
+   only ever exists inside the OPEN panel, so it always means "collapse". */
+#orbitPanel .minBtn{
+  flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(212,168,92,0.12);border:1px solid rgba(212,168,92,0.35);color:var(--gold-bright);
+  cursor:pointer;transition:background .2s,border-color .2s;
+}
+#orbitPanel .minBtn svg{width:11px;height:11px;flex-shrink:0;}
+#orbitPanel .minBtn:hover{background:rgba(212,168,92,0.22);}
+#orbitPanel .minBtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+
+/* minimized state: the full card is hidden (JS swaps .open off and lets
+   #orbitPill take over) — kept as a class rather than fully unmounting
+   so re-expanding never has to rebuild facts/prose from scratch. */
+#orbitPanel.minimized{display:none;}
+
+/* ---------- orbit pill (collapsed #orbitPanel) ----------
+   Compact HUD chip standing in for the full card while minimized — same
+   family as #orbitBadge (round dot + small-caps label) so it reads as
+   "just another instrument", not a new UI language. Anchored at the same
+   top-right desktop / top-center mobile neighborhood #orbitPanel already
+   uses, so nothing jumps position when toggling. Deliberately narrow: the
+   whole point is to give the 3D view back. */
+#orbitPill{
+  top:76px;right:16px;left:auto;bottom:auto;
+  display:none;align-items:center;gap:8px;
+  padding:8px 8px 8px 14px;border-radius:22px;z-index:7;cursor:pointer;
+  max-width:calc(100vw - 32px);
+}
+#orbitPill.show{display:flex;}
+#orbitPill:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+#orbitPill .dot{width:6px;height:6px;border-radius:50%;background:var(--gold-bright);flex:none;}
+#orbitPill .pillName{
+  font-family:var(--mono);font-size:11px;letter-spacing:0.03em;color:var(--gold-bright);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38vw;
+}
+#orbitPill .pillChevron{color:var(--dim);font-size:10px;flex:none;}
+#orbitPill .pillLeave{
+  flex:none;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(196,87,74,0.14);border:1px solid rgba(196,87,74,0.45);color:#ff9c8f;
+  font-size:11px;line-height:1;cursor:pointer;margin-left:2px;
+}
+#orbitPill .pillLeave:hover{background:rgba(196,87,74,0.26);}
+#orbitPill .pillLeave:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
 
 /* "bridge" button — only shown on the black hole's orbit card, hands off
    to /horizonte/ (the dedicated room with the real lensing shader). Kept
@@ -532,6 +581,17 @@ canvas{display:block;}
   #orbitPanel .facts{gap:6px;margin:0 0 11px;}
   #orbitPanel .facts div{font-size:11.5px;}
   #orbitPanel .prose{font-size:11.5px;margin:0 0 11px;}
+
+  /* minimized pill moves to the top HUD row on mobile — same neighborhood
+     as #orbitBadge (top:96px, centered) rather than staying anchored where
+     the full card sits (bottom-center), since the whole point of
+     minimizing here is to give the lower two-thirds of the screen — where
+     the planet actually is while orbiting — back to the user. */
+  #orbitPill{
+    top:96px;bottom:auto;left:50%;right:auto;transform:translateX(-50%);
+    max-width:calc(100vw - 24px);padding:6px 6px 6px 12px;
+  }
+  #orbitPill .pillName{font-size:10px;max-width:44vw;}
 
   #welcome{padding:14px;}
   #welcome .card{padding:18px 16px 16px;max-height:calc(100vh - 28px);}
@@ -988,7 +1048,12 @@ canvas{display:block;}
 </div>
 
 <div id="orbitPanel" class="panel" role="dialog" aria-labelledby="orbitName">
-  <span class="eyebrow" id="orbitEyebrow">Órbita de exploração</span>
+  <div class="orbitHead">
+    <span class="eyebrow" id="orbitEyebrow">Órbita de exploração</span>
+    <button class="minBtn" id="orbitMin" type="button" aria-label="Minimizar painel — continuar em órbita vendo o objeto">
+      <svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
   <h3 id="orbitName">—</h3>
   <div class="facts" id="orbitFacts"></div>
   <p class="prose" id="orbitProse"></p>
@@ -1000,6 +1065,20 @@ canvas{display:block;}
   <div class="actions">
     <button class="close" id="orbitLeave">sair da órbita · continuar voo livre</button>
   </div>
+</div>
+
+<!-- Minimized "pill" shown instead of the full #orbitPanel when the user
+     collapses it (item: painel cobre boa parte da tela no mobile durante
+     a órbita, onde girar/observar o planeta é o ponto da feature). Same
+     anchor position/family as #orbitBadge (top HUD chip) on mobile so it
+     reads as "just another compact instrument", not a new UI language.
+     Tapping the name re-expands; "sair" stays reachable without expanding
+     first, per spec ("não deixe o usuário preso"). -->
+<div id="orbitPill" class="panel" role="button" tabindex="0" aria-label="Órbita minimizada — toque para reabrir o painel de curiosidades">
+  <span class="dot" aria-hidden="true"></span>
+  <span class="pillName" id="orbitPillName">—</span>
+  <span class="pillChevron" aria-hidden="true">▾</span>
+  <button class="pillLeave" id="orbitPillLeave" type="button" aria-label="Sair da órbita · continuar voo livre">✕</button>
 </div>
 
 <div id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
@@ -1920,8 +1999,54 @@ var orbitFacts = document.getElementById('orbitFacts');
 var orbitProse = document.getElementById('orbitProse');
 var orbitLeaveBtn = document.getElementById('orbitLeave');
 var orbitBridge = document.getElementById('orbitBridge');
+var orbitMinBtn = document.getElementById('orbitMin');
+var orbitPill = document.getElementById('orbitPill');
+var orbitPillName = document.getElementById('orbitPillName');
+var orbitPillLeaveBtn = document.getElementById('orbitPillLeave');
 var orbitState = null; // {poi, dist, angle, tilt}
 var _orbitCenter = new THREE.Vector3();
+
+/* ---- minimize/expand (does NOT touch orbitState — the camera keeps
+   orbiting and free-look keeps working either way; this only toggles
+   which of #orbitPanel / #orbitPill is the visible surface). Reported
+   pain point: on mobile the full card covers most of the screen right
+   where the point is to look at the planet while it slowly turns.
+   #orbitBadge (the small "em órbita" HUD chip) and #orbitPill occupy the
+   same top-center slot on mobile by design, so exactly one of the two is
+   shown at a time — the pill is strictly a richer version of the same
+   chip (adds the object's name + a reachable "sair da órbita"). ---- */
+var orbitMinimized = false;
+function setOrbitMinimized(min){
+  orbitMinimized = min;
+  orbitPanel.classList.toggle('minimized', min);
+  if (orbitPill) orbitPill.classList.toggle('show', min && !!orbitState);
+  // hide the plain badge while the richer pill is showing in its spot
+  // (mobile), leave it alone when the pill lives elsewhere (desktop,
+  // where #orbitBadge sits top-center and #orbitPill sits top-right —
+  // toggling it here is harmless either way since both keep working).
+  if (orbitBadgeEl) orbitBadgeEl.classList.toggle('show', !min && !!orbitState);
+}
+if (orbitMinBtn){
+  orbitMinBtn.addEventListener('click', function(){ setOrbitMinimized(true); });
+}
+if (orbitPill){
+  var expandOrbitPill = function(e){
+    // the pill's own "sair da órbita" button handles itself (see below) —
+    // don't let a tap that lands on it also re-expand the panel first.
+    if (e && e.target && orbitPillLeaveBtn && (e.target === orbitPillLeaveBtn || orbitPillLeaveBtn.contains(e.target))) return;
+    setOrbitMinimized(false);
+  };
+  orbitPill.addEventListener('click', expandOrbitPill);
+  orbitPill.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); expandOrbitPill(e); }
+  });
+}
+if (orbitPillLeaveBtn){
+  orbitPillLeaveBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    leaveOrbitByUser();
+  });
+}
 
 function enterOrbit(poi){
   var centerNow = poi.mesh ? poi.mesh.getWorldPosition(_orbitCenter.clone()) : poi.worldPos.clone();
@@ -1947,7 +2072,13 @@ function enterOrbit(poi){
   });
   orbitProse.textContent = poi.prose || '';
   if (orbitBridge){ orbitBridge.hidden = !poi.isBlackHole; }
+  if (orbitPillName) orbitPillName.textContent = poi.name;
   orbitPanel.classList.add('open');
+  // every NEW orbit always starts expanded (spec: minimized state must
+  // never leak from one object to the next) — reset here rather than in
+  // leaveOrbit() so a mid-orbit re-entry (shouldn't happen, but cheap
+  // insurance) can't get stuck showing a stale pill.
+  setOrbitMinimized(false);
   if (typeof SoundEngine !== 'undefined') SoundEngine.startPoiDrone(poi);
   // dismiss any guide tip that might already be showing — it lives in the
   // same bottom-right corner as this panel's action buttons (including
@@ -1958,6 +2089,12 @@ function enterOrbit(poi){
 function leaveOrbit(){
   orbitState = null;
   orbitPanel.classList.remove('open');
+  // clear minimized state too, not just visibility -- otherwise it's only
+  // enterOrbit()'s own reset saving us from a stale "minimized" leaking
+  // into whatever inspects orbitPanel's classes between orbits.
+  orbitPanel.classList.remove('minimized');
+  orbitMinimized = false;
+  if (orbitPill) orbitPill.classList.remove('show');
   if (typeof SoundEngine !== 'undefined') SoundEngine.stopPoiDrone();
   leaveOrbitVisuals();
 }
