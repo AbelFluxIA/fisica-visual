@@ -127,6 +127,23 @@ body{
 #beginBtn:hover{background:rgba(212,168,92,0.24);border-color:rgba(212,168,92,0.75);transform:translateY(-1px);}
 #beginBtn:focus-visible{outline:2px solid #E8C27E;outline-offset:3px;}
 
+/* ---- tap-to-start gate: browsers block audio autoplay without a real
+   user gesture first, no matter what the <audio> element's preload/
+   autoplay attributes say. This screen exists purely to capture that
+   gesture — narration.play() is called synchronously inside its click
+   handler, which every major browser accepts as "user-initiated". ---- */
+#tapToStart{
+  position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  background:#020207;border:none;color:#E8C27E;cursor:pointer;
+  font-family:var(--mono);font-size:12.5px;letter-spacing:0.08em;text-transform:uppercase;
+  transition:opacity .6s ease;
+}
+#tapToStart.hidden{opacity:0;pointer-events:none;}
+#tapToStart svg{width:52px;height:52px;transition:transform .2s;}
+#tapToStart:hover svg{transform:scale(1.08);}
+#tapToStart span{color:#F5F1E6;font-family:'Fraunces Italic',Georgia,serif;font-style:italic;font-weight:500;font-size:17px;letter-spacing:0.005em;text-transform:none;}
+#tapToStart:focus-visible{outline:2px solid #E8C27E;outline-offset:-4px;}
+
 /* ---- prelude: two sequential prompts before captions start, timed to
    the real silence-then-voice structure of the narration audio (0-15s
    is instrumental only) — volume first, then rotate, mirroring the
@@ -197,6 +214,11 @@ body{
 <div id="introStage">
   <canvas id="introCanvas" aria-hidden="true"></canvas>
 </div>
+
+<button id="tapToStart" type="button">
+  <svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="17" stroke="currentColor" stroke-width="1.4"/><path d="M16 13l11 7-11 7V13z" fill="currentColor"/></svg>
+  <span>toque para começar</span>
+</button>
 
 <span id="introEyebrow">física visual · uma introdução</span>
 
@@ -276,14 +298,13 @@ body{
   var preludeVolume = document.getElementById("preludeVolume");
   var preludeRotate = document.getElementById("preludeRotate");
   var accelerateStage = document.getElementById("accelerateStage");
+  var tapToStart = document.getElementById("tapToStart");
 
   var currentCaptionIndex = -1;
   var finished = false;
   var usingAudioSync = false;
   var fallbackTimer = null;
   var fallbackStart = null;
-
-  eyebrowEl.classList.add("show");
 
   /* ---- prelude: volume prompt first (music-only, 0-15s), then a
      rotate prompt in the last couple seconds before the voice comes
@@ -302,7 +323,6 @@ body{
       preludeState = "done"; preludeVolume.classList.remove("show"); preludeRotate.classList.remove("show");
     }
   }
-  preludeVolume.classList.add("show");
 
   function showCaption(i){
     if (i === currentCaptionIndex) return;
@@ -395,31 +415,46 @@ body{
     if (fallbackTimer){ cancelAnimationFrame(fallbackTimer); fallbackTimer = null; }
   }
 
-  // try to play narration; if it actually starts, prefer audio-synced
-  // captions and cancel the fallback timer. If it fails for any reason
-  // (no file yet — expected until the user records one — decode error,
-  // or autoplay policy blocking it), fall back to the plain timer so
-  // the intro still plays start to finish.
-  var playPromise;
-  try{ playPromise = narration.play(); }catch(e){ playPromise = undefined; }
-  if (playPromise && typeof playPromise.then === "function"){
-    playPromise.then(function(){
-      usingAudioSync = true;
-      stopFallbackTimer();
-    }).catch(function(){
-      startFallbackTimer();
-    });
-  } else {
-    startFallbackTimer();
-  }
   narration.addEventListener("error", function(){
     usingAudioSync = false;
     startFallbackTimer();
   });
-  // safety net: if neither play() resolution nor rejection fires within
-  // a beat (some browsers are inconsistent here), start the fallback
-  // anyway — showCaption() is idempotent-safe either way.
-  window.setTimeout(function(){ if (!usingAudioSync) startFallbackTimer(); }, 900);
+
+  /* ---- gated start: every major browser blocks audio autoplay unless
+     playback begins inside a real user gesture (a click handler, not a
+     setTimeout or a promise callback after page load). Reported bug:
+     the intro loaded and captions ran on the JS fallback timer, but
+     narration.play() called on load silently failed everywhere because
+     there was no gesture yet — the user only ever saw a silent intro.
+     Fix: gate the whole experience behind #tapToStart; narration.play()
+     is now called synchronously inside ITS click handler, which is
+     exactly the pattern browsers accept as user-initiated. ---- */
+  var started = false;
+  function startExperience(){
+    if (started) return;
+    started = true;
+    tapToStart.classList.add("hidden");
+    eyebrowEl.classList.add("show");
+    preludeVolume.classList.add("show");
+
+    var playPromise;
+    try{ playPromise = narration.play(); }catch(e){ playPromise = undefined; }
+    if (playPromise && typeof playPromise.then === "function"){
+      playPromise.then(function(){
+        usingAudioSync = true;
+        stopFallbackTimer();
+      }).catch(function(){
+        startFallbackTimer();
+      });
+    } else {
+      startFallbackTimer();
+    }
+    // safety net: if neither play() resolution nor rejection fires within
+    // a beat (some browsers are inconsistent here), start the fallback
+    // anyway — showCaption() is idempotent-safe either way.
+    window.setTimeout(function(){ if (!usingAudioSync) startFallbackTimer(); }, 900);
+  }
+  tapToStart.addEventListener("click", startExperience);
 
   /* ---- reduced motion: only the visual drift/rush is toned down (see
      the starfield and accelerate-sequence code below) — the narration
