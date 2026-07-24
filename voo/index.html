@@ -1230,6 +1230,16 @@ function resize(){
   camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resize);
+// iOS Safari/Chrome fire 'resize' right as orientationchange starts, often
+// BEFORE innerWidth/innerHeight have actually updated to the new
+// orientation — resize() runs but reads stale (pre-rotation) dimensions,
+// leaving the WebGL canvas stretched/cropped into the new layout forever
+// (confirmed on-device: the rotate overlay itself correctly disappears,
+// proving orientation *detection* works — only the canvas dimensions were
+// wrong). orientationchange is the correct signal for "the OS has finished
+// rotating"; re-run resize() a beat after it fires, when the new
+// dimensions are reliably settled, not just on the racy 'resize' event.
+window.addEventListener('orientationchange', function(){ setTimeout(resize, 200); });
 resize();
 
 /* ============================================================
