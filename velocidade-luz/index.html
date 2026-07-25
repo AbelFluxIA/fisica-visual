@@ -304,11 +304,18 @@ input[type=range]:focus-visible{outline:2px solid var(--gold);outline-offset:4px
   .clock svg{width:28px;height:28px;}
 }
 
-/* ---------- short landscape phones ---------- */
-@media (max-height:420px) and (orientation:landscape){
+/* ---------- short landscape phones ----------
+   Threshold raised from 420px to 440px so it also catches taller-but-
+   still-landscape phones like the iPhone Pro Max (932x430 CSS px) — at
+   exactly 430px height the old 420px cutoff missed it entirely, leaving
+   #deck at its desktop width (760px+) with zero landscape correction.
+   Width tightened from 480px to 420px: at 812px-wide screens 480px was
+   still ~59% of the viewport; 420px keeps the deck under ~52% at 812px
+   wide and ~45% at 932px wide. */
+@media (max-height:440px) and (orientation:landscape){
   #hdr{top:10px;left:10px;max-width:150px;padding:7px 10px 6px;}
   #hdr .sub{display:none;}
-  #deck{bottom:6px;max-height:46vh;padding:8px 12px 10px;}
+  #deck{bottom:6px;max-height:46vh;padding:8px 12px 10px;width:min(420px, calc(100vw - 40px));}
   #info{top:10px;bottom:10px;right:10px;}
   #modeCard{display:none;}
 }

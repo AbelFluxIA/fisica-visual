@@ -102,6 +102,17 @@ body{
   text-shadow:0 2px 24px rgba(0,0,0,0.5);
 }
 #caption.show{opacity:1;transform:translateY(0);}
+/* word-by-word reveal: each word of the active caption is its own span,
+   hidden until its `at` timestamp is reached, then fades in quickly —
+   distinct from the slower 1.3s fade of #caption itself (that governs
+   the caption block/line appearing and disappearing between sentences;
+   this governs individual words accumulating within one sentence). */
+#caption .word{
+  display:inline-block;opacity:0;transform:translateY(4px);
+  transition:opacity .2s ease, transform .2s ease;
+  margin-right:0.28em;white-space:pre-wrap;
+}
+#caption .word.revealed{opacity:1;transform:translateY(0);}
 
 /* a faint permanent eyebrow above the caption so the intro doesn't feel
    like an unlabeled black box on first paint, before any caption fires */
@@ -120,7 +131,13 @@ body{
   background:rgba(212,168,92,0.14);border:1px solid rgba(212,168,92,0.5);border-radius:24px;
   color:#E8C27E;font-family:var(--mono);font-size:12.5px;letter-spacing:0.04em;
   padding:13px 28px;cursor:pointer;opacity:0;pointer-events:none;
-  transition:opacity 1s ease, background .2s, border-color .2s, transform .2s;
+  /* opacity fade matches REVEAL_LEAD_SECONDS in the JS below (6s) — the
+     .show class is now added ~6s before the narration is expected to
+     end, so this transition's full duration is what carries the button
+     from invisible to fully opaque exactly as the audio finishes,
+     instead of the old 1s pop that only started once the track was
+     already over. */
+  transition:opacity 6s ease, background .2s, border-color .2s, transform .2s;
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
 }
 #beginBtn.show{opacity:1;pointer-events:auto;}
@@ -263,30 +280,34 @@ body{
      Duration per caption ~4-6s reading time, per spec.
      ============================================================ */
   var CAPTIONS = [
-    { at: 15.0,  dur: 4.0, text: "Bem-vindo à Exploração Espacial." },
-    { at: 19.0,  dur: 3.0, text: "Você está pronto para explorar o espaço?" },
-    { at: 22.0,  dur: 2.0, text: "Eu sou a sua Guia." },
-    { at: 24.0,  dur: 5.0, text: "Meu propósito aqui é simples: mostrar a você um pouco do cosmo." },
-    { at: 29.0,  dur: 4.0, text: "Mas antes de começarmos, preciso que você entenda uma coisa." },
-    { at: 33.0,  dur: 4.0, text: "Suas crenças, sua religião, sua política." },
-    { at: 37.0,  dur: 8.0, text: "As coisas que você defende com tudo o que tem, que te fazem discutir, que te fazem ter certeza de que está certo." },
-    { at: 45.0,  dur: 9.0, text: "Tudo que você já viveu, cada alegria, cada dor, cada decisão que pareceu o fim do mundo," },
-    { at: 54.0,  dur: 8.0, text: "aconteceu num grão de poeira, suspenso num raio de sol, perdido numa escuridão sem fim." },
-    { at: 62.0,  dur: 5.0, text: "Bilhões de estrelas, bilhões de mundos possíveis." },
-    { at: 67.0,  dur: 11.0, text: "E você, com tudo o que pensa, tudo o que acredita, tudo o que é, não é mais que um piscar de olhos na vida do universo." },
-    { at: 78.0,  dur: 8.0, text: "Diante disso, suas certezas, seus problemas, sua angústia, não são nada." },
-    { at: 86.0,  dur: 2.0, text: "Mas há uma ironia nisso." },
-    { at: 88.0,  dur: 10.0, text: "Porque o próprio fato de sermos tão pequenos, tão breves, tão improváveis, e ainda assim capazes de acreditar, de pensar, de duvidar, de amar," },
-    { at: 98.0,  dur: 7.0, text: "nos faz, de alguma forma, o universo tentando entender a si mesmo através de nós." },
-    { at: 105.0, dur: 5.0, text: "Você não é insignificante por ser pequeno." },
-    { at: 110.0, dur: 5.0, text: "Você é extraordinário por existir, apesar de ser pequeno." },
-    { at: 115.0, dur: 3.0, text: "Então ouça isto, e nunca esqueça." },
-    { at: 118.0, dur: 6.0, text: "Você é especial, único, irrepetível em toda a história do cosmo." },
-    { at: 124.0, dur: 4.0, text: "E é hora de assumir o comando da sua própria jornada." },
-    { at: 128.0, dur: 2.0, text: "Você está pronto?" },
-    { at: 130.0, dur: 2.5, text: "Então vamos nessa." }
+    { at: 16.10, dur: 3.14, text: "Bem-vindo à Exploração Espacial.", words: [{w:"Bem-vindo",at:16.10}, {w:"à",at:16.68}, {w:"Exploração",at:17.27}, {w:"Espacial.",at:17.86}] },
+    { at: 19.54, dur: 2.66, text: "Você está pronto para explorar o espaço?", words: [{w:"Você",at:19.54}, {w:"está",at:19.81}, {w:"pronto",at:20.07}, {w:"para",at:20.34}, {w:"explorar",at:20.60}, {w:"o",at:20.87}, {w:"espaço?",at:21.13}] },
+    { at: 22.52, dur: 1.82, text: "Eu sou a sua Guia.", words: [{w:"Eu",at:22.52}, {w:"sou",at:22.72}, {w:"a",at:22.93}, {w:"sua",at:23.13}, {w:"Guia.",at:23.34}] },
+    { at: 24.10, dur: 4.68, text: "Meu propósito aqui é simples: mostrar a você um pouco do cosmo.", words: [{w:"Meu",at:24.10}, {w:"propósito",at:24.42}, {w:"aqui",at:24.75}, {w:"é",at:25.07}, {w:"simples:",at:25.39}, {w:"mostrar",at:25.72}, {w:"a",at:26.04}, {w:"você",at:26.36}, {w:"um",at:26.69}, {w:"pouco",at:27.01}, {w:"do",at:27.33}, {w:"cosmo.",at:27.66}] },
+    { at: 29.16, dur: 4.26, text: "Mas antes de começarmos, preciso que você entenda uma coisa.", words: [{w:"Mas",at:29.16}, {w:"antes",at:29.51}, {w:"de",at:29.85}, {w:"começarmos,",at:30.20}, {w:"preciso",at:30.54}, {w:"que",at:30.89}, {w:"você",at:31.24}, {w:"entenda",at:31.58}, {w:"uma",at:31.93}, {w:"coisa.",at:32.27}] },
+    { at: 33.58, dur: 3.80, text: "Suas crenças, sua religião, sua política.", words: [{w:"Suas",at:33.58}, {w:"crenças,",at:34.08}, {w:"sua",at:34.58}, {w:"religião,",at:35.08}, {w:"sua",at:35.58}, {w:"política.",at:36.08}] },
+    { at: 37.20, dur: 7.64, text: "As coisas que você defende com tudo o que tem, que te fazem discutir, que te fazem ter certeza de que está certo.", words: [{w:"As",at:37.20}, {w:"coisas",at:37.50}, {w:"que",at:37.79}, {w:"você",at:38.09}, {w:"defende",at:38.39}, {w:"com",at:38.69}, {w:"tudo",at:38.98}, {w:"o",at:39.28}, {w:"que",at:39.58}, {w:"tem,",at:39.88}, {w:"que",at:40.17}, {w:"te",at:40.47}, {w:"fazem",at:40.77}, {w:"discutir,",at:41.07}, {w:"que",at:41.36}, {w:"te",at:41.66}, {w:"fazem",at:41.96}, {w:"ter",at:42.26}, {w:"certeza",at:42.55}, {w:"de",at:42.85}, {w:"que",at:43.15}, {w:"está",at:43.45}, {w:"certo.",at:43.74}] },
+    { at: 45.22, dur: 9.24, text: "Tudo que você já viveu, cada alegria, cada dor, cada decisão que pareceu o fim do mundo,", words: [{w:"Tudo",at:45.22}, {w:"que",at:45.72}, {w:"você",at:46.21}, {w:"já",at:46.71}, {w:"viveu,",at:47.21}, {w:"cada",at:47.70}, {w:"alegria,",at:48.20}, {w:"cada",at:48.70}, {w:"dor,",at:49.19}, {w:"cada",at:49.69}, {w:"decisão",at:50.18}, {w:"que",at:50.68}, {w:"pareceu",at:51.18}, {w:"o",at:51.67}, {w:"fim",at:52.17}, {w:"do",at:52.67}, {w:"mundo,",at:53.16}] },
+    { at: 54.78, dur: 7.40, text: "aconteceu num grão de poeira, suspenso num raio de sol, perdido numa escuridão sem fim.", words: [{w:"aconteceu",at:54.78}, {w:"num",at:55.22}, {w:"grão",at:55.66}, {w:"de",at:56.10}, {w:"poeira,",at:56.54}, {w:"suspenso",at:56.98}, {w:"num",at:57.42}, {w:"raio",at:57.86}, {w:"de",at:58.30}, {w:"sol,",at:58.74}, {w:"perdido",at:59.18}, {w:"numa",at:59.62}, {w:"escuridão",at:60.06}, {w:"sem",at:60.50}, {w:"fim.",at:60.94}] },
+    { at: 62.80, dur: 4.58, text: "Bilhões de estrelas, bilhões de mundos possíveis.", words: [{w:"Bilhões",at:62.80}, {w:"de",at:63.34}, {w:"estrelas,",at:63.88}, {w:"bilhões",at:64.42}, {w:"de",at:64.96}, {w:"mundos",at:65.50}, {w:"possíveis.",at:66.04}] },
+    { at: 67.38, dur: 10.54, text: "E você, com tudo o que pensa, tudo o que acredita, tudo o que é, não é mais que um piscar de olhos na vida do universo.", words: [{w:"E",at:67.38}, {w:"você,",at:67.74}, {w:"com",at:68.10}, {w:"tudo",at:68.46}, {w:"o",at:68.82}, {w:"que",at:69.18}, {w:"pensa,",at:69.54}, {w:"tudo",at:69.91}, {w:"o",at:70.27}, {w:"que",at:70.63}, {w:"acredita,",at:70.99}, {w:"tudo",at:71.35}, {w:"o",at:71.71}, {w:"que",at:72.07}, {w:"é,",at:72.43}, {w:"não",at:72.79}, {w:"é",at:73.15}, {w:"mais",at:73.51}, {w:"que",at:73.87}, {w:"um",at:74.23}, {w:"piscar",at:74.59}, {w:"de",at:74.96}, {w:"olhos",at:75.32}, {w:"na",at:75.68}, {w:"vida",at:76.04}, {w:"do",at:76.40}, {w:"universo.",at:76.76}] },
+    { at: 78.62, dur: 8.38, text: "Diante disso, suas certezas, seus problemas, sua angústia, não são nada.", words: [{w:"Diante",at:78.62}, {w:"disso,",at:79.31}, {w:"suas",at:80.00}, {w:"certezas,",at:80.69}, {w:"seus",at:81.38}, {w:"problemas,",at:82.07}, {w:"sua",at:82.75}, {w:"angústia,",at:83.44}, {w:"não",at:84.13}, {w:"são",at:84.82}, {w:"nada.",at:85.51}] },
+    { at: 86.20, dur: 2.54, text: "Mas há uma ironia nisso.", words: [{w:"Mas",at:86.20}, {w:"há",at:86.55}, {w:"uma",at:86.90}, {w:"ironia",at:87.24}, {w:"nisso.",at:87.59}] },
+    { at: 88.54, dur: 10.38, text: "Porque o próprio fato de sermos tão pequenos, tão breves, tão improváveis, e ainda assim capazes de acreditar, de pensar, de duvidar, de amar,", words: [{w:"Porque",at:88.54}, {w:"o",at:88.94}, {w:"próprio",at:89.34}, {w:"fato",at:89.74}, {w:"de",at:90.14}, {w:"sermos",at:90.54}, {w:"tão",at:90.94}, {w:"pequenos,",at:91.33}, {w:"tão",at:91.73}, {w:"breves,",at:92.13}, {w:"tão",at:92.53}, {w:"improváveis,",at:92.93}, {w:"e",at:93.33}, {w:"ainda",at:93.73}, {w:"assim",at:94.13}, {w:"capazes",at:94.53}, {w:"de",at:94.93}, {w:"acreditar,",at:95.33}, {w:"de",at:95.73}, {w:"pensar,",at:96.12}, {w:"de",at:96.52}, {w:"duvidar,",at:96.92}, {w:"de",at:97.32}, {w:"amar,",at:97.72}] },
+    { at: 98.12, dur: 7.48, text: "nos faz, de alguma forma, o universo tentando entender a si mesmo através de nós.", words: [{w:"nos",at:98.12}, {w:"faz,",at:98.57}, {w:"de",at:99.01}, {w:"alguma",at:99.46}, {w:"forma,",at:99.90}, {w:"o",at:100.35}, {w:"universo",at:100.79}, {w:"tentando",at:101.24}, {w:"entender",at:101.68}, {w:"a",at:102.13}, {w:"si",at:102.57}, {w:"mesmo",at:103.02}, {w:"através",at:103.46}, {w:"de",at:103.91}, {w:"nós.",at:104.35}] },
+    { at: 106.32, dur: 4.08, text: "Você não é insignificante por ser pequeno.", words: [{w:"Você",at:106.32}, {w:"não",at:106.79}, {w:"é",at:107.26}, {w:"insignificante",at:107.73}, {w:"por",at:108.19}, {w:"ser",at:108.66}, {w:"pequeno.",at:109.13}] },
+    { at: 110.46, dur: 4.98, text: "Você é extraordinário por existir, apesar de ser pequeno.", words: [{w:"Você",at:110.46}, {w:"é",at:110.92}, {w:"extraordinário",at:111.39}, {w:"por",at:111.85}, {w:"existir,",at:112.32}, {w:"apesar",at:112.78}, {w:"de",at:113.25}, {w:"ser",at:113.71}, {w:"pequeno.",at:114.18}] },
+    { at: 115.80, dur: 3.02, text: "Então ouça isto, e nunca esqueça.", words: [{w:"Então",at:115.80}, {w:"ouça",at:116.17}, {w:"isto,",at:116.54}, {w:"e",at:116.91}, {w:"nunca",at:117.28}, {w:"esqueça.",at:117.65}] },
+    { at: 118.34, dur: 7.50, text: "Você é especial, único, irrepetível em toda a história do cosmo.", words: [{w:"Você",at:118.34}, {w:"é",at:118.95}, {w:"especial,",at:119.56}, {w:"único,",at:120.17}, {w:"irrepetível",at:120.78}, {w:"em",at:121.39}, {w:"toda",at:121.99}, {w:"a",at:122.60}, {w:"história",at:123.21}, {w:"do",at:123.82}, {w:"cosmo.",at:124.43}] },
+    { at: 125.04, dur: 3.38, text: "E é hora de assumir o comando da sua própria jornada.", words: [{w:"E",at:125.04}, {w:"é",at:125.27}, {w:"hora",at:125.51}, {w:"de",at:125.74}, {w:"assumir",at:125.98}, {w:"o",at:126.21}, {w:"comando",at:126.45}, {w:"da",at:126.68}, {w:"sua",at:126.92}, {w:"própria",at:127.15}, {w:"jornada.",at:127.39}] },
+    { at: 128.96, dur: 1.42, text: "Você está pronto?", words: [{w:"Você",at:128.96}, {w:"está",at:129.17}, {w:"pronto?",at:129.37}] },
+    { at: 130.54, dur: 1.74, text: "Então vamos nessa.", words: [{w:"Então",at:130.54}, {w:"vamos",at:130.85}, {w:"nessa.",at:131.17}] },
   ];
   var TOTAL_FALLBACK_DURATION = 132.5; // last caption's at+dur; the 12s music tail + accelerate sequence follow separately
+  // real mp3 length, confirmed via ffprobe (143.934694s) — used only to
+  // time the beginBtn fade-in lead on the no-audio/fallback-timer path;
+  // narration.duration is preferred whenever real audio is playing.
+  var TOTAL_TRACK_DURATION = 143.9;
 
   var captionEl = document.getElementById("caption");
   var eyebrowEl = document.getElementById("introEyebrow");
@@ -324,11 +345,76 @@ body{
     }
   }
 
-  function showCaption(i){
-    if (i === currentCaptionIndex) return;
+  // word spans currently rendered inside #caption for the active
+  // caption (index-aligned with CAPTIONS[currentCaptionIndex].words),
+  // and how many of them have been revealed so far — reset every time
+  // the active caption changes so each new sentence starts empty.
+  var currentWordSpans = [];
+  var revealedWordCount = 0;
+  // caption index that currentWordSpans/revealedWordCount actually
+  // belong to — decoupled from currentCaptionIndex because the spans
+  // rebuild is deliberately delayed (see showCaption's setTimeout), so
+  // revealWords() must be able to tell "spans not ready yet for the
+  // now-active caption" apart from "spans ready, nothing new to reveal".
+  var spansBuiltForIndex = -1;
+
+  // Builds one <span class="word"> per word of CAPTIONS[i], separated
+  // by literal text-node spaces (not CSS margin alone) so copied/selected
+  // text and textContent reads always have correct spacing between
+  // punctuation-attached words like "certeza," "início." — margin-right
+  // on .word is a purely visual nicety on top of that, per spec §5.
+  function buildWordSpans(i){
+    captionEl.textContent = "";
+    currentWordSpans = [];
+    var words = CAPTIONS[i].words;
+    for (var w=0; w<words.length; w++){
+      var span = document.createElement("span");
+      span.className = "word";
+      span.textContent = words[w].w;
+      captionEl.appendChild(span);
+      currentWordSpans.push(span);
+      if (w < words.length - 1) captionEl.appendChild(document.createTextNode(" "));
+    }
+    revealedWordCount = 0;
+    spansBuiltForIndex = i;
+  }
+
+  // Reveals (adds .revealed to) every word span whose `at` timestamp has
+  // been reached by `t`, for the currently active caption. Words already
+  // revealed are never hidden again within the same caption — this is
+  // the "accumulate" behavior from spec §2. Called on every timeupdate/
+  // rAF tick while a caption is showing, from both sync and fallback
+  // paths, so the two modes share one reveal implementation.
+  function revealWords(t){
+    if (currentCaptionIndex < 0 || currentCaptionIndex >= CAPTIONS.length) return;
+    // currentWordSpans is rebuilt asynchronously (260ms after
+    // currentCaptionIndex changes, see showCaption's setTimeout below) —
+    // if a timeupdate/tick lands in that gap, the spans on screen still
+    // belong to the PREVIOUS caption. Compare against spansBuiltForIndex
+    // (set at the end of buildWordSpans) rather than array lengths,
+    // which can coincidentally match between two different captions.
+    if (spansBuiltForIndex !== currentCaptionIndex) return;
+    var words = CAPTIONS[currentCaptionIndex].words;
+    if (!words || !currentWordSpans.length) return;
+    while (revealedWordCount < words.length && t >= words[revealedWordCount].at){
+      currentWordSpans[revealedWordCount].classList.add("revealed");
+      revealedWordCount++;
+    }
+  }
+
+  function showCaption(i, t){
+    if (i === currentCaptionIndex){
+      // same sentence still active — just keep revealing its words as
+      // time passes, no re-render/fade of the caption block itself.
+      if (typeof t === "number") revealWords(t);
+      return;
+    }
     currentCaptionIndex = i;
     if (i < 0 || i >= CAPTIONS.length){
       captionEl.classList.remove("show");
+      currentWordSpans = [];
+      revealedWordCount = 0;
+      spansBuiltForIndex = -1;
       return;
     }
     captionEl.classList.remove("show");
@@ -336,10 +422,18 @@ body{
     // pacing rather than a glitch — matches the "peso/cinematografia"
     // requirement (silence is part of the effect, not just captions).
     window.setTimeout(function(){
-      captionEl.textContent = CAPTIONS[i].text;
+      // new sentence: rebuild spans from scratch (§2 — accumulation
+      // resets to zero words visible on every caption change) and fade
+      // the caption block in; individual words then fade in on top of
+      // that as revealWords() reaches their `at` timestamps.
+      buildWordSpans(i);
       // force reflow so the transition retriggers even if text is identical
       void captionEl.offsetWidth;
       captionEl.classList.add("show");
+      // reveal whatever words are already due by the time the block
+      // finishes its fade-in pause (handles fast playbackRate / a late
+      // call landing after several word timestamps have passed).
+      if (typeof t === "number") revealWords(t);
     }, REDUCE_MOTION ? 0 : 260);
   }
 
@@ -370,6 +464,45 @@ body{
     }
   }
 
+  /* ---- begin-button reveal timing: previously revealControls() only
+     ever fired from finishIntro() (on the audio's "ended" event, or the
+     fallback timer crossing TOTAL_FALLBACK_DURATION), meaning the
+     button's opacity transition — 1s at the time — didn't even START
+     until the track was already over. The button would visibly "pop"
+     in right as the music stopped, which read as an afterthought
+     rather than a payoff timed to the hyperspace rush.
+     Fix: start the CSS fade REVEAL_LEAD_SECONDS before the audio is
+     expected to end, and stretch the .show transition (see CSS) to
+     last exactly that long, so full opacity (1.0) lands right as the
+     "ended" event fires — the fade IS the countdown to launch, not a
+     reaction to it. Real track duration (~143.9s, confirmed via
+     ffprobe) is read from narration.duration once metadata loads;
+     TOTAL_FALLBACK_DURATION's tail-adjusted twin (below) covers the
+     no-audio path so both paths land the fade at the same visual
+     beat relative to their own "end". ---- */
+  var REVEAL_LEAD_SECONDS = 6.0;
+  var controlsRevealStarted = false;
+  function expectedEndTime(){
+    // prefer the real decoded audio duration when it's known; otherwise
+    // fall back to whatever the JS timer path considers "the end" —
+    // TOTAL_FALLBACK_DURATION, which is the full ~143.9s track length
+    // normally, or the shorter reduced-motion duration when that path
+    // intentionally skips the music tail (see REDUCE_MOTION block below).
+    // Using TOTAL_FALLBACK_DURATION here (not a separate hardcoded
+    // constant) keeps the two in sync automatically.
+    if (usingAudioSync && narration.duration && isFinite(narration.duration)){
+      return narration.duration;
+    }
+    return TOTAL_FALLBACK_DURATION;
+  }
+  function checkRevealControls(t){
+    if (controlsRevealStarted || finished) return;
+    if (t >= expectedEndTime() - REVEAL_LEAD_SECONDS){
+      controlsRevealStarted = true;
+      revealControls();
+    }
+  }
+
   function revealControls(){
     beginBtn.classList.add("show");
   }
@@ -378,15 +511,16 @@ body{
     if (finished) return;
     finished = true;
     checkAccelerate(9999); // ensure the rush is showing by the time controls appear
-    revealControls();
+    revealControls(); // no-op via CSS if already .show — guarantees full opacity by "ended" even if checkRevealControls's estimate ran late
   }
 
   /* ---- audio-synced path ---- */
   function onTimeUpdate(){
     var t = narration.currentTime;
     updatePrelude(t);
-    showCaption(captionIndexForTime(t));
+    showCaption(captionIndexForTime(t), t);
     checkAccelerate(t);
+    checkRevealControls(t);
   }
   function onAudioEnded(){
     finishIntro();
@@ -401,8 +535,9 @@ body{
     function tick(){
       var t = (performance.now() - fallbackStart) / 1000;
       updatePrelude(t);
-      showCaption(captionIndexForTime(t));
+      showCaption(captionIndexForTime(t), t);
       checkAccelerate(t);
+      checkRevealControls(t);
       if (t >= TOTAL_FALLBACK_DURATION){
         finishIntro();
         return;
@@ -576,18 +711,29 @@ body{
   }
   window.addEventListener("resize", accResize);
 
+  /* ---- hyperspace star field: each star carries its own radial
+     distance (r), a base outward speed, and a "depth" factor in (0,1]
+     that never changes after birth — depth acts as a simple parallax
+     stand-in (closer stars = smaller depth = faster, brighter, thicker
+     trails), which is what actually reads as "3D rush" instead of a
+     flat ring of lines. Trail length is derived every frame from the
+     star's CURRENT radial speed (not a fixed constant), so trails
+     visibly stretch as the sequence accelerates. ---- */
   var rushPoints = [];
-  function makeRushPoint(){
+  function makeRushPoint(freshBorn){
     var ang = Math.random()*Math.PI*2;
     return {
       ang: ang,
-      r: Math.random()*40,
-      speed: 60 + Math.random()*70,
-      len: 4 + Math.random()*10,
-      color: Math.random() < 0.18 ? "232,194,126" : "225,232,245"
+      // freshly-born stars start at the vanishing point; the initial
+      // fill (before the loop has run) seeds some mid-flight too, so
+      // the very first frame isn't an empty center
+      r: freshBorn ? 0 : Math.random()*Math.max(accW||800,accH||600)*0.6,
+      depth: 0.15 + Math.random()*0.85, // 0=far/slow, 1=near/fast — fixed for this star's life
+      color: Math.random() < 0.16 ? "232,194,126" : (Math.random() < 0.5 ? "225,232,245" : "159,200,236")
     };
   }
-  for (var ri=0; ri<(REDUCE_MOTION?60:220); ri++) rushPoints.push(makeRushPoint());
+  var RUSH_COUNT = REDUCE_MOTION ? 90 : 340;
+  for (var ri=0; ri<RUSH_COUNT; ri++) rushPoints.push(makeRushPoint(false));
 
   var accStarted = false;
   var accT0 = null;
@@ -599,32 +745,82 @@ body{
     if (REDUCE_MOTION){
       // one settled frame conveying "rushing outward" without a sustained
       // animation loop, per prefers-reduced-motion
-      accDraw(0.7);
+      accDraw(0.7, 1/60);
       return;
     }
+    var lastNow = accT0;
     function loop(now){
       var t = (now - accT0) / 1000;
-      accDraw(t);
+      var dt = Math.min(0.05, (now - lastNow) / 1000); // clamp to avoid huge jumps after tab-switch
+      lastNow = now;
+      accDraw(t, dt);
       requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);
   }
-  function accDraw(t){
+  function accDraw(t, dt){
     var cx = accW/2, cy = accH/2;
-    // ramps from a gentle drift up to a full rush over ~4s, then holds
-    // at max intensity for the rest of the 12s tail
-    var intensity = Math.min(1, t/4);
-    accCtx.fillStyle = "rgba(2,2,7,"+(REDUCE_MOTION?1:0.32)+")";
+    // speed curve: a snappy ease-in to full rush by ~2.6s (was a linear
+    // ramp to 1.0 over 4s — too gentle for the "uau" the sequence needs),
+    // then a slow continued creep up to a 1.6x peak multiplier so the
+    // back half of the 12s tail still feels like it's gaining speed
+    // rather than plateauing.
+    var rampT = Math.min(1, t/2.6);
+    var eased = 1 - Math.pow(1-rampT, 3); // cubic ease-out: fast climb, settles smoothly
+    var creep = Math.min(0.6, t/14); // gentle continued build across the whole tail
+    var intensity = eased * (1 + creep); // can exceed 1 → up to ~1.6x at peak
+    var maxR = Math.max(accW,accH)*0.78;
+    var baseSpeed = 130; // px/s at depth=1, intensity=1 (was 60-130 total range before — this is the new floor)
+
+    accCtx.fillStyle = "rgba(2,2,7,"+(REDUCE_MOTION?1:0.30)+")";
     accCtx.fillRect(0,0,accW,accH);
+    accCtx.lineCap = "round";
+
     rushPoints.forEach(function(p){
-      if (!REDUCE_MOTION) p.r += p.speed * intensity * (1/60);
-      var maxR = Math.max(accW,accH)*0.75;
-      if (p.r > maxR){ p.r = 0; p.ang = Math.random()*Math.PI*2; }
-      var x = cx + Math.cos(p.ang)*p.r, y = cy + Math.sin(p.ang)*p.r;
-      var x2 = cx + Math.cos(p.ang)*(p.r - p.len*(1+intensity*3)), y2 = cy + Math.sin(p.ang)*(p.r - p.len*(1+intensity*3));
-      accCtx.strokeStyle = "rgba("+p.color+","+(0.25+intensity*0.55)+")";
-      accCtx.lineWidth = 1 + intensity*1.2;
-      accCtx.beginPath(); accCtx.moveTo(x2,y2); accCtx.lineTo(x,y); accCtx.stroke();
+      var speed = baseSpeed * (0.35 + p.depth*1.4) * intensity;
+      if (!REDUCE_MOTION) p.r += speed * dt;
+      if (p.r > maxR){
+        // respawn at center as a fresh star — keeps density constant
+        // without ever growing the array
+        p.r = 0;
+        p.ang = Math.random()*Math.PI*2;
+        p.depth = 0.15 + Math.random()*0.85;
+        p.color = Math.random() < 0.16 ? "232,194,126" : (Math.random() < 0.5 ? "225,232,245" : "159,200,236");
+        return;
+      }
+      // trail length grows with current radial speed AND with how far
+      // out the star already is (closer = longer streak), clamped so
+      // near-center new stars stay short dots rather than long lines
+      var trailLen = Math.min(p.r*0.9, 10 + speed*0.11);
+      var headR = p.r;
+      var tailR = Math.max(0, p.r - trailLen);
+      var x2 = cx + Math.cos(p.ang)*headR, y2 = cy + Math.sin(p.ang)*headR;
+      var x1 = cx + Math.cos(p.ang)*tailR, y1 = cy + Math.sin(p.ang)*tailR;
+
+      // depth-driven brightness/thickness: near stars (higher depth,
+      // further traveled) read as faster AND punchier, echoing real
+      // parallax rather than uniform line weight
+      var travel = Math.min(1, p.r/maxR);
+      var brightness = (0.22 + p.depth*0.5) * (0.5 + 0.5*intensity) * (0.6 + travel*0.5);
+      var width = (0.6 + p.depth*1.8) * (0.55 + intensity*0.75);
+
+      if (trailLen > 1.2){
+        var grad = accCtx.createLinearGradient(x1,y1,x2,y2);
+        grad.addColorStop(0, "rgba("+p.color+",0)");
+        grad.addColorStop(1, "rgba("+p.color+","+Math.min(1,brightness).toFixed(3)+")");
+        accCtx.strokeStyle = grad;
+      } else {
+        accCtx.strokeStyle = "rgba("+p.color+","+Math.min(1,brightness*0.7).toFixed(3)+")";
+      }
+      accCtx.lineWidth = width;
+      accCtx.beginPath(); accCtx.moveTo(x1,y1); accCtx.lineTo(x2,y2); accCtx.stroke();
+
+      // bright core dot at the head once a star is going fast enough —
+      // sells the "streaking past camera" read at peak intensity
+      if (intensity > 0.5 && p.depth > 0.55){
+        accCtx.fillStyle = "rgba("+p.color+","+Math.min(1,brightness+0.25).toFixed(3)+")";
+        accCtx.beginPath(); accCtx.arc(x2,y2, width*0.55, 0, Math.PI*2); accCtx.fill();
+      }
     });
   }
 })();

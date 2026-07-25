@@ -869,8 +869,13 @@ canvas{display:block;}
    not width, so a normal short-but-wide desktop window is unaffected.
    Placed at the end of the stylesheet deliberately: same-specificity CSS
    rules resolve by source order, and this needs to win over every
-   earlier width-based responsive rule for the same elements. */
-@media (max-height:420px) and (orientation:landscape){
+   earlier width-based responsive rule for the same elements.
+   Threshold raised from 420px to 440px so it also catches the iPhone
+   Pro Max (932x430 CSS px landscape) — at exactly 430px height the old
+   420px cutoff missed it entirely, leaving #orbitPanel positioned by
+   its desktop rule (top:76px, unconstrained height) instead of the
+   short-landscape layout below. */
+@media (max-height:440px) and (orientation:landscape){
   #topLeftBar{top:8px;left:8px;}
   #hdr{display:none;}
   /* pinned into the gap between #topLeftBar (left, variable width — 2
@@ -889,7 +894,12 @@ canvas{display:block;}
   #navHere{display:none;}
   #radar{width:52px;height:52px;}
   #poiCard{bottom:8px;top:8px;left:auto;right:8px;transform:none;width:min(280px,42vw);max-height:calc(100vh - 16px);overflow-y:auto;}
-  #orbitPanel{top:8px;bottom:8px;max-height:calc(100vh - 16px);}
+  /* base rule's width:min(320px, calc(100vw - 32px)) is already narrow
+     enough in absolute terms, but gets explicit here too so the panel
+     never inherits a wider value from some other future rule — 320px
+     is ~39% of an 812px-wide screen and ~34% of 932px, comfortably
+     under the "never dominate more than ~55-60% of width" target. */
+  #orbitPanel{top:8px;bottom:8px;max-height:calc(100vh - 16px);width:min(320px, calc(100vw - 32px));}
   #speedo{bottom:82px;right:10px;}
   #stopBtn{bottom:8px;padding:9px 20px;font-size:11px;}
   #dragHint{bottom:52px;}
@@ -1542,18 +1552,32 @@ POIS.push({ name: EARTH_MOON.name, mesh: moonMesh, radius: EARTH_MOON.radius, la
    STELLAR LAYER — procedural starfield + nebula sprites
    ============================================================ */
 (function buildStellarLayer(){
-  var COUNT = 3200;
+  /* Star count: bumped from the original 3200 up to 16000 (5x) for the
+     "mais estrelas realistas / mais imersão / universo maior" request.
+     Still a single THREE.Points/BufferGeometry draw call (no per-star
+     Object3D), so this is one extra buffer upload, not 16000 extra scene
+     objects — cost is a handful of extra megabytes of typed arrays and a
+     bigger (still trivial) vertex count for the GPU. Reduced-motion does
+     NOT cut this count: density is a static visual, not an animation, so
+     matchMedia only gates the twinkle pulse further below. */
+  var COUNT = 16000;
   var positions = new Float32Array(COUNT*3);
   var colors = new Float32Array(COUNT*3);
   var sizes = new Float32Array(COUNT);
 
-  // simplified spectral classes: hot blue/white, sun-like yellow, cool red
+  /* Real simplified spectral classes (O/B/A/F/G/K/M) with roughly
+     real-world-flavored proportions: cool M/K dwarfs are by far the most
+     common stars in any real patch of sky, hot O/B stars are rare but
+     the brightest/biggest points so they still read as standout "hero"
+     stars. Weights sum to 1. */
   var classes = [
-    { color:new THREE.Color(0x9fbfff), weight:0.16 }, // blue-white hot
-    { color:new THREE.Color(0xf3f6ff), weight:0.30 }, // white
-    { color:new THREE.Color(0xfff1c2), weight:0.30 }, // yellow, sun-like
-    { color:new THREE.Color(0xffb37a), weight:0.14 }, // orange
-    { color:new THREE.Color(0xff8064), weight:0.10 }  // red, cool
+    { color:new THREE.Color(0x9db8ff), weight:0.03, sizeMul:1.9, briMul:1.35 }, // O — blue, very hot, rare
+    { color:new THREE.Color(0xb9cbff), weight:0.07, sizeMul:1.6, briMul:1.25 }, // B — blue-white, hot
+    { color:new THREE.Color(0xe6ecff), weight:0.12, sizeMul:1.25,briMul:1.1  }, // A — white
+    { color:new THREE.Color(0xfff6e8), weight:0.15, sizeMul:1.05,briMul:1.0  }, // F — yellow-white
+    { color:new THREE.Color(0xfff1c2), weight:0.18, sizeMul:1.0, briMul:0.95 }, // G — yellow, sun-like
+    { color:new THREE.Color(0xffc98a), weight:0.20, sizeMul:0.85,briMul:0.85 }, // K — orange
+    { color:new THREE.Color(0xff9a72), weight:0.25, sizeMul:0.7, briMul:0.75 }  // M — red dwarf, most common
   ];
   function pickClass(){
     var r = Math.random(), acc = 0;
@@ -1572,8 +1596,12 @@ POIS.push({ name: EARTH_MOON.name, mesh: moonMesh, radius: EARTH_MOON.radius, la
     positions[i*3] = x; positions[i*3+1] = y; positions[i*3+2] = z;
 
     var cls = pickClass();
-    colors[i*3] = cls.color.r; colors[i*3+1] = cls.color.g; colors[i*3+2] = cls.color.b;
-    sizes[i] = (Math.random()*2.2 + 0.6) * (cls === classes[0] ? 1.3 : 1);
+    // brightness range widened per-class (briMul) so hot O/B stars pop
+    // as occasional bright beacons instead of every star looking the
+    // same intensity — this is the "reforce a variação de brilho" ask.
+    var bri = (0.55 + Math.random()*0.75) * cls.briMul;
+    colors[i*3] = cls.color.r*bri; colors[i*3+1] = cls.color.g*bri; colors[i*3+2] = cls.color.b*bri;
+    sizes[i] = (Math.random()*1.9 + 0.55) * cls.sizeMul;
   }
 
   var geo = new THREE.BufferGeometry();
@@ -1587,15 +1615,115 @@ POIS.push({ name: EARTH_MOON.name, mesh: moonMesh, radius: EARTH_MOON.radius, la
   });
   var starPoints = new THREE.Points(geo, starMat);
   stellarGroup.add(starPoints);
+  window.__starMat = starMat; // used by the gentle twinkle pulse in the main loop
 
-  // nebulae: soft radial-gradient sprites, additive blend, two color themes
-  function makeNebulaTexture(hue1, hue2){
+  /* ------------------------------------------------------------
+     GALACTIC DUST BAND — a second, much flatter/denser Points layer
+     standing in for "our own" bright band of the Milky Way crossing the
+     stellar-scale sky (distinct from the big stylized disc + galaxy
+     sprites over in the galactic layer, which only fade in much farther
+     out). Reuses the exact same Points/BufferGeometry technique as the
+     main starfield, just squashed almost flat and colored as a subtle
+     warm haze, so it costs one more draw call, not per-star objects.
+     ------------------------------------------------------------ */
+  var BAND_COUNT = 6000;
+  var bandPositions = new Float32Array(BAND_COUNT*3);
+  var bandColors = new Float32Array(BAND_COUNT*3);
+  var bandSizes = new Float32Array(BAND_COUNT);
+  var bandTilt = 0.34; // radians, so the band reads as a diagonal sweep, not a flat equator
+  var cosT = Math.cos(bandTilt), sinT = Math.sin(bandTilt);
+  for (var bi=0; bi<BAND_COUNT; bi++){
+    var br = 500 + Math.pow(Math.random(), 0.7) * 2500;
+    var bTheta = Math.random()*Math.PI*2;
+    // narrow gaussian-ish spread around the band plane for a soft edge
+    var bSpread = (Math.random()+Math.random()+Math.random()-1.5) * 0.16;
+    var bx = br*Math.cos(bTheta);
+    var bz = br*Math.sin(bTheta);
+    var by = br*bSpread;
+    // tilt the whole band around the X axis
+    var byT = by*cosT - bz*sinT*0.12;
+    var bzT = bz;
+    bandPositions[bi*3] = bx; bandPositions[bi*3+1] = byT; bandPositions[bi*3+2] = bzT;
+
+    var warm = 0.7 + Math.random()*0.3;
+    bandColors[bi*3] = 0.85*warm; bandColors[bi*3+1] = 0.78*warm; bandColors[bi*3+2] = 0.7*warm;
+    bandSizes[bi] = Math.random()*1.1 + 0.35;
+  }
+  var bandGeo = new THREE.BufferGeometry();
+  bandGeo.setAttribute('position', new THREE.BufferAttribute(bandPositions,3));
+  bandGeo.setAttribute('color', new THREE.BufferAttribute(bandColors,3));
+  bandGeo.setAttribute('size', new THREE.BufferAttribute(bandSizes,1));
+  var bandMat = new THREE.PointsMaterial({
+    size: 1.5, vertexColors:true, transparent:true, opacity:0.55,
+    sizeAttenuation:true, depthWrite:false, blending: THREE.AdditiveBlending
+  });
+  var bandPoints = new THREE.Points(bandGeo, bandMat);
+  stellarGroup.add(bandPoints);
+
+  /* ------------------------------------------------------------
+     DISTANT STAR CLUSTER — a tight, bright knot of points off to one
+     side, reading as a globular/open cluster glimpsed from afar. Same
+     Points technique again, just a small count clustered with a tight
+     gaussian-ish radius around one center instead of spread through the
+     whole shell.
+     ------------------------------------------------------------ */
+  var CLUSTER_COUNT = 900;
+  var clusterCenter = new THREE.Vector3(-1450, 520, -1050);
+  var clusterR = 130;
+  var clPositions = new Float32Array(CLUSTER_COUNT*3);
+  var clColors = new Float32Array(CLUSTER_COUNT*3);
+  var clSizes = new Float32Array(CLUSTER_COUNT);
+  for (var ci=0; ci<CLUSTER_COUNT; ci++){
+    // denser toward the center: bias radius with a power curve
+    var cr = Math.pow(Math.random(), 1.8) * clusterR;
+    var cTheta = Math.random()*Math.PI*2;
+    var cPhi = Math.acos(2*Math.random()-1);
+    clPositions[ci*3]   = clusterCenter.x + cr*Math.sin(cPhi)*Math.cos(cTheta);
+    clPositions[ci*3+1] = clusterCenter.y + cr*Math.cos(cPhi);
+    clPositions[ci*3+2] = clusterCenter.z + cr*Math.sin(cPhi)*Math.sin(cTheta);
+
+    var ccls = pickClass();
+    var cbri = 0.9 + Math.random()*0.6;
+    clColors[ci*3] = ccls.color.r*cbri; clColors[ci*3+1] = ccls.color.g*cbri; clColors[ci*3+2] = ccls.color.b*cbri;
+    clSizes[ci] = (Math.random()*1.6 + 0.9) * ccls.sizeMul;
+  }
+  var clGeo = new THREE.BufferGeometry();
+  clGeo.setAttribute('position', new THREE.BufferAttribute(clPositions,3));
+  clGeo.setAttribute('color', new THREE.BufferAttribute(clColors,3));
+  clGeo.setAttribute('size', new THREE.BufferAttribute(clSizes,1));
+  var clMat = new THREE.PointsMaterial({
+    size: 2.6, vertexColors:true, transparent:true, opacity:0.95,
+    sizeAttenuation:true, depthWrite:false, blending: THREE.AdditiveBlending
+  });
+  stellarGroup.add(new THREE.Points(clGeo, clMat));
+  // soft glow haze behind the cluster so it reads as a fuzzy knot even
+  // when zoomed out, same cheap canvas-sprite trick used for the sun glow
+  var clusterGlow = makeGlowSprite('220,225,255', 170, 0.35);
+  clusterGlow.position.copy(clusterCenter);
+  stellarGroup.add(clusterGlow);
+
+  // nebulae: soft radial-gradient sprites, additive blend, color themes.
+  // shapeMode picks between a rounder "reflection nebula" blob cluster
+  // (the original technique) and an elongated "emission nebula" streak
+  // cluster for visual variety between the different nebula defs below.
+  function makeNebulaTexture(hue1, hue2, shapeMode){
     var c = document.createElement('canvas'); c.width = c.height = 512;
     var ctx = c.getContext('2d');
     ctx.globalCompositeOperation = 'lighter';
-    for (var k=0;k<5;k++){
-      var cx = 256 + (Math.random()-0.5)*220, cy = 256 + (Math.random()-0.5)*220;
-      var rad = 130 + Math.random()*140;
+    var blobs = shapeMode === 'wispy' ? 7 : 5;
+    for (var k=0;k<blobs;k++){
+      var cx, cy, rad;
+      if (shapeMode === 'wispy'){
+        // elongated, loosely aligned blobs -> reads as filamentary emission
+        // nebula (Orion/Rosette-like) instead of one round puff
+        var t = k/(blobs-1);
+        cx = 256 + (t-0.5)*300 + (Math.random()-0.5)*60;
+        cy = 256 + Math.sin(t*Math.PI*1.4)*120 + (Math.random()-0.5)*60;
+        rad = 90 + Math.random()*120;
+      } else {
+        cx = 256 + (Math.random()-0.5)*220; cy = 256 + (Math.random()-0.5)*220;
+        rad = 130 + Math.random()*140;
+      }
       var g = ctx.createRadialGradient(cx,cy,0,cx,cy,rad);
       var hue = k%2===0 ? hue1 : hue2;
       g.addColorStop(0, 'hsla('+hue+',85%,68%,0.55)');
@@ -1617,14 +1745,26 @@ POIS.push({ name: EARTH_MOON.name, mesh: moonMesh, radius: EARTH_MOON.radius, la
      cruising distances, (b) a per-frame opacity that fades with camera
      distance to the nebula's own center (see updateNebulae() in the main
      loop) instead of a constant material opacity, and (c) a hard cap far
-     below 1 so stars are always at least faintly visible through it. */
+     below 1 so stars are always at least faintly visible through it.
+
+     Two new nebulae added alongside the original magenta/violet one
+     (which keeps its POI card unchanged, per spec): a red/pink "emission
+     nebula" palette (Orion/Rosette-like: hydrogen-alpha red against a
+     magenta secondary, wispy shape) and a cooler blue "reflection
+     nebula" palette (Pleiades-like: pale blue/cyan, rounder shape). Same
+     shader-free canvas technique as the original, so no new perf cost
+     category — just two more small billboard sprites plus their own
+     entries in window.__nebulae so the existing distance-fade logic in
+     updateNebulae() applies uniformly to all four. */
   var nebulaDefs = [
-    { hue1:300, hue2:260, pos:[620,140,-480], size:260 },  // magenta/violet
-    { hue1:190, hue2:150, pos:[-900,-220,700], size:300 }  // teal/emerald
+    { hue1:300, hue2:260, pos:[620,140,-480], size:260, shape:'blob'  }, // magenta/violet (original, POI unchanged)
+    { hue1:190, hue2:150, pos:[-900,-220,700], size:300, shape:'blob' }, // teal/emerald (original)
+    { hue1:350, hue2:320, pos:[1450,-380,-950], size:340, shape:'wispy' }, // red/pink emission nebula
+    { hue1:205, hue2:225, pos:[-500,460,-1550], size:280, shape:'blob'  }  // pale blue reflection nebula
   ];
   window.__nebulae = [];
   nebulaDefs.forEach(function(nd){
-    var tex = makeNebulaTexture(nd.hue1, nd.hue2);
+    var tex = makeNebulaTexture(nd.hue1, nd.hue2, nd.shape);
     var mat = new THREE.SpriteMaterial({ map: tex, transparent:true, opacity:0.32, blending:THREE.AdditiveBlending, depthWrite:false });
     var spr = new THREE.Sprite(mat);
     spr.position.set(nd.pos[0], nd.pos[1], nd.pos[2]);
@@ -2664,6 +2804,25 @@ function updateNebulae(){
   }
 }
 
+/* Gentle whole-field "twinkle": a soft, slow sine pulse applied to the
+   starfield's overall opacity (not per-star — a per-vertex shader would
+   cost a custom ShaderMaterial, which nothing else in this file uses, so
+   this stays consistent with the existing low-tech/high-effect style
+   such as updateNebulae()'s distance fade). Runs AFTER updateLayers()
+   already set stellarGroup's base opacity for this frame (see call order
+   in animate()), so it multiplies on top the same way the nebula fade
+   does. Respects prefers-reduced-motion: when active, the pulse simply
+   never advances past its resting value, so the field is static but
+   nothing is removed. */
+var _twinkleT = 0;
+function updateStarTwinkle(dt){
+  var mat = window.__starMat;
+  if (!mat) return;
+  if (!REDUCE_MOTION) _twinkleT += dt;
+  var pulse = 1 + Math.sin(_twinkleT*0.6) * 0.05; // ±5%, slow — a shimmer, not a strobe
+  mat.opacity = Math.min(1, mat.opacity * pulse);
+}
+
 function smoothstep(a,b,x){
   var t = Math.max(0, Math.min(1, (x-a)/(b-a)));
   return t*t*(3-2*t);
@@ -2829,6 +2988,7 @@ function animate(){
 
   updateLayers();
   updateNebulae();
+  updateStarTwinkle(dt);
 
   frameCount++;
   if (frameCount % 3 === 0){ updateMarkers(); updateNearest(); updateRadar(); }

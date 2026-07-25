@@ -296,11 +296,20 @@ input[type=range]:focus-visible{outline:2px solid var(--gold);outline-offset:4px
 /* ---------- short landscape phones ----------
    Width-based rules alone let the deck grow tall enough to eat most of a
    short-but-wide screen. Target by height so a normal desktop window
-   with a short viewport is unaffected. */
-@media (max-height:420px) and (orientation:landscape){
+   with a short viewport is unaffected. Threshold raised from 420px to
+   440px so it also catches taller-but-still-landscape phones like the
+   iPhone Pro Max (932x430 CSS px) — at exactly 430px height the old
+   420px cutoff missed it entirely, leaving #deck at its desktop width
+   (680px+, ~73-82% of screen width) with zero landscape correction.
+   Width itself also tightened from 480px to 420px: at 812px-wide
+   screens 480px was still ~59% of the viewport, visually dominating
+   over the simulation; 420px keeps the deck under ~52% at 812px wide
+   and ~45% at 932px wide, per the "never dominate more than ~55-60%"
+   target. */
+@media (max-height:440px) and (orientation:landscape){
   #hdr{top:10px;left:10px;max-width:150px;padding:7px 10px 6px;}
   #hdr .sub{display:none;}
-  #deck{bottom:6px;max-height:42vh;padding:8px 12px 10px;}
+  #deck{bottom:6px;max-height:42vh;padding:8px 12px 10px;width:min(420px, calc(100vw - 40px));}
   .clocks{gap:8px;}
   .clock svg{width:32px;height:32px;}
   #factorTxt{max-width:220px;}
