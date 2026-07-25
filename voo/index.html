@@ -789,12 +789,18 @@ canvas{display:block;}
    feedback: "não gostei daquela bolinha", "não sei como parar") AND the
    follow-up drag-sets-throttle scheme (explicit negative feedback:
    "quase não consigo andar" — combining look and speed into one vertical
-   drag was confusing). Current scheme, gamepad-style:
+   drag was confusing). A third generation (press-and-hold #thrustBtn,
+   release = instant zero) was then replaced by the current tap-incremental
+   scheme after further feedback that holding the button down made it hard
+   to also drag-to-look one-handed:
      - drag anywhere on the open scene = look only, no speed component.
-     - #thrustBtn (bottom-right, thumb-reach in landscape) = press-and-hold
-       to accelerate forward with a short ramp; release = instant stop.
-     - #stopBtn (bottom-center, red) = unmissable panic/safety stop,
-       unchanged, always available regardless of what else is pressed. */
+     - #thrustBtn (bottom-right, thumb-reach in landscape) = tap to add a
+       speed increment (cruise-control style); the ship keeps cruising at
+       that speed with no finger held down. Tap again to add more, up to a
+       cap.
+     - #stopBtn (bottom-center, red) = the only way to slow down: eases
+       speed to zero over a short brake ramp, unmissable, always available
+       regardless of what else is pressed. */
 #stopBtn{
   display:none;position:fixed;z-index:6;left:50%;bottom:18px;transform:translateX(-50%);
   align-items:center;gap:8px;padding:13px 26px;border-radius:26px;
@@ -814,12 +820,20 @@ canvas{display:block;}
 }
 #dragHint.show{display:block;}
 
-/* ---------- thrust button (press-and-hold forward) ----------
+/* ---------- thrust button (tap-to-increment forward) ----------
    The most-used touch control, so it gets the largest hit target and the
    thumb-natural bottom-right corner (where the hand holding a phone in
    landscape already rests). Round, big, high-contrast "go" color (gold/
-   plasma) to read as distinct from the red STOP button. touch-action:none
-   stops the browser from treating a held finger as a scroll/zoom gesture. */
+   plasma) to read as distinct from the red STOP button.
+   NOTE: deliberately NOT touch-action:none here (that was correct back
+   when this was a press-and-hold control that needed to suppress
+   scroll/zoom for the whole hold duration — leftover from that design).
+   With the tap-incremental model the button binds a plain 'click'
+   listener, and touch-action:none suppresses the browser's synthetic
+   click after a real touch tap on some engines (confirmed: the button
+   worked with a mouse click but never responded to an actual touch tap
+   once this rule was in place) — user_select is enough on its own to
+   stop a stray text-selection long-press without blocking the click. */
 #thrustBtn{
   display:none;position:fixed;z-index:6;right:18px;bottom:104px;
   width:84px;height:84px;border-radius:50%;
@@ -827,16 +841,17 @@ canvas{display:block;}
   background:rgba(212,168,92,0.16);border:2px solid rgba(212,168,92,0.7);color:var(--gold-bright);
   font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;
   cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  box-shadow:0 4px 22px rgba(212,168,92,0.25);touch-action:none;user-select:none;-webkit-user-select:none;
+  box-shadow:0 4px 22px rgba(212,168,92,0.25);user-select:none;-webkit-user-select:none;
   transition:transform .12s ease,background .12s ease,box-shadow .12s ease;
 }
 #thrustBtn.show{display:flex;}
 #thrustBtn svg{width:22px;height:22px;flex-shrink:0;}
-/* pressed state — the required "toque registrou" visual feedback: scales
-   up slightly (thumb still covers it, so this reads more as "glow" than
-   as a jarring size jump), brightens fill and glow. Driven by the .pressed
-   class (set on pointerdown/pointerup in JS) rather than :active alone so
-   it stays correct if the pointer is captured or the gesture is cancelled. */
+/* pressed state — now a brief "pulse" of confirmation per tap (added and
+   removed on a short timer in JS, NOT tied to how long the finger stays
+   down — a tap is a tap, there is no "hold" state anymore) rather than a
+   press-and-hold indicator: scales up slightly, brightens fill and glow,
+   transition is quick so it reads as a snappy "toque registrou" pulse
+   rather than a lingering "still active" state. */
 #thrustBtn.pressed{
   transform:scale(1.08);background:rgba(212,168,92,0.34);border-color:rgba(232,194,126,0.95);
   box-shadow:0 4px 30px rgba(212,168,92,0.5);
@@ -996,17 +1011,18 @@ canvas{display:block;}
 <!-- Mobile flight controls, gamepad-style (item: "botões fixos na tela"):
      - dragging anywhere on #scene = look only (canvas pointer handlers in
        JS), no speed component;
-     - #thrustBtn = press-and-hold forward thrust, ramps up while held,
-       drops to zero the instant it's released;
-     - #stopBtn = always-visible, unmissable panic stop that zeroes speed
-       instantly from anywhere, independent of what else is pressed.
+     - #thrustBtn = tap-to-increment forward thrust — each tap adds a speed
+       step and the ship keeps cruising at that speed with no finger held
+       down, so the other hand/finger stays free to drag-look;
+     - #stopBtn = always-visible, unmissable panic stop that brakes speed
+       smoothly to zero from anywhere, independent of what else is pressed.
      #touchCtl itself stays as the semantic/activation marker (JS toggles
      touchCtl.active on coarse-pointer devices) but no longer paints a
      stick UI. -->
 <div id="touchCtl">
-  <div id="dragHint">arraste para olhar ao redor · segure <b>▲</b> para avançar · toque em <b>PARAR</b> a qualquer momento</div>
+  <div id="dragHint">arraste para olhar ao redor · toque em <b>▲</b> para acelerar · toque em <b>PARAR</b> para frear</div>
 </div>
-<button id="thrustBtn" type="button" aria-label="Manter pressionado para avançar — soltar para parar de acelerar">
+<button id="thrustBtn" type="button" aria-label="Toque para acelerar — a nave mantém a velocidade sozinha. Toque em PARAR para desacelerar.">
   <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3l6 13H4l6-13z" fill="currentColor"/></svg>
   avançar
 </button>
@@ -1098,7 +1114,7 @@ canvas{display:block;}
     <p>Esta sala é uma cabine de comando: você pilota livremente entre o Sol e os planetas, depois se afasta o suficiente para atravessar a vizinhança estelar e, por fim, a escala das próprias galáxias — sem cortes de câmera, como um zoom contínuo.</p>
     <ol>
       <li id="welcomeDesktopMove"><b>WASD</b> (ou setas) move a nave; arraste o <b>mouse</b> para olhar ao redor; o <b>scroll</b> acelera ou freia.</li>
-      <li id="welcomeMobileMove" hidden><b>arraste o dedo</b> na tela para olhar ao redor · segure o botão <b>▲ avançar</b> para acelerar a nave · toque em <b>PARAR</b> a qualquer momento para zerar a velocidade na hora.</li>
+      <li id="welcomeMobileMove" hidden><b>arraste o dedo</b> na tela para olhar ao redor · toque no botão <b>▲ avançar</b> para acelerar a nave — cada toque aumenta a velocidade e ela se mantém sozinha, sem precisar segurar · toque em <b>PARAR</b> para desacelerar suavemente até zero.</li>
       <li>Marcadores dourados são <b>pontos de interesse</b>. Clique (ou toque) num deles para ver fatos reais e viajar até lá com a câmera.</li>
       <li>Ao se afastar bastante, a cena troca de camada de escala sozinha — observe o indicador no topo mudar de "Sistema Solar" para "vizinhança estelar", depois "escala galáctica" e, no limite, uma dramatização visual do próprio Big Bang.</li>
       <li>Perdido? O radar no canto e o botão <b>"recentralizar"</b> sempre te trazem de volta a uma vista geral do sistema solar.</li>
@@ -2419,47 +2435,65 @@ canvas.addEventListener('wheel', function(e){
   if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
 }, { passive:false });
 
-/* ---- touch controls (gamepad-style redesign) ----
+/* ---- touch controls (tap-incremental redesign) ----
    Generation 1: fixed virtual joystick knob + separate look zone + up/down
    buttons — explicitly disliked ("não gostei daquela bolinha") and
    confusing to stop ("avança e não sei como parar").
    Generation 2: drag anywhere to look-AND-accelerate (vertical drag
    distance = throttle) — explicit follow-up feedback: "quase não consigo
    andar", the combined gesture made looking and moving fight each other.
-   Generation 3 (current): the two actions are fully separate inputs, like
-   a gamepad —
+   Generation 3: drag-to-look fully separate from a dedicated press-and-hold
+   #thrustBtn (ramp up while held, instant zero on release) — this fixed
+   Gen 2's problem but introduced a new one: holding the button down with
+   one finger while also dragging to look with another is awkward when the
+   phone is held in a single hand, which is how most people hold it.
+   Generation 4 (current): #thrustBtn becomes tap-incremental, "cruise
+   control" style —
      - drag anywhere on the open scene = look ONLY (canvas pointer
-       handlers above), zero effect on speed;
-     - #thrustBtn = dedicated press-and-hold forward control. Holding it
-       ramps speed up smoothly to a comfortable cruise value over ~0.8s
-       and holds it there for as long as the finger stays down; releasing
-       (pointerup/pointercancel/pointerleave) drops speed to exactly zero
-       immediately — same "no residual drift" guarantee the old design
-       had, so the "não sei como parar" fix is preserved even though the
-       accelerate gesture itself changed;
-     - #stopBtn remains the large, always-visible, unmissable panic/safety
-       stop, redundant with releasing the thrust button, for killing speed
-       from anywhere at any time (e.g. mid-drag-look, or if thrust was left
-       pressed by accident).
+       handlers above), zero effect on speed, unchanged from Gen 3;
+     - #thrustBtn = each tap/click adds one fixed speed increment
+       (THRUST_STEP) to the current speed, up to THRUST_CRUISE_SPEED. The
+       ship then keeps cruising at that speed indefinitely with NO finger
+       held down — releasing does nothing, because there is no "held"
+       state to release. This is what frees the hand to drag-look while
+       moving.
+     - #stopBtn is now the ONLY way to reduce speed: it eases speed down to
+       zero over BRAKE_RAMP_SECONDS instead of the old instant snap-to-zero,
+       matching the user's own description ("vai freando até zerar"). Still
+       the large, always-visible, unmissable panic/safety control.
    No reverse button: evaluated the space in the bottom-right corner next
    to #stopBtn and #speedo and a second control there reads cluttered and
    risks mis-taps against a control this frequently used; forward-only
-   plus the instant STOP covers "get to zero fast" without it. No vertical
-   Q/E-equivalent on touch either, unchanged from the previous design —
-   Q/E remain available via an attached physical keyboard if present. */
+   plus STOP-to-brake covers "get to zero" without it. No vertical Q/E-
+   equivalent on touch either, unchanged from the previous design — Q/E
+   remain available via an attached physical keyboard if present. */
 var touchCtl = document.getElementById('touchCtl');
 var dragHintEl = document.getElementById('dragHint');
 var stopBtn = document.getElementById('stopBtn');
 var thrustBtn = document.getElementById('thrustBtn');
 var vertUp=false, vertDown=false; // no touch equivalent by design; kept as constants for updateCamera()
 
-/* thrustHeld: true for the entire press-and-hold window (touchstart..
-   touchend/cancel/leave). updateCamera() eases `speed` toward
-   THRUST_CRUISE_SPEED while this is true and snaps it to 0 the instant
-   it goes false — see the main loop below. */
-var thrustHeld = false;
-var THRUST_CRUISE_SPEED = 150;   // comfortable cruise value reached at the top of the ramp
-var THRUST_RAMP_SECONDS = 0.8;   // 0.5–1s ramp requested — time to go from 0 to cruise
+/* THRUST_CRUISE_SPEED is the speed cap for tap-incremental thrust (same
+   comfortable cruise value the old press-and-hold ramp used to top out
+   at, kept as-is since it was already tuned). THRUST_STEP is how much one
+   tap adds; 6 taps from a dead stop reaches the cap — enough steps for
+   fine control (small early bumps to line up on a target) without making
+   "get to cruise" feel like a chore. BRAKE_RAMP_SECONDS is how long
+   #stopBtn takes to ease speed down to zero once tapped — long enough to
+   read as a smooth "freando" deceleration rather than a jarring snap,
+   short enough that it never feels like STOP is unresponsive. */
+var THRUST_CRUISE_SPEED = 150;   // speed cap reachable via tap-incremental thrust
+var THRUST_STEP = THRUST_CRUISE_SPEED / 6;   // ~25 un/s added per tap
+var BRAKE_RAMP_SECONDS = 1.0;    // 0.5-1.5s braking window requested — 1s split the difference
+
+/* brakeActive: true from the moment #stopBtn is tapped until speed has
+   eased down to (effectively) zero. updateCamera() ramps `speed` toward 0
+   over BRAKE_RAMP_SECONDS while this is true — see the main loop below.
+   Any subsequent thrust tap (or WASD/scroll input) implicitly cancels
+   braking by setting this back to false in thrustBtn's own handler /
+   the keyboard path already resets speed directly, so there's no
+   fighting between "braking down" and "a fresh tap just added speed". */
+var brakeActive = false;
 
 if (isTouch){
   touchCtl.classList.add('active');
@@ -2471,43 +2505,46 @@ if (isTouch){
   setTimeout(function(){ dragHintEl.classList.remove('show'); }, 6000);
 }
 
+/* hardStop(): now a smooth brake-to-zero rather than an instant snap —
+   the only place `speed` used to get force-set to 0 outside the ramp.
+   Kept the function name since call sites elsewhere (Escape key, room
+   switches, etc.) all mean "stop the ship", and a smooth brake still
+   satisfies that intent within ~1s. */
 function hardStop(){
-  speed = 0;
-  thrustHeld = false; thrustBtn.classList.remove('pressed');
+  brakeActive = true;
   if (orbitState) leaveOrbit();
   if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
 }
 stopBtn.addEventListener('pointerdown', function(e){ e.preventDefault(); hardStop(); });
 
-/* thrust button: press-and-hold, gamepad-button style. Uses pointer
-   events (not touchstart/touchend) so it behaves identically for a mouse
-   or a stylus in case a touch-capable laptop lands here — matches how
-   every other control on this screen is wired. pointerup/pointercancel
-   AND pointerleave all release thrust: pointerleave matters because a
-   finger can slide off the button's hit area while still technically
-   "down" on the screen, which must read as "let go", not "still held". */
-function thrustStart(e){
-  e.preventDefault();
-  thrustHeld = true;
+/* thrust button: tap-incremental, "cruise control" style. Uses a plain
+   'click' handler (not pointerdown/up) — there is no press-and-hold state
+   to track anymore, a tap is a discrete, one-shot event, and 'click'
+   already gives free debouncing against duplicate synthetic mouse events
+   that can otherwise follow a touch tap on some browsers. */
+function thrustTap(e){
+  if (e) e.preventDefault();
+  brakeActive = false; // a fresh tap always means "go", overrides any brake in progress
+  speed = Math.min(THRUST_CRUISE_SPEED, Math.max(0, speed) + THRUST_STEP);
+  // quick visual "pulse" confirming the tap registered — NOT a sustained
+  // "held" state anymore, so it's added and removed on a short timer
+  // instead of being driven by pointerdown/pointerup.
+  thrustBtn.classList.remove('pressed');
+  // force a reflow so re-adding the class always restarts the CSS
+  // transition even on a rapid double-tap, instead of the second tap
+  // silently no-op'ing because the class was already present.
+  void thrustBtn.offsetWidth;
   thrustBtn.classList.add('pressed');
-  // pressing thrust is manual flight intent — same "player touched the
+  clearTimeout(thrustTap._pulseTimer);
+  thrustTap._pulseTimer = setTimeout(function(){ thrustBtn.classList.remove('pressed'); }, 150);
+  // tapping thrust is manual flight intent — same "player touched the
   // stick" cancel semantics WASD/drag already trigger elsewhere.
   if (orbitState) leaveOrbit();
   if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
-  try{ thrustBtn.setPointerCapture && thrustBtn.setPointerCapture(e.pointerId); }catch(err){}
 }
-function thrustEnd(e){
-  if (e) e.preventDefault();
-  thrustHeld = false;
-  thrustBtn.classList.remove('pressed');
-  speed = 0; // immediate, total stop on release — no inertia, no ramp-down
-}
-thrustBtn.addEventListener('pointerdown', thrustStart);
-thrustBtn.addEventListener('pointerup', thrustEnd);
-thrustBtn.addEventListener('pointercancel', thrustEnd);
-thrustBtn.addEventListener('pointerleave', thrustEnd);
-// a context menu (long-press on some browsers) mid-hold would otherwise
-// leave thrustHeld stuck true with no matching pointerup ever firing.
+thrustBtn.addEventListener('click', thrustTap);
+// a context menu (long-press on some browsers) should not leave any
+// stuck state now, but still prevented for a clean, app-like feel.
 thrustBtn.addEventListener('contextmenu', function(e){ e.preventDefault(); });
 
 /* ============================================================
@@ -2567,19 +2604,26 @@ function updateCamera(dt){
   if (keys['KeyE']||vertUp) vert += 1;
   if (vert) camera.position.addScaledVector(tmpUp, vert*60*dt);
 
-  // thrust button (press-and-hold, gamepad-style — replaces the old
-  // drag-sets-throttle scheme): while held, speed eases up toward
-  // THRUST_CRUISE_SPEED over THRUST_RAMP_SECONDS and holds there for as
-  // long as the finger stays down, completely independent of any look
-  // drag happening at the same time on the scene. Release is handled in
-  // thrustEnd() above, which snaps speed to exactly 0 the instant the
-  // finger lifts — no residual drift, same "no coasting" guarantee the
-  // previous scheme had, direct fix for "avança e não sei como parar".
-  if (thrustHeld && speed < THRUST_CRUISE_SPEED){
-    // linear ramp so "reaches cruise in THRUST_RAMP_SECONDS" is exact and
-    // easy to verify, not just an asymptotic approach that never quite
-    // arrives — matters for a control this central to "consigo andar".
-    speed = Math.min(THRUST_CRUISE_SPEED, speed + (THRUST_CRUISE_SPEED/THRUST_RAMP_SECONDS)*dt);
+  // thrust button (tap-incremental, "cruise control"-style — replaces the
+  // old press-and-hold ramp): each tap bumps `speed` up by THRUST_STEP
+  // directly in thrustTap() above, and the ship simply keeps that speed
+  // frame after frame with no per-frame ramping-up logic needed here at
+  // all — the ramp only exists on the way DOWN now, driven by the STOP
+  // button's brake instead.
+  //
+  // braking: #stopBtn sets brakeActive = true (see hardStop() above);
+  // while true, speed eases down to zero over BRAKE_RAMP_SECONDS rather
+  // than snapping instantly, matching "vai freando até zerar". Once speed
+  // is close enough to zero it's clamped exactly to 0 and braking turns
+  // itself off — direct fix for "avança e não sei como parar", now with a
+  // short, deliberate deceleration instead of a jarring stop.
+  if (brakeActive){
+    if (speed > 0){
+      speed = Math.max(0, speed - (THRUST_CRUISE_SPEED/BRAKE_RAMP_SECONDS)*dt);
+    } else if (speed < 0){
+      speed = Math.min(0, speed + (THRUST_CRUISE_SPEED/BRAKE_RAMP_SECONDS)*dt);
+    }
+    if (Math.abs(speed) < 0.05){ speed = 0; brakeActive = false; }
   }
 
   resolveCollisions();
