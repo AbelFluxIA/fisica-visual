@@ -3098,11 +3098,72 @@ mo.observe(document.documentElement, {attributes:true, attributeFilter:['data-th
    timbre (additive stacks of sine/triangle harmonics through slow
    attack/release envelopes), long sustained notes with real silence
    between them, sparse open intervals (fifths/octaves, never dense
-   chords), no perceptible beat/rhythm. None of Zimmer's actual
-   melodies, chord progressions or recordings are used or approximated
-   beat-for-beat — this is an original, minimal, royalty-free
-   soundscape in a similar REGISTER (organ-like timbre, patience,
-   scale), not a reproduction of the copyrighted score.
+   chords). None of Zimmer's actual melodies, chord progressions or
+   recordings are used or approximated beat-for-beat — this is an
+   original, minimal, royalty-free soundscape in a similar REGISTER
+   (organ-like timbre, patience, scale), not a reproduction of the
+   copyrighted score.
+
+   ---- Recalibration against a real reference track (2026-07-25) ----
+   The above was tuned purely from a verbal description. A real
+   reference now exists: assets/audio/intro-narration.mp3, whose
+   instrumental-only stretches (0-15.3s before the voice enters, and
+   132-143.9s after it ends — boundaries confirmed by volumedetect:
+   mean volume jumps from -31dB to -18dB at ~15.5s) were extracted and
+   measured with ffmpeg/numpy/scipy (see /tmp scratchpad of that
+   session for the extraction commands — reproducible via `ffmpeg -ss
+   T -t 1 -i intro-narration.mp3 -af volumedetect -f null -`):
+
+     - Spectral balance (Welch PSD over each segment): 55-61% of ALL
+       energy sits in 20-60Hz, another 32-34% in 60-250Hz. Combined,
+       ~90% of the signal's energy is below 250Hz. Mid/high-mid/high
+       bands (500Hz+) sum to under 3%. Spectral centroid: 112Hz (intro)
+       / 228Hz (tail). This is much darker/lower than a C2 (65.41Hz)
+       organ register alone implies — the reference leans on true
+       sub-bass, closer to C1 (32.7Hz), not just a low-register lead.
+     - Onset/envelope analysis (20ms-smoothed amplitude envelope,
+       peak-picking): the instrumental is NOT a static sustained pad.
+       It has a real, audible pulse — near-isochronous ~1.00s
+       inter-onset interval for the first ~9s (IOIs: 1.00, 1.02, 1.00,
+       1.01, 0.97, 1.00, 1.01s — i.e. ~60 pulses/min), which then
+       tightens to ~0.45-0.6s pulses (~110-120/min) later in the intro
+       and through the tail. This is the "batida crescente" already
+       named in assets/audio/README.md — a slow-to-faster heartbeat/
+       clock-tick motif, the single most Zimmer-Interstellar-specific
+       trait of the reference (echoes the famous ticking-clock device
+       in that score). A single 1s window around one pulse shows a
+       broadband transient (energy spikes briefly up to ~14kHz then
+       decays fast, i.e. a soft mallet/pluck-like attack) sitting on
+       top of a bass layer that never stops — pulse ON TOP of drone,
+       not instead of it.
+     - Texture: sparse, not orchestral. No sustained mid/high content,
+       no more than one transient layer audible over the drone at once.
+       This matches (does not contradict) the existing minimalist
+       intent — it just adds one honest detail that was missing: the
+       reference is not beat-free, it has a slow sub-bass pulse.
+
+   What changed as a result (see startFloor/HARMONICS/ROOT/
+   scheduleNextPhrase below for the actual numbers):
+     1. Floor drone dropped from C2+octave to C1-rooted (32.7Hz) to
+        match the measured 32-43Hz spectral peak.
+     2. A sparse, quiet sub-bass "pulse" was added to the floor layer —
+        soft-attack, fast-decay, ~1 pulse every 3.2-4.8s at rest,
+        tightening slightly as intensity rises. This is deliberately
+        far slower/sparser than the reference's own ~1s-then-0.5s
+        pulse (a literal tempo match would read as rhythmic/busy over
+        many minutes of free flight, which the brief explicitly rules
+        out) — it borrows the CHARACTER (a soft low heartbeat under
+        the drone) at a pace suited to an ambient loop, not the tempo.
+     3. HARMONICS trimmed further toward the fundamental (less energy
+        in mult 3/4/6) since measured mid/high content in the
+        reference is under 3% of total energy — the existing organ
+        voice was already dark but had slightly more upper-partial
+        presence than the reference supports.
+     4. Note/gap durations and interval choices are unchanged: the
+        reference's instrumental cues are short (~15s and ~12s) so
+        they can't independently confirm or contradict the existing
+        9-18s phrase length, which remains a deliberate ambient-loop
+        choice (the reference itself is not a loop, it's a 15s cue).
    ------------------------------------------------------------
    Autoplay-safety: the AudioContext is created and resumed ONLY on the
    first user gesture (click/touch/keydown anywhere), never on load —
@@ -3149,7 +3210,14 @@ var SoundEngine = (function(){
      not as musical space. A single, unwavering, very quiet low drone
      fills that gap: never percussive, never a note in its own right,
      just a floor the phrases rise out of and sink back into so the
-     ambience never fully cuts to nothing. */
+     ambience never fully cuts to nothing.
+     Root dropped from C2 (65.41Hz) to C1 (32.7Hz): PSD analysis of the
+     reference's instrumental segments found the strongest spectral
+     peak at 32-43Hz with 55-61% of total energy below 60Hz — the old
+     floor sat a full octave above where the reference's real energy
+     concentrates. */
+  var FLOOR_ROOT = 32.70; // C1 — matches the 32-43Hz PSD peak measured in the reference
+  var pulseTimer = null;
   function startFloor(){
     if (!ctx || floorGain) return;
     floorGain = ctx.createGain();
@@ -3159,7 +3227,7 @@ var SoundEngine = (function(){
     [1, 2].forEach(function(mult){
       var o = ctx.createOscillator();
       o.type = 'sine';
-      o.frequency.value = 65.41 * mult; // same C2 root as the organ voices
+      o.frequency.value = FLOOR_ROOT * mult;
       var og = ctx.createGain();
       og.gain.value = mult === 1 ? 0.7 : 0.3;
       o.connect(og); og.connect(floorGain);
@@ -3167,13 +3235,61 @@ var SoundEngine = (function(){
     });
   }
 
+  /* ---------- sub-bass "pulse" ----------
+     Onset analysis of the reference (20ms-smoothed envelope,
+     prominence peak-picking) found a real pulse under the drone: a
+     near-isochronous ~1.00s-apart broadband transient (energy briefly
+     up to ~14kHz, fast decay — a soft mallet/pluck character, not a
+     drum hit) for the first ~9s, tightening to ~0.45-0.6s later. That
+     "heartbeat that quickens" is arguably the single most recognizable
+     Zimmer/Interstellar trait in the reference and had no equivalent
+     here before. Reproduced at a much slower, sparser pace than the
+     measured tempo on purpose — this loops for potentially many
+     minutes of free flight, so borrowing the reference's literal ~60
+     -120 BPM would read as a rhythmic beat/heartbeat-under-tension,
+     contradicting the "no perceptible beat" brief. Instead: one very
+     soft, low pulse every few seconds, present but easy to miss,
+     tightening only slightly with intensity (mirrors the reference's
+     acceleration in direction, never in absolute speed). */
+  function playPulse(){
+    if (!ctx || !floorGain) return;
+    var now = ctx.currentTime;
+    var pg = ctx.createGain();
+    pg.gain.value = 0;
+    pg.connect(floorGain);
+    pg.gain.linearRampToValueAtTime(0.55, now + 0.03); // soft, fast attack (mallet-like, not a hard click)
+    pg.gain.exponentialRampToValueAtTime(0.0008, now + 1.1); // fast decay, matches the reference's transient
+    var o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(FLOOR_ROOT, now);
+    o.frequency.exponentialRampToValueAtTime(FLOOR_ROOT * 0.97, now + 1.0); // tiny downward pitch drift = softer, less "clicky"
+    o.connect(pg);
+    o.start(now); o.stop(now + 1.3);
+  }
+  function scheduleNextPulse(){
+    if (!ctx || muted) return; // setMuted() restarts this when unmuted, same pattern as scheduleNextPhrase
+    playPulse();
+    // 3.2-4.8s at rest, tightening toward 2.2-3.4s at full cosmic intensity —
+    // same DIRECTION of change as the reference's own acceleration, at an
+    // ambient-appropriate absolute pace rather than its literal ~1s/~0.5s.
+    var t = currentIntensity;
+    var interval = (3.2 - t*1.0) + Math.random()*1.6;
+    pulseTimer = setTimeout(scheduleNextPulse, interval * 1000);
+  }
+
   /* ---------- pipe-organ-ish voice ----------
      A single sustained note = a fundamental + a handful of harmonics at
      organ-like amplitude ratios (strong octave/12th, weaker upper
      partials), each its own oscillator summed into one per-note gain
      envelope with a slow attack and slow release — this is what gives
-     it "breath" instead of a synth-pad snap. */
-  var HARMONICS = [ {mult:1, amp:0.5}, {mult:2, amp:0.32}, {mult:3, amp:0.16}, {mult:4, amp:0.12}, {mult:6, amp:0.06} ];
+     it "breath" instead of a synth-pad snap.
+     Weights darkened further: Welch PSD of the reference's instrumental
+     segments put under 3% of total energy above 500Hz (mid+high-mid+
+     high bands combined) — mult 3 pulled down and mult 6 (the brightest
+     partial, ~5th harmonic overtone) more than halved so the stack
+     stays weighted toward the fundamental/octave the way the reference
+     is, instead of carrying an audible upper shimmer. */
+  var HARMONICS = [ {mult:1, amp:0.55}, {mult:2, amp:0.30}, {mult:3, amp:0.11}, {mult:4, amp:0.08}, {mult:6, amp:0.025} ];
   function playOrganNote(freq, dur, gainTarget, dest, waveOverride){
     if (!ctx) return;
     var now = ctx.currentTime;
@@ -3205,6 +3321,13 @@ var SoundEngine = (function(){
      Density/richness scales with how far out the camera has traveled —
      more voices and longer sustains as the layer grows more cosmic,
      without ever becoming loud or busy. */
+  // C2 kept (not dropped to C1 like the floor, see FLOOR_ROOT above):
+  // this voice already carries harmonics up to mult*4/6, so pushing the
+  // fundamental down a further octave would put its overtone stack
+  // uncomfortably close to the floor's own fundamental+octave and muddy
+  // the two layers together. Keeping ROOT at C2 while FLOOR_ROOT sits at
+  // C1 gives the same "reference leans very low" read (measured PSD
+  // peak 32-43Hz) while keeping the organ line legible above the drone.
   var ROOT = 65.41; // C2 — low register, organ-like
   var SCALE_DEGREES = [0, 3, 5, 7, 10, 12]; // minor-leaning open intervals (root, m3, 4th, 5th, m7, octave)
   function degreeFreq(deg, oct){ return ROOT * Math.pow(2, oct + deg/12); }
@@ -3307,7 +3430,7 @@ var SoundEngine = (function(){
     if (!c) return;
     started = true;
     if (c.state === 'suspended') c.resume();
-    if (!muted) scheduleNextPhrase();
+    if (!muted){ scheduleNextPhrase(); scheduleNextPulse(); }
   }
   function setMuted(v){
     muted = v;
@@ -3320,9 +3443,11 @@ var SoundEngine = (function(){
     master.gain.linearRampToValueAtTime(muted?0:0.55, now+0.6);
     if (muted){
       if (composerTimer) { clearTimeout(composerTimer); composerTimer = null; }
+      if (pulseTimer) { clearTimeout(pulseTimer); pulseTimer = null; }
       stopPoiDrone();
-    } else if (started && !composerTimer){
-      scheduleNextPhrase();
+    } else if (started){
+      if (!composerTimer) scheduleNextPhrase();
+      if (!pulseTimer) scheduleNextPulse();
     }
   }
 
