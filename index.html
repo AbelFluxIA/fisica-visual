@@ -78,8 +78,18 @@ body{
   position:relative;
 }
 
-#introStage{position:fixed;inset:0;}
-#introCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+#introStage{position:fixed;inset:0;background:#020207;}
+/* the black hole shader is the primary background now; the old
+   starfield canvas is kept mounted behind it (lower z, reduced opacity)
+   as a subtle complement rather than being removed outright — it reads
+   well peeking around the hole's edges and costs very little since
+   it's plain canvas2d. */
+#introCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0;opacity:0.55;}
+#blackholeCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;}
+/* shown only if WebGL is unavailable/fails to init — a plain dark
+   backdrop so the intro never shows a blank/broken layer; the Canvas2D
+   starfield (still mounted underneath) remains visible on top of it. */
+#blackholeFallback{position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse 60% 50% at 50% 46%, rgba(212,168,92,0.10), transparent 70%),#020207;display:none;}
 
 /* soft vignette so caption text always has contrast, regardless of what's
    drifting behind it at that moment */
@@ -188,16 +198,12 @@ body{
   #preludeVolume svg path:last-child, #preludeRotate svg{animation:none;}
 }
 
-/* ---- accelerate sequence: last 12s of the track (music tail, no more
-   captions) — a starfield rushing toward the viewer, echoing "it's
-   time to take command of your own journey" right before #beginBtn
-   appears. Separate canvas, only mounted/animated for this window. ---- */
-#accelerateStage{
-  position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none;
-  transition:opacity 1.2s ease;
-}
-#accelerateStage.show{opacity:1;}
-#accelerateCanvas{width:100%;height:100%;display:block;}
+/* ---- fall sequence: last ~12s of the track (music tail, no more
+   captions) — instead of a separate canvas, the black hole shader's own
+   camera distance (uDist) is animated down toward the event horizon
+   over this window, so the same real render dominates the frame and
+   fades toward darkness right as #beginBtn reaches full opacity. See
+   FALL_FROM / updateBlackholeFall() in the script below. ---- */
 
 /* also-available link to the rooms hub, kept very quiet — this is the
    "outras salas" escape hatch required even from the cinematic intro */
@@ -230,6 +236,8 @@ body{
 
 <div id="introStage">
   <canvas id="introCanvas" aria-hidden="true"></canvas>
+  <canvas id="blackholeCanvas" aria-hidden="true"></canvas>
+  <div id="blackholeFallback" aria-hidden="true"></div>
 </div>
 
 <button id="tapToStart" type="button">
@@ -253,8 +261,6 @@ body{
 <div id="captionWrap">
   <p id="caption"></p>
 </div>
-
-<div id="accelerateStage" aria-hidden="true"><canvas id="accelerateCanvas"></canvas></div>
 
 <div id="introControls">
   <button id="beginBtn" type="button">iniciar o voo</button>
@@ -318,7 +324,6 @@ body{
   var introControls = document.getElementById("introControls");
   var preludeVolume = document.getElementById("preludeVolume");
   var preludeRotate = document.getElementById("preludeRotate");
-  var accelerateStage = document.getElementById("accelerateStage");
   var tapToStart = document.getElementById("tapToStart");
 
   var currentCaptionIndex = -1;
@@ -447,21 +452,22 @@ body{
 
   /* ---- accelerate sequence: the last stretch of the track is a music
      tail with no more speech (measured end of narration ~132s, track
-     ends ~144s) — captions stop, a starfield rush takes over, and the
-     begin button fades in right as it peaks. ---- */
+     ends ~144s) — captions stop and the black hole shader's camera
+     starts falling toward the event horizon (see updateBlackholeFall /
+     window.__bhUpdateTime near the end of this script), while the begin
+     button fades in right as it peaks. ---- */
   var ACCELERATE_FROM = 132.0;
   var accelerateStarted = false;
   function checkAccelerate(t){
     if (!accelerateStarted && t >= ACCELERATE_FROM){
       accelerateStarted = true;
       // the last caption (128-132.5s) can still be fading in exactly as
-      // the rush starts (132s) — clear it explicitly so the two never
+      // the fall starts (132s) — clear it explicitly so the two never
       // visually stack, rather than relying on captionIndexForTime()
       // to naturally roll past it a beat later.
       showCaption(-1);
-      accelerateStage.classList.add("show");
-      startAccelerateAnim();
     }
+    if (window.__bhUpdateTime) window.__bhUpdateTime(t);
   }
 
   /* ---- begin-button reveal timing: previously revealControls() only
@@ -470,7 +476,7 @@ body{
      button's opacity transition — 1s at the time — didn't even START
      until the track was already over. The button would visibly "pop"
      in right as the music stopped, which read as an afterthought
-     rather than a payoff timed to the hyperspace rush.
+     rather than a payoff timed to the fall toward the event horizon.
      Fix: start the CSS fade REVEAL_LEAD_SECONDS before the audio is
      expected to end, and stretch the .show transition (see CSS) to
      last exactly that long, so full opacity (1.0) lands right as the
@@ -510,7 +516,7 @@ body{
   function finishIntro(){
     if (finished) return;
     finished = true;
-    checkAccelerate(9999); // ensure the rush is showing by the time controls appear
+    checkAccelerate(9999); // ensure the fall has reached its darkest point by the time controls appear
     revealControls(); // no-op via CSS if already .show — guarantees full opacity by "ended" even if checkRevealControls's estimate ran late
   }
 
@@ -591,10 +597,14 @@ body{
   }
   tapToStart.addEventListener("click", startExperience);
 
-  /* ---- reduced motion: only the visual drift/rush is toned down (see
-     the starfield and accelerate-sequence code below) — the narration
-     is the point of this intro, so it always plays start to finish and
-     is never shortened or skippable, per spec. Only the fallback timer
+  /* ---- reduced motion: only the visual drift (starfield + black hole
+     orbit) is toned down (see the starfield and black-hole blocks below)
+     — the narration is the point of this intro, so it always plays
+     start to finish and is never shortened or skippable, per spec. The
+     black hole's fall phase stays visible even under reduced motion
+     (see BH_ORBIT_YAW_SPEED / the fall block near the end of this
+     script), just without the orbital drift layered on top. Only the
+     fallback timer
      (no-audio path) needs its own duration, matching the real track. ---- */
   if (REDUCE_MOTION){
     TOTAL_FALLBACK_DURATION = CAPTIONS[CAPTIONS.length-1].at + CAPTIONS[CAPTIONS.length-1].dur + 1;
@@ -690,138 +700,302 @@ body{
   }
   requestAnimationFrame(draw);
 
+
   /* ============================================================
-     ACCELERATE SEQUENCE — the last ~12s of the track (music tail,
-     narration already finished). A classic hyperspace rush: points
-     race outward from the vanishing point, accelerating as the cue
-     plays out, echoing "it's time to take command of your own
-     journey" right before the begin button appears. Separate canvas
-     and rAF loop, only started once (see checkAccelerate above) so it
-     costs nothing during the spoken portion of the intro.
+     BLACK HOLE BACKGROUND — the same physically-integrated Schwarzschild
+     null-geodesic shader used in the dedicated /horizonte/ room (see
+     that file for the derivation notes), reused here as the intro's
+     primary background instead of a generic starfield. Ported as a
+     self-contained IIFE-style block: variable names below are prefixed
+     bh* throughout to avoid colliding with the starfield code above
+     (canvas/ctx/draw/etc.) sharing this same <script>.
+
+     Two phases, both driven by the SAME time source (narration audio
+     currentTime, or the fallback timer — see onTimeUpdate/startFallback-
+     Timer above, which now also call updateBlackholeTime()):
+       - "orbit" phase (0s .. FALL_FROM): camera sits at a fixed,
+         contemplative distance (BH_ORBIT_R) doing a slow constant yaw
+         drift — a calm backdrop behind the captions.
+       - "fall" phase (FALL_FROM .. end of track): camera distance eases
+         from BH_ORBIT_R down toward BH_RMIN (just outside the shader's
+         own minimum/capture radius), so the frame fills with the disk
+         and horizon and the picture goes almost fully dark right as
+         the track ends — "sendo arrastado até a singularidade".
+     FALL_FROM mirrors the old ACCELERATE_FROM (132.0s, same trigger
+     the accelerate sequence used) so the timing beat the audio was
+     mixed against doesn't change, only what's on screen during it.
      ============================================================ */
-  var accCanvas = document.getElementById("accelerateCanvas");
-  var accCtx = accCanvas.getContext("2d");
-  var accW, accH, accDpr;
-  function accResize(){
-    accDpr = Math.min(devicePixelRatio || 1, 2);
-    accW = innerWidth; accH = innerHeight;
-    accCanvas.width = accW*accDpr; accCanvas.height = accH*accDpr;
-    accCanvas.style.width = accW+"px"; accCanvas.style.height = accH+"px";
-    accCtx.setTransform(accDpr,0,0,accDpr,0,0);
-  }
-  window.addEventListener("resize", accResize);
+  var bhCanvas = document.getElementById("blackholeCanvas");
+  var bhFallback = document.getElementById("blackholeFallback");
+  var bhGl = null;
+  try{
+    bhGl = bhCanvas.getContext("webgl", {antialias:false, depth:false, alpha:false})
+        || bhCanvas.getContext("experimental-webgl");
+  }catch(e){ bhGl = null; }
 
-  /* ---- hyperspace star field: each star carries its own radial
-     distance (r), a base outward speed, and a "depth" factor in (0,1]
-     that never changes after birth — depth acts as a simple parallax
-     stand-in (closer stars = smaller depth = faster, brighter, thicker
-     trails), which is what actually reads as "3D rush" instead of a
-     flat ring of lines. Trail length is derived every frame from the
-     star's CURRENT radial speed (not a fixed constant), so trails
-     visibly stretch as the sequence accelerates. ---- */
-  var rushPoints = [];
-  function makeRushPoint(freshBorn){
-    var ang = Math.random()*Math.PI*2;
-    return {
-      ang: ang,
-      // freshly-born stars start at the vanishing point; the initial
-      // fill (before the loop has run) seeds some mid-flight too, so
-      // the very first frame isn't an empty center
-      r: freshBorn ? 0 : Math.random()*Math.max(accW||800,accH||600)*0.6,
-      depth: 0.15 + Math.random()*0.85, // 0=far/slow, 1=near/fast — fixed for this star's life
-      color: Math.random() < 0.16 ? "232,194,126" : (Math.random() < 0.5 ? "225,232,245" : "159,200,236")
-    };
-  }
-  var RUSH_COUNT = REDUCE_MOTION ? 90 : 340;
-  for (var ri=0; ri<RUSH_COUNT; ri++) rushPoints.push(makeRushPoint(false));
+  if (!bhGl){
+    // no WebGL at all — never let the intro break; fall back to a
+    // simple dark backdrop (the Canvas2D starfield above still renders
+    // on top of it, so the background is never literally blank).
+    bhFallback.style.display = "block";
+  } else {
+    (function(){
+      var FRAG = [
+        "precision highp float;",
+        "uniform vec2 uRes;",
+        "uniform float uTime;",
+        "uniform float uDist;",
+        "uniform float uYaw;",
+        "uniform float uPitch;",
+        "#define DISK_IN 2.8",
+        "#define DISK_OUT 12.0",
+        "#define STEPS 220",
 
-  var accStarted = false;
-  var accT0 = null;
-  function startAccelerateAnim(){
-    if (accStarted) return;
-    accStarted = true;
-    accResize();
-    accT0 = performance.now();
-    if (REDUCE_MOTION){
-      // one settled frame conveying "rushing outward" without a sustained
-      // animation loop, per prefers-reduced-motion
-      accDraw(0.7, 1/60);
-      return;
-    }
-    var lastNow = accT0;
-    function loop(now){
-      var t = (now - accT0) / 1000;
-      var dt = Math.min(0.05, (now - lastNow) / 1000); // clamp to avoid huge jumps after tab-switch
-      lastNow = now;
-      accDraw(t, dt);
-      requestAnimationFrame(loop);
-    }
-    requestAnimationFrame(loop);
-  }
-  function accDraw(t, dt){
-    var cx = accW/2, cy = accH/2;
-    // speed curve: a snappy ease-in to full rush by ~2.6s (was a linear
-    // ramp to 1.0 over 4s — too gentle for the "uau" the sequence needs),
-    // then a slow continued creep up to a 1.6x peak multiplier so the
-    // back half of the 12s tail still feels like it's gaining speed
-    // rather than plateauing.
-    var rampT = Math.min(1, t/2.6);
-    var eased = 1 - Math.pow(1-rampT, 3); // cubic ease-out: fast climb, settles smoothly
-    var creep = Math.min(0.6, t/14); // gentle continued build across the whole tail
-    var intensity = eased * (1 + creep); // can exceed 1 → up to ~1.6x at peak
-    var maxR = Math.max(accW,accH)*0.78;
-    var baseSpeed = 130; // px/s at depth=1, intensity=1 (was 60-130 total range before — this is the new floor)
+        "float hash13(vec3 p){ p = fract(p*0.1031); p += dot(p, p.yzx+33.33); return fract((p.x+p.y)*p.z); }",
+        "float hash11(float n){ return fract(sin(n)*43758.5453); }",
+        "float noise1(float x){ float i=floor(x); float f=fract(x); f=f*f*(3.0-2.0*f); return mix(hash11(i), hash11(i+1.0), f); }",
 
-    accCtx.fillStyle = "rgba(2,2,7,"+(REDUCE_MOTION?1:0.30)+")";
-    accCtx.fillRect(0,0,accW,accH);
-    accCtx.lineCap = "round";
+        "vec3 stars(vec3 d){",
+        "  vec3 col = vec3(0.0);",
+        "  vec3 p = d * 42.0;",
+        "  vec3 id = floor(p);",
+        "  vec3 f = fract(p) - 0.5;",
+        "  float h = hash13(id);",
+        "  if (h > 0.952){",
+        "    vec3 sp = (vec3(hash13(id+7.1), hash13(id+3.7), hash13(id+9.3)) - 0.5)*0.66;",
+        "    float b = (h-0.952)/0.048;",
+        "    float st = smoothstep(0.10+0.10*b, 0.0, length(f-sp)) * (0.25+b*1.5);",
+        "    vec3 tint = mix(vec3(0.72,0.84,1.0), vec3(1.0,0.86,0.70), hash13(id+1.3));",
+        "    col += st * tint;",
+        "  }",
+        "  float band = exp(-abs(dot(d, normalize(vec3(0.30,1.0,0.14)))) * 4.5);",
+        "  col += band * vec3(0.040,0.046,0.070);",
+        "  return col;",
+        "}",
 
-    rushPoints.forEach(function(p){
-      var speed = baseSpeed * (0.35 + p.depth*1.4) * intensity;
-      if (!REDUCE_MOTION) p.r += speed * dt;
-      if (p.r > maxR){
-        // respawn at center as a fresh star — keeps density constant
-        // without ever growing the array
-        p.r = 0;
-        p.ang = Math.random()*Math.PI*2;
-        p.depth = 0.15 + Math.random()*0.85;
-        p.color = Math.random() < 0.16 ? "232,194,126" : (Math.random() < 0.5 ? "225,232,245" : "159,200,236");
+        "vec3 diskColor(vec3 hit, vec3 rd){",
+        "  float r = max(length(hit.xz), 1e-3);",
+        "  float q = clamp((r - DISK_IN)/(DISK_OUT - DISK_IN), 0.0, 1.0);",
+        "  float ang = atan(hit.z, hit.x);",
+        "  float ph = ang + uTime * 7.5 * pow(r, -1.5);",
+        "  float streak = 0.66",
+        "    + 0.24*sin(ph*9.0 + r*7.0)",
+        "    + 0.16*sin(ph*23.0 - r*11.0 + 1.7)",
+        "    + 0.28*(noise1(r*3.1 + uTime*0.25) - 0.5);",
+        "  vec3 hot  = vec3(1.05,0.99,0.93);",
+        "  vec3 mid  = vec3(1.05,0.62,0.26);",
+        "  vec3 cool = vec3(0.55,0.22,0.10);",
+        "  vec3 c = mix(hot, mid, smoothstep(0.0,0.45,q));",
+        "  c = mix(c, cool, smoothstep(0.45,1.0,q));",
+        "  float bright = mix(2.6, 0.28, q);",
+        "  vec3 tang = vec3(-hit.z, 0.0, hit.x)/r;",
+        "  float beta = sqrt(0.5/max(r,0.7));",
+        "  float cosT = dot(tang, -normalize(rd));",
+        "  float dop = clamp(1.0/(1.0 - 0.9*beta*cosT), 0.55, 1.9);",
+        "  bright *= dop*dop*dop;",
+        "  c = mix(c, c*vec3(0.72,0.86,1.25), clamp((dop-1.0)*1.3, -0.30, 0.55));",
+        "  c *= bright * (sqrt(max(1.0 - 1.0/r, 0.0))*1.25 + 0.05);",
+        "  c *= smoothstep(DISK_IN, DISK_IN+0.25, r);",
+        "  return max(c*streak, 0.0);",
+        "}",
+
+        "void main(){",
+        "  vec2 uv = (2.0*gl_FragCoord.xy - uRes)/uRes.y;",
+        "  float cp = cos(uPitch), sp = sin(uPitch);",
+        "  float cy = cos(uYaw),  sy = sin(uYaw);",
+        "  vec3 ro = uDist * vec3(cp*sy, sp, cp*cy);",
+        "  vec3 fw = normalize(-ro);",
+        "  vec3 rt = normalize(cross(fw, vec3(0.0,1.0,0.0)));",
+        "  vec3 up = cross(rt, fw);",
+        "  vec3 rd = normalize(fw*1.25 + uv.x*rt + uv.y*up);",
+
+        "  vec3 p = ro;",
+        "  vec3 v = rd;",
+        "  vec3 hv = cross(p, v);",
+        "  float h2 = dot(hv, hv);",
+
+        "  vec3 col = vec3(0.0);",
+        "  float T = 1.0;",
+        "  bool captured = false;",
+        "  float escR = max(uDist*1.6, 40.0);",
+
+        "  for (int i=0;i<STEPS;i++){",
+        "    float r2 = dot(p,p);",
+        "    float r = sqrt(r2);",
+        "    if (r < 1.0){ captured = true; break; }",
+        "    if (r > escR && dot(p,v) > 0.0) break;",
+        "    float dt = clamp(0.09*r, 0.045, 1.7);",
+        "    vec3 a = -1.5 * h2 * p / (r2*r2*r);",
+        "    vec3 pn = p + v*dt + a*(0.5*dt*dt);",
+        "    vec3 vn = v + a*dt;",
+        "    if (p.y*pn.y < 0.0){",
+        "      float f = p.y/(p.y - pn.y);",
+        "      vec3 hit = mix(p, pn, f);",
+        "      float hr = length(hit.xz);",
+        "      if (hr > DISK_IN*0.98 && hr < DISK_OUT){",
+        "        vec3 dc = diskColor(hit, v);",
+        "        float q = clamp((hr-DISK_IN)/(DISK_OUT-DISK_IN), 0.0, 1.0);",
+        "        float al = clamp(0.9 - q*0.75, 0.08, 0.9);",
+        "        col += T * dc * al;",
+        "        T *= (1.0 - al);",
+        "        if (T < 0.02) break;",
+        "      }",
+        "    }",
+        "    p = pn; v = vn;",
+        "  }",
+        "  if (!captured && T > 0.02) col += T * stars(normalize(v));",
+        "  col = col/(1.0 + col);",
+        "  col = pow(col, vec3(0.4545));",
+        "  float vig = 1.0 - 0.32*dot(uv*0.5, uv*0.5);",
+        "  gl_FragColor = vec4(col*vig, 1.0);",
+        "}"
+      ].join("\n");
+
+      var VERT = "attribute vec2 aPos; void main(){ gl_Position = vec4(aPos,0.0,1.0); }";
+
+      function bhCompile(type, src){
+        var s = bhGl.createShader(type);
+        bhGl.shaderSource(s, src);
+        bhGl.compileShader(s);
+        if (!bhGl.getShaderParameter(s, bhGl.COMPILE_STATUS)){
+          console.error(bhGl.getShaderInfoLog(s));
+          return null;
+        }
+        return s;
+      }
+      var bhVs = bhCompile(bhGl.VERTEX_SHADER, VERT);
+      var bhFs = bhCompile(bhGl.FRAGMENT_SHADER, FRAG);
+      if (!bhVs || !bhFs){ bhFallback.style.display = "block"; return; }
+      var bhProg = bhGl.createProgram();
+      bhGl.attachShader(bhProg, bhVs); bhGl.attachShader(bhProg, bhFs);
+      bhGl.linkProgram(bhProg);
+      if (!bhGl.getProgramParameter(bhProg, bhGl.LINK_STATUS)){
+        console.error(bhGl.getProgramInfoLog(bhProg));
+        bhFallback.style.display = "block";
         return;
       }
-      // trail length grows with current radial speed AND with how far
-      // out the star already is (closer = longer streak), clamped so
-      // near-center new stars stay short dots rather than long lines
-      var trailLen = Math.min(p.r*0.9, 10 + speed*0.11);
-      var headR = p.r;
-      var tailR = Math.max(0, p.r - trailLen);
-      var x2 = cx + Math.cos(p.ang)*headR, y2 = cy + Math.sin(p.ang)*headR;
-      var x1 = cx + Math.cos(p.ang)*tailR, y1 = cy + Math.sin(p.ang)*tailR;
+      bhGl.useProgram(bhProg);
 
-      // depth-driven brightness/thickness: near stars (higher depth,
-      // further traveled) read as faster AND punchier, echoing real
-      // parallax rather than uniform line weight
-      var travel = Math.min(1, p.r/maxR);
-      var brightness = (0.22 + p.depth*0.5) * (0.5 + 0.5*intensity) * (0.6 + travel*0.5);
-      var width = (0.6 + p.depth*1.8) * (0.55 + intensity*0.75);
+      var bhBuf = bhGl.createBuffer();
+      bhGl.bindBuffer(bhGl.ARRAY_BUFFER, bhBuf);
+      bhGl.bufferData(bhGl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), bhGl.STATIC_DRAW);
+      var bhLoc = bhGl.getAttribLocation(bhProg, "aPos");
+      bhGl.enableVertexAttribArray(bhLoc);
+      bhGl.vertexAttribPointer(bhLoc, 2, bhGl.FLOAT, false, 0, 0);
 
-      if (trailLen > 1.2){
-        var grad = accCtx.createLinearGradient(x1,y1,x2,y2);
-        grad.addColorStop(0, "rgba("+p.color+",0)");
-        grad.addColorStop(1, "rgba("+p.color+","+Math.min(1,brightness).toFixed(3)+")");
-        accCtx.strokeStyle = grad;
-      } else {
-        accCtx.strokeStyle = "rgba("+p.color+","+Math.min(1,brightness*0.7).toFixed(3)+")";
+      var bhU = {};
+      ["uRes","uTime","uDist","uYaw","uPitch"].forEach(function(n){ bhU[n] = bhGl.getUniformLocation(bhProg, n); });
+
+      /* ---------- state ---------- */
+      // RMIN matches /horizonte/'s own minimum camera distance (1.02
+      // Schwarzschild radii — just outside the r=1 capture threshold
+      // baked into the shader loop above). BH_ORBIT_R (contemplative
+      // distance during narration) and BH_FALL_TARGET (how close the
+      // "fall" phase gets before the track ends) were chosen by testing
+      // screenshots: 6.0 reads as "calm establishing shot" — same value
+      // the /horizonte/ room itself defaults to — and 1.35 fills the
+      // frame with disk/horizon without the render going fully black
+      // before the audio actually ends (r<~1.15 starts reading as
+      // near-total darkness given the vignette + tone mapping above).
+      var BH_RMIN = 1.02, BH_RMAX = 30;
+      var BH_ORBIT_R = 6.0;
+      var BH_FALL_TARGET = 1.12;
+      var bhState = { r: BH_ORBIT_R, yaw: 0.6, pitch: 0.16 };
+
+      var bhReduceMotion = REDUCE_MOTION;
+      // slow constant orbital drift during the narration phase — tested
+      // both a static frame and a slow drift via screenshots taken a
+      // minute apart; the drift reads as "alive, contemplative" rather
+      // than a looping still, so it's kept for full motion. Reduced-
+      // motion gets a static orbit (no drift) per spec, but the fall
+      // phase below is intentionally NOT slowed to zero — it's the
+      // requested climax and stays visible, just compressed.
+      var BH_ORBIT_YAW_SPEED = bhReduceMotion ? 0 : 0.014; // rad/s
+
+      function bhResize(){
+        var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        var w = bhCanvas.clientWidth || innerWidth, h = bhCanvas.clientHeight || innerHeight;
+        var scale = Math.min(1, Math.sqrt(1200000/(w*h*dpr*dpr)));
+        bhCanvas.width  = Math.max(1, Math.round(w*dpr*scale));
+        bhCanvas.height = Math.max(1, Math.round(h*dpr*scale));
+        bhGl.viewport(0, 0, bhCanvas.width, bhCanvas.height);
       }
-      accCtx.lineWidth = width;
-      accCtx.beginPath(); accCtx.moveTo(x1,y1); accCtx.lineTo(x2,y2); accCtx.stroke();
+      window.addEventListener("resize", bhResize);
+      bhResize();
 
-      // bright core dot at the head once a star is going fast enough —
-      // sells the "streaking past camera" read at peak intensity
-      if (intensity > 0.5 && p.depth > 0.55){
-        accCtx.fillStyle = "rgba("+p.color+","+Math.min(1,brightness+0.25).toFixed(3)+")";
-        accCtx.beginPath(); accCtx.arc(x2,y2, width*0.55, 0, Math.PI*2); accCtx.fill();
+      /* ---------- fall-phase timing, driven externally by the shared
+         narration clock (see updateBlackholeTime, called from
+         onTimeUpdate/startFallbackTimer's tick alongside checkAccelerate
+         so both phases share exactly one time source). FALL_FROM is the
+         same trigger the old hyperspace sequence used (ACCELERATE_FROM),
+         kept as its own constant here so this block stays self-contained
+         even though the values are identical by design. ---- */
+      var FALL_FROM = 132.0;
+      var bhFallDurationHint = 12.0; // matches the track's ~12s music tail
+
+      // easeInCubic: gentle at first, steep near the end — reads as
+      // gravity actually pulling harder as you get closer, rather than
+      // a constant-speed slide. Chosen over linear/quad after comparing
+      // screenshots at the same elapsed time: cubic kept the first
+      // few seconds of the fall visually calm (still readable as "the
+      // hole growing near") before the last ~3s snap toward darkness.
+      function easeInCubic(x){ return x*x*x; }
+
+      function updateBlackholeFall(t){
+        var end = (typeof expectedEndTime === "function") ? expectedEndTime() : (FALL_FROM + bhFallDurationHint);
+        var span = Math.max(1, end - FALL_FROM);
+        var p = (t - FALL_FROM) / span;
+        if (p < 0) p = 0; if (p > 1) p = 1;
+        var eased = easeInCubic(p);
+        bhState.r = BH_ORBIT_R + (BH_FALL_TARGET - BH_ORBIT_R) * eased;
+        // as the camera falls in, ease off the orbital yaw drift too —
+        // by the time you're this close a still-rotating camera reads
+        // as seasick rather than "being pulled in" in a straight line.
+        bhFallActive = true;
+        bhFallProgress = p;
       }
-    });
+
+      var bhFallActive = false;
+      var bhFallProgress = 0;
+
+      // exposed so the caption/timer code above (which already tracks
+      // the single source of truth for "current time in the track") can
+      // drive both phases without this block needing its own timer.
+      window.__bhUpdateTime = function(t){
+        if (t >= FALL_FROM){
+          updateBlackholeFall(t);
+        } else if (bhFallActive){
+          // shouldn't normally happen (time doesn't go backward) but
+          // keep it safe/idempotent if it ever does (e.g. dev tools
+          // scrubbing playbackRate oddly).
+          bhFallActive = false; bhState.r = BH_ORBIT_R;
+        }
+      };
+
+      /* ---------- render loop ---------- */
+      var bhSimTime = 0, bhLast = performance.now();
+      function bhFrame(now){
+        var dt = Math.min((now - bhLast)/1000, 0.1);
+        bhLast = now;
+        bhSimTime += dt;
+        if (!bhFallActive){
+          bhState.yaw += BH_ORBIT_YAW_SPEED * dt;
+        } else {
+          // gentle residual drift that fades out as the fall progresses,
+          // instead of a hard cut to zero rotation the instant the fall
+          // window begins.
+          bhState.yaw += BH_ORBIT_YAW_SPEED * dt * (1 - bhFallProgress);
+        }
+        bhGl.uniform2f(bhU.uRes, bhCanvas.width, bhCanvas.height);
+        bhGl.uniform1f(bhU.uTime, bhSimTime);
+        bhGl.uniform1f(bhU.uDist, Math.max(BH_RMIN, bhState.r));
+        bhGl.uniform1f(bhU.uYaw, bhState.yaw);
+        bhGl.uniform1f(bhU.uPitch, bhState.pitch);
+        bhGl.drawArrays(bhGl.TRIANGLES, 0, 3);
+        requestAnimationFrame(bhFrame);
+      }
+      requestAnimationFrame(bhFrame);
+    })();
   }
 })();
 </script>
