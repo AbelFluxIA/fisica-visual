@@ -905,9 +905,23 @@ canvas{display:block;}
   #infoBtn #infoBtnLabel{display:none;}
   #soundBtn{top:8px;right:54px;width:30px;height:30px;}
   #soundBtn svg{width:13px;height:13px;}
-  #navHud{top:auto;bottom:8px;left:8px;padding:6px 7px 7px;}
+  /* max-width is explicit here (not just implied by content) because this
+     panel's content — the "recentralizar" button label plus the radar
+     canvas — is wide enough to stretch past the left corner it's meant
+     to hug, colliding with whatever sits centered above it (#dragHint,
+     #ctlHint) once both happen to be visible. Content is centered inside
+     via #navHud's own flex column, so capping the box just clips outward
+     growth without reflowing the radar/button. */
+  #navHud{top:auto;bottom:8px;left:8px;max-width:120px;padding:6px 7px 7px;}
   #navHere{display:none;}
   #radar{width:52px;height:52px;}
+  /* #ctlHint (desktop keyboard legend) is hidden on touch devices via JS
+     (isTouch check, see the flight-controls script further down) rather
+     than here by viewport width — a landscape phone is routinely WIDER
+     than the max-width:720px threshold #ctlHint's own base rule uses, so
+     relying on width alone let it stay visible and collide with #navHud/
+     #dragHint/#stopBtn on exactly this breakpoint. Kept as CSS-only
+     commentary marker; no rule needed here since the JS gate covers it. */
   #poiCard{bottom:8px;top:8px;left:auto;right:8px;transform:none;width:min(280px,42vw);max-height:calc(100vh - 16px);overflow-y:auto;}
   /* base rule's width:min(320px, calc(100vw - 32px)) is already narrow
      enough in absolute terms, but gets explicit here too so the panel
@@ -920,7 +934,13 @@ canvas{display:block;}
   #dragHint{bottom:52px;}
   #thrustBtn{width:68px;height:68px;right:14px;bottom:8px;font-size:8px;}
   #thrustBtn svg{width:18px;height:18px;}
-  #guideTip{bottom:82px;}
+  /* stacked clear ABOVE #speedo (not sharing its bottom:82px) — both are
+     right-anchored in this breakpoint's compressed vertical space, and
+     sharing the same offset let a full-length guide message overlap the
+     speed readout underneath it. ~82px (speedo's own offset) + speedo's
+     own height (~55-70px depending on breakpoint) + a small gap clears it
+     at both 375px and 430px tall landscape phones. */
+  #guideTip{bottom:160px;max-width:min(280px,calc(100vw - 180px));}
   #orbitBadge{top:40px;padding:4px 10px;}
   #orbitBadge span{font-size:8px;}
   #welcome .card{max-height:calc(100vh - 16px);padding:16px 18px 14px;}
@@ -2469,6 +2489,7 @@ canvas.addEventListener('wheel', function(e){
    remain available via an attached physical keyboard if present. */
 var touchCtl = document.getElementById('touchCtl');
 var dragHintEl = document.getElementById('dragHint');
+var ctlHintEl = document.getElementById('ctlHint');
 var stopBtn = document.getElementById('stopBtn');
 var thrustBtn = document.getElementById('thrustBtn');
 var vertUp=false, vertDown=false; // no touch equivalent by design; kept as constants for updateCamera()
@@ -2500,6 +2521,15 @@ if (isTouch){
   stopBtn.classList.add('show');
   thrustBtn.classList.add('show');
   dragHintEl.classList.add('show');
+  // #ctlHint is the desktop keyboard/mouse legend (WASD, scroll, etc.) —
+  // on a touch device it's not just redundant with #dragHint/#thrustBtn/
+  // #stopBtn, it actively collides with them (and with #navHud) on short
+  // landscape phones, since its own CSS only hides it below a *width*
+  // threshold (max-width:720px) while a landscape phone is often WIDER
+  // than that (812-932 CSS px) despite being touch-only. isTouch is the
+  // real signal for "should the keyboard legend show at all", so gate it
+  // here directly rather than trying to guess every viewport size in CSS.
+  if (ctlHintEl) ctlHintEl.classList.add('hidden');
   // the hint is a one-time affordance: fades once the player has
   // successfully dragged once (see pointerdown above) or after a beat.
   setTimeout(function(){ dragHintEl.classList.remove('show'); }, 6000);
