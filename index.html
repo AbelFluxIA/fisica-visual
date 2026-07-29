@@ -222,6 +222,27 @@ body{
 #salasLink:hover{color:rgba(237,234,226,0.7);}
 #salasLink:focus-visible{outline:2px solid #E8C27E;}
 
+/* "pular introdução" — re-added after user feedback (the track/visuals
+   are the point, but forcing every repeat visitor to sit through the
+   full ~2:24 is friction they explicitly asked to remove). Only shown
+   once the VOICE actually starts (SKIP_SHOW_FROM, matches when the
+   caption/narration begins) — the 0-16s prelude is just two quick
+   volume/rotate prompts, too short and too instructional to bother
+   skipping. Hidden again once #beginBtn takes over near the very end
+   (see revealControls()) so the two exits never compete for attention
+   at the climax. */
+#skipIntroBtn{
+  position:absolute;top:max(24px, env(safe-area-inset-top));right:max(18px, env(safe-area-inset-right));z-index:3;
+  background:rgba(13,15,24,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:20px;
+  font-family:var(--mono);font-size:10px;letter-spacing:0.05em;color:rgba(237,234,226,0.5);
+  padding:7px 13px;cursor:pointer;opacity:0;pointer-events:none;
+  transition:opacity .8s ease,color .2s,border-color .2s;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+#skipIntroBtn.show{opacity:1;pointer-events:auto;}
+#skipIntroBtn:hover{color:#fff;border-color:rgba(255,255,255,0.3);}
+#skipIntroBtn:focus-visible{outline:2px solid #E8C27E;}
+
 /* transition-out: when the intro finishes/skips, fade to black before
    handing off to /voo/ — avoids a jarring hard cut between two very
    different rendering contexts (canvas2d intro vs. WebGL flight room) */
@@ -273,6 +294,7 @@ body{
   <button id="beginBtn" type="button">iniciar o voo</button>
 </div>
 
+<button id="skipIntroBtn" type="button">pular introdução ›</button>
 <a id="salasLink" href="/salas/">ver todas as salas</a>
 
 <audio id="narration" src="assets/audio/intro-narration.mp3" preload="auto"></audio>
@@ -332,6 +354,7 @@ body{
   var preludeVolume = document.getElementById("preludeVolume");
   var preludeRotate = document.getElementById("preludeRotate");
   var tapToStart = document.getElementById("tapToStart");
+  var skipIntroBtn = document.getElementById("skipIntroBtn");
 
   var currentCaptionIndex = -1;
   var finished = false;
@@ -549,6 +572,7 @@ body{
 
   function revealControls(){
     beginBtn.classList.add("show");
+    skipIntroBtn.classList.remove("show");
   }
 
   function finishIntro(){
@@ -563,6 +587,7 @@ body{
     var t = narration.currentTime;
     updatePrelude(t);
     updateBlackholeVisibility(t);
+    updateSkipButton(t);
     showCaption(captionIndexForTime(t), t);
     checkAccelerate(t);
     checkRevealControls(t);
@@ -581,6 +606,7 @@ body{
       var t = (performance.now() - fallbackStart) / 1000;
       updatePrelude(t);
       updateBlackholeVisibility(t);
+      updateSkipButton(t);
       showCaption(captionIndexForTime(t), t);
       checkAccelerate(t);
       checkRevealControls(t);
@@ -650,20 +676,36 @@ body{
     TOTAL_FALLBACK_DURATION = CAPTIONS[CAPTIONS.length-1].at + CAPTIONS[CAPTIONS.length-1].dur + 1;
   }
 
-  /* ---- navigation: only the explicit "iniciar o voo" button (shown
-     once the narration finishes) leads to /voo/ — no skip, no Escape
-     shortcut, by design: the narration/track is meant to be heard in
-     full every time. ---- */
+  /* ---- navigation: "iniciar o voo" (shown once the narration finishes)
+     and "pular introdução" (shown once the voice starts, see
+     updateSkipButton below) both lead to /voo/ — same transition either
+     way, just reached at a different point in the timeline. ---- */
   function goToFlight(){
     introStage.classList.add("leaving");
     captionWrap.classList.add("leaving");
     introControls.classList.add("leaving");
+    skipIntroBtn.classList.remove("show");
     try{ narration.pause(); }catch(e){}
     window.setTimeout(function(){
       window.location.href = "/voo/";
     }, REDUCE_MOTION ? 80 : 720);
   }
   beginBtn.addEventListener("click", goToFlight);
+  skipIntroBtn.addEventListener("click", goToFlight);
+
+  /* ---- skip button visibility: appears once the voice actually starts
+     (same ROTATE_PROMPT_UNTIL=16s mark used for the prelude/black hole
+     fade-in — the opening prompts are too short/instructional to need
+     a skip), hides again once #beginBtn takes over near the end so the
+     two exits never both show at once. */
+  var skipShown = false;
+  function updateSkipButton(t){
+    if (finished) return; // beginBtn has already taken over
+    if (!skipShown && t >= ROTATE_PROMPT_UNTIL){
+      skipShown = true;
+      skipIntroBtn.classList.add("show");
+    }
+  }
 
   /* ============================================================
      BACKGROUND — slow-drifting starfield with a distant warm core,
