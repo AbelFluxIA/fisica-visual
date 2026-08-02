@@ -230,18 +230,23 @@ body{
    volume/rotate prompts, too short and too instructional to bother
    skipping. Hidden again once #beginBtn takes over near the very end
    (see revealControls()) so the two exits never compete for attention
-   at the climax. */
+   at the climax. Made deliberately more prominent (bigger, brighter,
+   gold border) after feedback that the quiet version was too easy to miss. */
 #skipIntroBtn{
   position:absolute;top:max(24px, env(safe-area-inset-top));right:max(18px, env(safe-area-inset-right));z-index:3;
-  background:rgba(13,15,24,0.4);border:1px solid rgba(255,255,255,0.12);border-radius:20px;
-  font-family:var(--mono);font-size:10px;letter-spacing:0.05em;color:rgba(237,234,226,0.5);
-  padding:7px 13px;cursor:pointer;opacity:0;pointer-events:none;
-  transition:opacity .8s ease,color .2s,border-color .2s;
+  background:rgba(13,15,24,0.55);border:1px solid rgba(232,194,126,0.45);border-radius:22px;
+  font-family:var(--mono);font-size:13px;letter-spacing:0.05em;color:rgba(245,241,230,0.88);
+  padding:10px 18px;cursor:pointer;opacity:0;pointer-events:none;
+  transition:opacity .8s ease,color .2s,border-color .2s,background .2s;
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  box-shadow:0 2px 18px rgba(0,0,0,0.35);
 }
 #skipIntroBtn.show{opacity:1;pointer-events:auto;}
-#skipIntroBtn:hover{color:#fff;border-color:rgba(255,255,255,0.3);}
+#skipIntroBtn:hover{color:#fff;border-color:#E8C27E;background:rgba(13,15,24,0.75);}
 #skipIntroBtn:focus-visible{outline:2px solid #E8C27E;}
+@media (max-width:640px){
+  #skipIntroBtn{font-size:12px;padding:9px 15px;}
+}
 
 /* transition-out: when the intro finishes/skips, fade to black before
    handing off to /voo/ — avoids a jarring hard cut between two very
