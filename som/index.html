@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Sala do Som — Física Visual</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="Manipule frequência e amplitude, veja a onda mudar e ouça de verdade.">
+<style>
+@font-face{
+  font-family:'Fraunces Display';
+  src:local('Georgia');
+  font-weight:400 700;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+:root{
+  --bg:#07080D;
+  --bg-deep:#020207;
+  --panel:rgba(13,15,24,0.82);
+  --panel-solid:#0D0F18;
+  --line:rgba(212,168,92,0.16);
+  --line-soft:rgba(255,255,255,0.07);
+  --text:#EDEAE2;
+  --dim:#9C9788;
+  --gold:#D4A85C;
+  --gold-bright:#E8C27E;
+  --sky:#6FA8C7;
+  --alert:#C4574A;
+  --ok:#7CBF8E;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,monospace;
+  --serif:Georgia,"Times New Roman",serif;
+  --sans:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+}
+:root[data-theme="light"]{
+  --bg:#F3EFE4;
+  --bg-deep:#EAE4D4;
+  --panel:rgba(255,253,247,0.88);
+  --panel-solid:#FFFDF7;
+  --line:rgba(120,90,30,0.2);
+  --line-soft:rgba(20,20,10,0.08);
+  --text:#221F18;
+  --dim:#6B6656;
+  --sky:#3E7A96;
+}
+
+#backlink{
+  position:fixed;top:16px;left:16px;z-index:20;
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--dim);
+  text-decoration:none;padding:8px 12px;border-radius:16px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+#backlink svg{width:10px;height:10px;}
+#backlink:hover{color:var(--text);}
+
+canvas#scene{position:fixed;inset:0;width:100%;height:100%;display:block;}
+
+header#hdr{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  z-index:15;max-width:min(560px,90vw);text-align:center;
+  padding:14px 22px;border-radius:20px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+header#hdr .eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--gold-bright);
+}
+header#hdr h1{
+  font-family:var(--serif);font-weight:700;font-size:clamp(20px,3.6vw,28px);
+  margin:4px 0 2px;color:var(--text);
+}
+header#hdr p{margin:0;font-size:13px;color:var(--dim);}
+
+/* ---- readout: live frequency/note/amplitude, positioned top-right
+   so it reads like an instrument display, not a caption ---- */
+#readout{
+  position:fixed;top:16px;right:16px;z-index:15;
+  padding:12px 16px;border-radius:16px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  font-family:var(--mono);font-size:12px;color:var(--dim);text-align:right;
+}
+#readout .hz{font-size:20px;color:var(--gold-bright);font-weight:600;}
+#readout .note{color:var(--text);}
+
+#dock{
+  position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
+  z-index:15;width:min(560px,94vw);
+  padding:16px 20px;border-radius:22px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:flex;flex-direction:column;gap:12px;
+}
+.row{display:flex;align-items:center;gap:12px;}
+.row .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.05em;min-width:78px;}
+.row input[type=range]{flex:1;height:4px;accent-color:var(--gold-bright);}
+.row .val{font-family:var(--mono);font-size:12px;color:var(--text);min-width:56px;text-align:right;}
+
+#presetRow{display:flex;gap:8px;flex-wrap:wrap;}
+.presetBtn{
+  font-family:var(--mono);font-size:11px;color:var(--dim);
+  background:transparent;border:1px solid var(--line-soft);border-radius:12px;
+  padding:6px 12px;cursor:pointer;transition:border-color .2s,color .2s;
+}
+.presetBtn:hover{border-color:var(--gold-bright);color:var(--text);}
+
+#playRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:2px;border-top:1px solid var(--line-soft);}
+#playBtn{
+  font-family:var(--mono);font-size:13px;letter-spacing:.04em;color:#1a1408;
+  background:var(--gold-bright);border:none;border-radius:16px;
+  padding:11px 22px;cursor:pointer;white-space:nowrap;
+  transition:transform .15s;
+}
+#playBtn:hover{transform:translateY(-1px);}
+#playBtn.playing{background:var(--alert);color:#fff;}
+#waveType{
+  display:flex;border:1px solid var(--line-soft);border-radius:12px;overflow:hidden;
+}
+#waveType button{
+  font-family:var(--mono);font-size:10.5px;color:var(--dim);background:transparent;
+  border:none;padding:8px 10px;cursor:pointer;
+}
+#waveType button.on{background:var(--gold-bright);color:#1a1408;font-weight:600;}
+
+#audioHint{
+  position:fixed;bottom:200px;left:50%;transform:translateX(-50%);
+  z-index:15;font-family:var(--mono);font-size:11px;color:var(--dim);
+  opacity:0;transition:opacity .3s ease;pointer-events:none;
+}
+#audioHint.show{opacity:1;}
+
+#revealBanner{
+  position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.94);
+  z-index:25;max-width:min(480px,88vw);text-align:center;
+  padding:22px 26px;border-radius:20px;
+  background:var(--panel-solid);border:1px solid var(--gold-bright);
+  box-shadow:0 12px 50px rgba(0,0,0,0.5);
+  opacity:0;pointer-events:none;
+  transition:opacity .4s ease,transform .4s ease;
+}
+#revealBanner.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+#revealBanner h2{font-family:var(--serif);font-size:clamp(19px,3.6vw,25px);margin:0 0 8px;color:var(--gold-bright);}
+#revealBanner p{margin:0 0 14px;font-size:14px;color:var(--text);line-height:1.5;}
+#revealBanner button{
+  font-family:var(--mono);font-size:12px;color:var(--text);
+  background:transparent;border:1px solid var(--line-soft);border-radius:14px;
+  padding:9px 16px;cursor:pointer;
+}
+#revealBanner button:hover{border-color:var(--gold-bright);}
+
+#welcome{
+  position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+  background:rgba(2,2,7,0.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+#welcome .card{
+  max-width:min(460px,88vw);padding:26px 28px;border-radius:22px;
+  background:var(--panel-solid);border:1px solid var(--line);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+#welcome .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--gold-bright);text-transform:uppercase;}
+#welcome h2{font-family:var(--serif);font-size:clamp(20px,4vw,25px);margin:8px 0 10px;color:var(--text);}
+#welcome p, #welcome li{font-size:14px;color:var(--dim);line-height:1.55;}
+#welcome ol{margin:0 0 16px;padding-left:20px;}
+#welcome li b{color:var(--text);}
+#welcome .actions{display:flex;gap:10px;justify-content:flex-end;}
+#welcome .go{
+  font-family:var(--mono);font-size:13px;color:#1a1408;background:var(--gold-bright);
+  border:none;border-radius:14px;padding:10px 20px;cursor:pointer;font-weight:600;
+}
+#welcome .skip{
+  font-family:var(--mono);font-size:12px;color:var(--dim);background:transparent;
+  border:1px solid var(--line-soft);border-radius:14px;padding:10px 16px;cursor:pointer;
+}
+
+@media (max-width:640px){
+  #dock{bottom:10px;padding:12px 14px;gap:10px;width:96vw;}
+  .row .lbl{min-width:60px;font-size:10px;}
+  header#hdr{top:56px;padding:8px 14px;max-width:92vw;}
+  header#hdr .eyebrow{font-size:9px;}
+  header#hdr h1{font-size:16px;white-space:nowrap;}
+  header#hdr p{display:none;}
+  #backlink{padding:7px 10px;font-size:11px;}
+  #readout{top:56px;padding:8px 12px;}
+  #readout .hz{font-size:15px;}
+  #audioHint{bottom:230px;font-size:10px;}
+}
+@media (prefers-reduced-motion:reduce){
+  #revealBanner{transition:none;}
+}
+</style>
+</head>
+<body>
+
+<a id="backlink" href="/salas/"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>observatório</a>
+
+<canvas id="scene" aria-label="Uma onda sonora se movendo, mudando de comprimento e altura conforme a frequência e amplitude mudam."></canvas>
+
+<header id="hdr">
+  <div class="eyebrow">Acústica · Sala do Som</div>
+  <h1>Veja o <em>som</em></h1>
+  <p>frequência e amplitude, na tela e no ouvido ao mesmo tempo</p>
+</header>
+
+<div id="readout">
+  <div class="hz" id="hzVal">440 Hz</div>
+  <div class="note" id="noteVal">Lá4</div>
+</div>
+
+<div id="audioHint">toque em "tocar som" para ouvir</div>
+
+<div id="dock">
+  <div class="row">
+    <span class="lbl">frequência</span>
+    <input type="range" id="freqSlider" min="80" max="2000" value="440" step="1">
+    <span class="val" id="freqVal">440 Hz</span>
+  </div>
+  <div class="row">
+    <span class="lbl">amplitude</span>
+    <input type="range" id="ampSlider" min="0" max="100" value="60" step="1">
+    <span class="val" id="ampVal">60%</span>
+  </div>
+  <div id="presetRow">
+    <button class="presetBtn" data-hz="110">grave (110Hz)</button>
+    <button class="presetBtn" data-hz="440">Lá padrão (440Hz)</button>
+    <button class="presetBtn" data-hz="880">oitava (880Hz)</button>
+    <button class="presetBtn" data-hz="1568">agudo (1568Hz)</button>
+  </div>
+  <div id="playRow">
+    <button id="playBtn">▶ tocar som</button>
+    <div id="waveType" role="group" aria-label="Forma da onda">
+      <button data-wave="sine" class="on">senoide</button>
+      <button data-wave="square">quadrada</button>
+      <button data-wave="sawtooth">dente-de-serra</button>
+    </div>
+  </div>
+</div>
+
+<div id="revealBanner" role="status">
+  <h2>Dobrar a frequência = subir uma oitava.</h2>
+  <p>440Hz é o Lá que as orquestras afinam. 880Hz é exatamente o dobro — o mesmo Lá, uma oitava acima. Seu ouvido reconhece "a mesma nota" porque a proporção 2:1 é universal: dobrar sempre soa como a mesma nota, mais aguda.</p>
+  <button id="revealClose">continuar</button>
+</div>
+
+<div id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <div class="card">
+    <span class="eyebrow">Acústica · Sala do Som</span>
+    <h2 id="welcomeTitle">Som é só uma onda de pressão no ar</h2>
+    <p>Frequência é o quão grave ou agudo. Amplitude é o quão alto. Aqui você vê e ouve as duas ao mesmo tempo.</p>
+    <ol>
+      <li>Mexa no controle de <b>frequência</b> e observe a onda ficar mais apertada (agudo) ou mais larga (grave).</li>
+      <li>Aperte <b>"tocar som"</b> para realmente ouvir — seu navegador vai gerar a onda de verdade.</li>
+      <li>Vá de 440Hz para 880Hz e preste atenção: é a mesma nota, uma oitava acima. Não é coincidência.</li>
+    </ol>
+    <div class="actions">
+      <button class="skip" id="welcomeSkip">já sei, pular</button>
+      <button class="go" id="welcomeGo">começar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var canvas = document.getElementById("scene");
+  var ctx = canvas.getContext("2d");
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0;
+
+  function resize(){
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  var freq = 440;
+  var amp = 60; // 0-100, UI units
+  var waveType = "sine";
+
+  var freqSlider = document.getElementById("freqSlider");
+  var ampSlider = document.getElementById("ampSlider");
+  var freqVal = document.getElementById("freqVal");
+  var ampVal = document.getElementById("ampVal");
+  var hzVal = document.getElementById("hzVal");
+  var noteVal = document.getElementById("noteVal");
+
+  /* ---- note name from frequency: standard equal-temperament formula,
+     A4=440Hz as reference (n=0). Rounds to nearest semitone so the
+     display reads as a real note name, matching what a tuner would show. ---- */
+  var NOTE_NAMES = ["Dó","Dó#","Ré","Ré#","Mi","Fá","Fá#","Sol","Sol#","Lá","Lá#","Si"];
+  function noteFromFreq(f){
+    var n = Math.round(12 * Math.log2(f / 440));
+    var noteIdx = ((n % 12) + 21) % 12; // A=9 in a C-based array, offset handled via modulo
+    var idx = (9 + n) % 12;
+    if (idx < 0) idx += 12;
+    var octave = 4 + Math.floor((n + 9) / 12);
+    return NOTE_NAMES[idx] + octave;
+  }
+
+  function updateReadout(){
+    freqVal.textContent = freq + " Hz";
+    ampVal.textContent = amp + "%";
+    hzVal.textContent = freq + " Hz";
+    noteVal.textContent = noteFromFreq(freq);
+    if (oscOn) updateOscillator();
+    checkReveal();
+  }
+
+  freqSlider.addEventListener("input", function(){
+    freq = parseInt(freqSlider.value, 10);
+    updateReadout();
+  });
+  ampSlider.addEventListener("input", function(){
+    amp = parseInt(ampSlider.value, 10);
+    updateReadout();
+  });
+
+  document.querySelectorAll(".presetBtn").forEach(function(b){
+    b.addEventListener("click", function(){
+      freq = parseInt(b.dataset.hz, 10);
+      freqSlider.value = freq;
+      updateReadout();
+    });
+  });
+
+  document.querySelectorAll('#waveType button').forEach(function(b){
+    b.addEventListener("click", function(){
+      waveType = b.dataset.wave;
+      document.querySelectorAll('#waveType button').forEach(function(x){ x.classList.toggle("on", x===b); });
+      if (oscOn && osc) osc.type = waveType;
+    });
+  });
+
+  /* ---------- Web Audio: real oscillator, gain scaled from amplitude ---------- */
+  var audioCtx = null, osc = null, gainNode = null, oscOn = false;
+  var playBtn = document.getElementById("playBtn");
+  var audioHint = document.getElementById("audioHint");
+
+  function ensureAudio(){
+    if (!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  }
+  function updateOscillator(){
+    if (!osc || !gainNode) return;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime((amp/100) * 0.25, audioCtx.currentTime); // 0.25 cap: comfortable volume
+  }
+  function startAudio(){
+    ensureAudio();
+    osc = audioCtx.createOscillator();
+    gainNode = audioCtx.createGain();
+    osc.type = waveType;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime((amp/100) * 0.25, audioCtx.currentTime);
+    osc.connect(gainNode).connect(audioCtx.destination);
+    osc.start();
+    oscOn = true;
+    playBtn.textContent = "■ parar som";
+    playBtn.classList.add("playing");
+    audioHint.classList.remove("show");
+  }
+  function stopAudio(){
+    if (osc){
+      try{ osc.stop(); }catch(e){}
+      osc.disconnect();
+      gainNode.disconnect();
+      osc = null; gainNode = null;
+    }
+    oscOn = false;
+    playBtn.textContent = "▶ tocar som";
+    playBtn.classList.remove("playing");
+  }
+  playBtn.addEventListener("click", function(){
+    if (oscOn) stopAudio(); else startAudio();
+  });
+
+  window.setTimeout(function(){
+    if (!oscOn) audioHint.classList.add("show");
+  }, 1800);
+
+  /* ---------- reveal: crossing from 440 to 880 (or vice versa) ---------- */
+  var revealShown = false;
+  var revealBanner = document.getElementById("revealBanner");
+  var visited440 = false, visited880 = false;
+  function checkReveal(){
+    if (Math.abs(freq-440) < 15) visited440 = true;
+    if (Math.abs(freq-880) < 20) visited880 = true;
+    if (!revealShown && visited440 && visited880){
+      revealShown = true;
+      window.setTimeout(function(){ revealBanner.classList.add("show"); }, 300);
+    }
+  }
+  document.getElementById("revealClose").addEventListener("click", function(){
+    revealBanner.classList.remove("show");
+  });
+
+  /* ---------- drawing: traveling sine/square/saw wave, wavelength on
+     screen inversely tied to frequency (higher pitch = tighter wave,
+     matching real acoustics — wavelength = speed/frequency), amplitude
+     tied to the visual height. Animated with a phase scroll so it
+     reads as a moving wave, not a static graph. ---- */
+  var phase = 0;
+  function drawWave(t){
+    var isLight = document.documentElement.getAttribute("data-theme") === "light";
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.fillStyle = isLight ? "#EAE4D4" : "#050609";
+    ctx.fillRect(0,0,W,H);
+
+    var midY = H*0.42;
+    ctx.strokeStyle = isLight ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0,midY); ctx.lineTo(W,midY); ctx.stroke();
+
+    var wavelengthPx = Math.max(18, 26000 / freq); // higher freq -> shorter wavelength on screen
+    var amplitudePx = (amp/100) * H * 0.28;
+    var speed = 2.4;
+    phase += speed * (freq/440) * 0.016;
+
+    ctx.beginPath();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#E8C27E";
+    for (var x=0; x<=W; x+=2){
+      var ph = (x/wavelengthPx)*Math.PI*2 + phase;
+      var y;
+      if (waveType === "sine"){
+        y = Math.sin(ph);
+      } else if (waveType === "square"){
+        y = Math.sin(ph) >= 0 ? 1 : -1;
+      } else { // sawtooth
+        y = 2 * (((ph/(Math.PI*2)) % 1 + 1) % 1) - 1;
+      }
+      var py = midY + y*amplitudePx;
+      if (x===0) ctx.moveTo(x,py); else ctx.lineTo(x,py);
+    }
+    ctx.stroke();
+
+    // glow
+    ctx.shadowColor = "rgba(232,194,126,0.5)";
+    ctx.shadowBlur = 12;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    requestAnimationFrame(drawWave);
+  }
+  requestAnimationFrame(drawWave);
+  updateReadout();
+
+  /* ---------- welcome modal ---------- */
+  var welcome = document.getElementById("welcome");
+  var SEEN_KEY = "fv_som_seen";
+  function closeWelcome(){ welcome.style.display = "none"; }
+  document.getElementById("welcomeGo").addEventListener("click", function(){
+    try{ localStorage.setItem(SEEN_KEY, "1"); }catch(e){}
+    closeWelcome();
+  });
+  document.getElementById("welcomeSkip").addEventListener("click", function(){
+    try{ localStorage.setItem(SEEN_KEY, "1"); }catch(e){}
+    closeWelcome();
+  });
+  try{
+    if (localStorage.getItem(SEEN_KEY)) closeWelcome();
+  }catch(e){}
+
+  window.addEventListener("beforeunload", function(){
+    if (oscOn) stopAudio();
+  });
+
+})();
+</script>
+</body>
+</html>

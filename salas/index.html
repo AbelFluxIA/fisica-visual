@@ -269,6 +269,15 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       scene:"light"
     },
     {
+      id:"som", status:"ready", track:null,
+      eyebrow:"Acústica",
+      title:"Veja o ", titleEm:"som",
+      desc:"Mexa na frequência e na amplitude, veja a onda mudar e ouça de verdade — dobrar a frequência é subir uma oitava, sempre.",
+      hook:"a mesma nota, o dobro da frequência",
+      href:"/som/",
+      scene:"sound"
+    },
+    {
       id:"voo", status:"ready", track:null,
       eyebrow:"Exploração livre",
       title:"Voo ", titleEm:"espacial",
@@ -507,6 +516,20 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       ctx.globalCompositeOperation = "source-over";
     }
 
+    function sound(t){
+      ctx.clearRect(0,0,w,h);
+      var midY = h*0.5;
+      var wavelength = 22 + 10*Math.sin(t*0.3); // slowly breathing frequency for visual interest
+      var amp2 = h*0.22;
+      ctx.strokeStyle = goldC; ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      for (var x=0;x<=w;x+=2){
+        var y = midY + Math.sin((x/wavelength) + t*3)*amp2;
+        if (x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+
     var flightOrbits = [
       {r:0.22, speed:0.9,  size:1.1, color:"#9fbfff"},
       {r:0.30, speed:0.65, size:1.5, color:plasmaC},
@@ -535,7 +558,7 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       });
     }
 
-    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity, light:light};
+    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity, light:light, sound:sound};
     var fn = fns[kind] || function(){};
     var t0 = performance.now();
     function loop(now){
