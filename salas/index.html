@@ -251,6 +251,15 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       scene:"lightspeed"
     },
     {
+      id:"gravidade", status:"ready", track:null,
+      eyebrow:"Mecânica clássica",
+      title:"Quem cai ", titleEm:"primeiro?",
+      desc:"Solte uma pena e um martelo da mesma altura. Com ar, a pena perde feio. No vácuo, chegam juntos — massa não importa, só a gravidade.",
+      hook:"a resposta óbvia está errada",
+      href:"/gravidade/",
+      scene:"gravity"
+    },
+    {
       id:"voo", status:"ready", track:null,
       eyebrow:"Exploração livre",
       title:"Voo ", titleEm:"espacial",
@@ -448,6 +457,20 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       ctx.globalAlpha=1;
     }
 
+    function gravity(t){
+      ctx.clearRect(0,0,w,h);
+      var cycle = t % 2.4;
+      var fall = Math.min(cycle / 1.8, 1); // 1.8s fall, 0.6s pause on ground
+      var topY = h*0.16, groundY = h*0.82;
+      ctx.strokeStyle = plasmaC+"33"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(0,groundY); ctx.lineTo(w,groundY); ctx.stroke();
+      var y = topY + (groundY-topY) * (fall*fall); // eased like real free fall (∝t²)
+      [w*0.4, w*0.62].forEach(function(x, i){
+        ctx.fillStyle = i===0 ? goldC : plasmaC;
+        ctx.beginPath(); ctx.arc(x, y, h*0.045, 0, Math.PI*2); ctx.fill();
+      });
+    }
+
     var flightOrbits = [
       {r:0.22, speed:0.9,  size:1.1, color:"#9fbfff"},
       {r:0.30, speed:0.65, size:1.5, color:plasmaC},
@@ -476,7 +499,7 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       });
     }
 
-    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight};
+    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity};
     var fn = fns[kind] || function(){};
     var t0 = performance.now();
     function loop(now){
