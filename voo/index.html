@@ -1866,10 +1866,23 @@ POIS.push({ name: EARTH_MOON.name, mesh: moonMesh, radius: EARTH_MOON.radius, la
     return new THREE.CanvasTexture(c);
   }
 
+  /* Expanded from 3 to 9 distant galaxies ("cade as outras galáxias" —
+     the original count read as too sparse for how big this layer's
+     radius actually is). Spread across all octants at varying distance
+     and size so the sky reads as populated from any camera angle, not
+     just clustered in one direction. Sizes vary more too (280-640) so
+     some read as closer/brighter "hero" galaxies and others as faint
+     distant smears, which is closer to how a real deep-sky view looks. */
   var galaxyDefs = [
     { hue:280, pos:[2400, 300, -1600], size:520, name:'Espiral distante I' },
     { hue:200, pos:[-2600, -450, 1200], size:640, name:'Espiral distante II' },
-    { hue:40,  pos:[1200, -800, 2600], size:420, name:'Espiral distante III' }
+    { hue:40,  pos:[1200, -800, 2600], size:420, name:'Espiral distante III' },
+    { hue:340, pos:[-1800, 900, -2200], size:380, name:'Espiral distante IV' },
+    { hue:160, pos:[3100, -600, 800], size:300, name:'Espiral distante V' },
+    { hue:20,  pos:[-900, -1400, -2600], size:460, name:'Espiral distante VI' },
+    { hue:250, pos:[600, 1600, 2300], size:340, name:'Espiral distante VII' },
+    { hue:100, pos:[-3000, 200, -400], size:280, name:'Espiral distante VIII' },
+    { hue:310, pos:[1700, -1100, -900], size:360, name:'Espiral distante IX' }
   ];
   galaxyDefs.forEach(function(gd){
     var tex = makeGalaxyTexture(gd.hue);
