@@ -296,6 +296,15 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       scene:"timedilation"
     },
     {
+      id:"pouso-marte", status:"ready", track:null,
+      eyebrow:"Mecânica orbital",
+      title:"Pouse ", titleEm:"sem virar cratera",
+      desc:"Controle os retropropulsores contra a gravidade real de Marte. Rápido demais na chegada e a missão vira uma cratera nova.",
+      hook:"a gravidade nunca desliga",
+      href:"/pouso-marte/",
+      scene:"marslanding"
+    },
+    {
       id:"voo", status:"ready", track:null,
       eyebrow:"Exploração livre",
       title:"Voo ", titleEm:"espacial",
@@ -588,6 +597,28 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       });
     }
 
+    function marslanding(t){
+      ctx.clearRect(0,0,w,h);
+      var groundT = 0.5 + 0.5*Math.sin(t*0.35); // breathes between high altitude and near-ground
+      var g2 = ctx.createLinearGradient(0,0,0,h);
+      g2.addColorStop(0, 'rgba(20,12,8,0)');
+      g2.addColorStop(1, 'hsla(22,55%,'+(20+groundT*20)+'%,'+(0.3+groundT*0.4)+')');
+      ctx.fillStyle = g2;
+      ctx.fillRect(0,0,w,h);
+      var cx=w*0.5, cy=h*(0.35+groundT*0.25);
+      ctx.fillStyle = goldC;
+      ctx.beginPath();
+      ctx.moveTo(cx-7,cy+9); ctx.lineTo(cx-5,cy-9); ctx.lineTo(cx+5,cy-9); ctx.lineTo(cx+7,cy+9);
+      ctx.closePath(); ctx.fill();
+      // thrust flame
+      var flameLen = 6 + groundT*14*(0.7+0.3*Math.sin(t*8));
+      var fg = ctx.createLinearGradient(cx,cy+9,cx,cy+9+flameLen);
+      fg.addColorStop(0,'rgba(255,200,120,0.8)'); fg.addColorStop(1,'rgba(255,120,60,0)');
+      ctx.fillStyle = fg;
+      ctx.beginPath(); ctx.moveTo(cx-4,cy+9); ctx.lineTo(cx,cy+9+flameLen); ctx.lineTo(cx+4,cy+9);
+      ctx.closePath(); ctx.fill();
+    }
+
     var flightOrbits = [
       {r:0.22, speed:0.9,  size:1.1, color:"#9fbfff"},
       {r:0.30, speed:0.65, size:1.5, color:plasmaC},
@@ -616,7 +647,7 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       });
     }
 
-    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity, light:light, sound:sound, racetrack:racetrack, timedilation:timedilation};
+    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity, light:light, sound:sound, racetrack:racetrack, timedilation:timedilation, marslanding:marslanding};
     var fn = fns[kind] || function(){};
     var t0 = performance.now();
     function loop(now){

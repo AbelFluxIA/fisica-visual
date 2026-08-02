@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Pouso em Marte — Física Visual</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="Controle os retropropulsores e pouse de verdade em Marte — rápido demais e a missão termina em crateras novas.">
+<style>
+@font-face{
+  font-family:'Fraunces Display';
+  src:local('Georgia');
+  font-weight:400 700;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+:root{
+  --bg:#07080D;
+  --panel:rgba(13,15,24,0.82);
+  --panel-solid:#0D0F18;
+  --line-soft:rgba(255,255,255,0.07);
+  --text:#EDEAE2;
+  --dim:#9C9788;
+  --gold:#D4A85C;
+  --gold-bright:#E8C27E;
+  --alert:#C4574A;
+  --ok:#7CBF8E;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,monospace;
+  --serif:Georgia,"Times New Roman",serif;
+  --sans:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+}
+:root[data-theme="light"]{
+  --bg:#F3EFE4;
+  --panel:rgba(255,253,247,0.88);
+  --panel-solid:#FFFDF7;
+  --line-soft:rgba(20,20,10,0.08);
+  --text:#221F18;
+  --dim:#6B6656;
+}
+
+#backlink{
+  position:fixed;top:16px;left:16px;z-index:20;
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--dim);
+  text-decoration:none;padding:8px 12px;border-radius:16px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+#backlink:hover{color:var(--text);}
+
+canvas#scene{position:fixed;inset:0;width:100%;height:100%;display:block;}
+
+header#hdr{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  z-index:15;max-width:min(560px,90vw);text-align:center;
+  padding:14px 22px;border-radius:20px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+header#hdr .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-bright);}
+header#hdr h1{font-family:var(--serif);font-weight:700;font-size:clamp(20px,3.6vw,28px);margin:4px 0 2px;color:var(--text);}
+header#hdr p{margin:0;font-size:13px;color:var(--dim);}
+
+/* ---- flight readout: altitude + vertical speed, the two numbers
+   that decide whether this is a landing or a crater ---- */
+#readout{
+  position:fixed;top:16px;right:16px;z-index:15;
+  padding:12px 16px;border-radius:16px;text-align:right;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  font-family:var(--mono);font-size:12px;color:var(--dim);
+}
+#readout .big{font-size:18px;color:var(--text);font-weight:600;}
+#readout .vspeed.safe{color:var(--ok);}
+#readout .vspeed.warn{color:var(--gold-bright);}
+#readout .vspeed.danger{color:var(--alert);}
+
+#dock{
+  position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
+  z-index:15;width:min(480px,94vw);
+  padding:16px 20px;border-radius:22px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:flex;flex-direction:column;gap:12px;align-items:center;
+}
+#throttleRow{display:flex;align-items:center;gap:14px;width:100%;}
+#throttleLbl{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--dim);min-width:88px;}
+#throttleSlider{flex:1;height:6px;accent-color:var(--gold-bright);}
+#throttleVal{font-family:var(--mono);font-size:13px;color:var(--gold-bright);min-width:44px;text-align:right;font-weight:600;}
+#hint{font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center;}
+#restartBtn{
+  font-family:var(--mono);font-size:12px;color:var(--text);
+  background:transparent;border:1px solid var(--line-soft);border-radius:14px;
+  padding:9px 18px;cursor:pointer;display:none;
+}
+#restartBtn:hover{border-color:var(--gold-bright);}
+
+#outcomeBanner{
+  position:fixed;left:50%;top:40%;transform:translate(-50%,-50%) scale(.94);
+  z-index:25;max-width:min(500px,88vw);text-align:center;
+  padding:24px 28px;border-radius:20px;
+  background:var(--panel-solid);border:1px solid var(--gold-bright);
+  box-shadow:0 12px 50px rgba(0,0,0,0.5);
+  opacity:0;pointer-events:none;
+  transition:opacity .4s ease,transform .4s ease;
+}
+#outcomeBanner.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+#outcomeBanner.crash{border-color:var(--alert);}
+#outcomeBanner h2{font-family:var(--serif);font-size:clamp(20px,4vw,26px);margin:0 0 8px;}
+#outcomeBanner.success h2{color:var(--ok);}
+#outcomeBanner.crash h2{color:var(--alert);}
+#outcomeBanner p{margin:0 0 14px;font-size:14px;color:var(--text);line-height:1.5;}
+#outcomeBanner button{
+  font-family:var(--mono);font-size:12px;color:#1a1408;background:var(--gold-bright);
+  border:none;border-radius:14px;padding:10px 20px;cursor:pointer;font-weight:600;
+}
+
+#welcome{
+  position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+  background:rgba(2,2,7,0.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+#welcome .card{
+  max-width:min(460px,88vw);padding:26px 28px;border-radius:22px;
+  background:var(--panel-solid);border:1px solid var(--line-soft);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+#welcome .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--gold-bright);text-transform:uppercase;}
+#welcome h2{font-family:var(--serif);font-size:clamp(20px,4vw,25px);margin:8px 0 10px;color:var(--text);}
+#welcome p, #welcome li{font-size:14px;color:var(--dim);line-height:1.55;}
+#welcome ol{margin:0 0 16px;padding-left:20px;}
+#welcome li b{color:var(--text);}
+#welcome .actions{display:flex;gap:10px;justify-content:flex-end;}
+#welcome .go{
+  font-family:var(--mono);font-size:13px;color:#1a1408;background:var(--gold-bright);
+  border:none;border-radius:14px;padding:10px 20px;cursor:pointer;font-weight:600;
+}
+
+@media (max-width:640px){
+  #dock{bottom:10px;padding:12px 14px;}
+  header#hdr{top:56px;left:16px;right:16px;transform:none;padding:8px 12px;max-width:none;text-align:left;width:auto;}
+  header#hdr .eyebrow{font-size:9px;}
+  header#hdr h1{font-size:15px;white-space:normal;}
+  header#hdr p{display:none;}
+  #backlink{padding:7px 10px;font-size:11px;}
+  #readout{top:auto;bottom:96px;right:16px;padding:8px 12px;text-align:right;}
+  #readout .big{font-size:15px;}
+}
+@media (prefers-reduced-motion:reduce){
+  #outcomeBanner{transition:none;}
+}
+</style>
+</head>
+<body>
+
+<a id="backlink" href="/salas/"><svg viewBox="0 0 12 12" fill="none" width="10" height="10" style="vertical-align:-1px;margin-right:4px"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>observatório</a>
+
+<canvas id="scene" aria-label="Descida controlada de uma sonda em direção à superfície de Marte, controlando o empuxo dos retropropulsores para pousar com segurança."></canvas>
+
+<header id="hdr">
+  <div class="eyebrow">Mecânica orbital · Pouso em Marte</div>
+  <h1>Pouse <em>sem</em> virar cratera</h1>
+  <p>controle o empuxo — rápido demais na chegada e a missão acaba ali</p>
+</header>
+
+<div id="readout">
+  <div class="big" id="altVal">300 m</div>
+  <div>altitude</div>
+  <div class="big vspeed" id="vspeedVal">-15 m/s</div>
+  <div>velocidade vertical</div>
+</div>
+
+<div id="dock">
+  <div id="throttleRow">
+    <span id="throttleLbl">empuxo</span>
+    <input type="range" id="throttleSlider" min="0" max="100" value="0">
+    <span id="throttleVal">0%</span>
+  </div>
+  <div id="hint">segure perto de 100% cedo, reduza perto do chão — pouso seguro é abaixo de 5 m/s</div>
+  <button id="restartBtn">tentar de novo</button>
+</div>
+
+<div id="outcomeBanner" role="status">
+  <h2 id="outcomeTitle">Pouso confirmado.</h2>
+  <p id="outcomeText"></p>
+  <button id="outcomeClose">fechar</button>
+</div>
+
+<div id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <div class="card">
+    <span class="eyebrow">Mecânica orbital · Pouso em Marte</span>
+    <h2 id="welcomeTitle">A gravidade nunca desliga. Você controla o resto.</h2>
+    <p>Marte puxa sua sonda pra baixo o tempo todo — 3,7 m/s², bem mais fraco que a Terra, mas ainda letal se você chegar rápido demais.</p>
+    <ol>
+      <li>Controle o <b>empuxo</b> dos retropropulsores (0-100%) para frear a queda.</li>
+      <li>Acompanhe <b>altitude</b> e <b>velocidade vertical</b> no canto — o número fica verde quando está seguro.</li>
+      <li>Toque o solo abaixo de <b>5 m/s</b> para pousar. Mais rápido que isso e a sonda não sobrevive.</li>
+    </ol>
+    <div class="actions">
+      <button class="go" id="welcomeGo">iniciar descida</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var canvas = document.getElementById("scene");
+  var ctx = canvas.getContext("2d");
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0;
+
+  function resize(){
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  /* ---- physics: real Mars surface gravity (3.71 m/s², vs Earth's
+     9.8) pulling the probe down continuously; thrust from the slider
+     (0-100%) opposes it up to a max deceleration a bit above gravity
+     so landing is actually possible (thrustMax comfortably exceeds g,
+     matching how a real descent stage is sized — engines strong
+     enough to arrest the fall with margin, not just barely hover).
+     Altitude and vertical speed are the two numbers a real landing
+     sequence lives or dies by, so those drive the whole readout.
+     Starting altitude/speed represent the final powered-descent phase
+     (after atmospheric entry + parachute already slowed the real
+     vehicle) — tuned so an unpowered fall takes ~9s, giving the
+     player a real window to react without turning a full landing
+     (thrust up, then back off near v=0 to keep sinking slowly) into
+     a multi-minute wait. ---- */
+  var MARS_G = 3.71;
+  var THRUST_MAX = 6.5; // m/s^2 of deceleration at 100% throttle
+
+  var altitude = 300; // meters
+  var vSpeed = -15;    // m/s, negative = falling
+  var throttle = 0;     // 0-100
+  var ended = false;
+  var lastT = 0;
+
+  var throttleSlider = document.getElementById("throttleSlider");
+  var throttleVal = document.getElementById("throttleVal");
+  throttleSlider.addEventListener("input", function(){
+    throttle = parseInt(throttleSlider.value, 10);
+    throttleVal.textContent = throttle + "%";
+  });
+
+  var altVal = document.getElementById("altVal");
+  var vspeedVal = document.getElementById("vspeedVal");
+
+  function fmtAlt(m){
+    if (m >= 1000) return (m/1000).toFixed(2) + " km";
+    return Math.round(m) + " m";
+  }
+
+  function updateReadout(){
+    altVal.textContent = fmtAlt(Math.max(0,altitude));
+    vspeedVal.textContent = vSpeed.toFixed(1) + " m/s";
+    vspeedVal.classList.remove("safe","warn","danger");
+    var absV = Math.abs(vSpeed);
+    if (absV < 8) vspeedVal.classList.add("safe");
+    else if (absV < 20) vspeedVal.classList.add("warn");
+    else vspeedVal.classList.add("danger");
+  }
+  updateReadout();
+
+  /* ---------- physics tick ---------- */
+  function physicsTick(dt){
+    if (ended) return;
+    var thrustAccel = (throttle/100) * THRUST_MAX;
+    var netAccel = thrustAccel - MARS_G; // positive slows the fall
+    vSpeed += netAccel * dt;
+    altitude += vSpeed * dt;
+    updateReadout();
+
+    if (altitude <= 0){
+      altitude = 0;
+      endFlight();
+    }
+  }
+
+  var outcomeBanner = document.getElementById("outcomeBanner");
+  var outcomeTitle = document.getElementById("outcomeTitle");
+  var outcomeText = document.getElementById("outcomeText");
+  var restartBtn = document.getElementById("restartBtn");
+
+  function endFlight(){
+    ended = true;
+    var absV = Math.abs(vSpeed);
+    var success = absV < 5;
+    outcomeBanner.classList.remove("success","crash");
+    outcomeBanner.classList.add(success ? "success" : "crash");
+    if (success){
+      outcomeTitle.textContent = "Pouso confirmado.";
+      outcomeText.innerHTML = "Velocidade de contato: <b>"+absV.toFixed(1)+" m/s</b> — dentro da margem segura. Em Marte, a gravidade é só 38% da terrestre, mas a atmosfera é fina demais para um paraquedas sozinho frear tudo: por isso sondas reais (como a Perseverance) também usam retropropulsores nos segundos finais.";
+    } else {
+      outcomeTitle.textContent = "Impacto.";
+      outcomeText.innerHTML = "Velocidade de contato: <b>"+absV.toFixed(1)+" m/s</b> — rápido demais para a estrutura aguentar. A missão Mars Polar Lander da NASA foi perdida em 1999 por um problema parecido: os motores desligaram cedo demais, achando (por engano) que já tinha pousado.";
+    }
+    window.setTimeout(function(){ outcomeBanner.classList.add("show"); }, 300);
+    restartBtn.style.display = "inline-block";
+  }
+  document.getElementById("outcomeClose").addEventListener("click", function(){
+    outcomeBanner.classList.remove("show");
+  });
+  restartBtn.addEventListener("click", function(){
+    altitude = 300; vSpeed = -15; throttle = 0;
+    throttleSlider.value = 0; throttleVal.textContent = "0%";
+    ended = false;
+    outcomeBanner.classList.remove("show");
+    restartBtn.style.display = "none";
+    updateReadout();
+  });
+
+  /* ---------- drawing: sky color shifts from black (space) to Mars'
+     dusty butterscotch as altitude drops (real atmospheric scattering
+     look), ground rises to meet the probe, dust particles picked up
+     by thrust when close to the surface. ---- */
+  var dust = [];
+  for (var i=0;i<60;i++){
+    dust.push({ x: Math.random()*W, y: Math.random()*H, r: 1+Math.random()*2, drift: Math.random()*0.5 });
+  }
+
+  function draw(){
+    var skyT = Math.max(0, Math.min(1, 1 - altitude/2500));
+    var skyTop = lerpColor([5,6,10], [176,94,58], skyT*0.7);
+    var skyBot = lerpColor([10,11,16], [214,150,96], skyT);
+    var g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0, rgbStr(skyTop));
+    g.addColorStop(1, rgbStr(skyBot));
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    // ground rises as altitude approaches 0, filling more of the frame
+    var groundT = Math.max(0, Math.min(1, 1 - altitude/800));
+    var groundY = H * (1 - groundT*0.55);
+    if (groundT > 0){
+      ctx.fillStyle = "#8a5a3c";
+      ctx.beginPath();
+      ctx.moveTo(0, H);
+      ctx.lineTo(0, groundY);
+      for (var x=0;x<=W;x+=40){
+        ctx.lineTo(x, groundY - Math.sin(x*0.01)*10*groundT);
+      }
+      ctx.lineTo(W,H);
+      ctx.closePath();
+      ctx.fill();
+      // craters, visible once close
+      if (groundT > 0.3){
+        ctx.strokeStyle = "rgba(0,0,0,0.25)";
+        ctx.lineWidth = 2;
+        [0.2,0.45,0.7,0.85].forEach(function(fx,i){
+          var cx = W*fx, cy = groundY + 20 + i*8;
+          var r = (10+i*4) * groundT;
+          ctx.beginPath(); ctx.ellipse(cx,cy,r,r*0.35,0,0,Math.PI*2); ctx.stroke();
+        });
+      }
+    }
+
+    // probe, centered, with thrust flame scaled by throttle
+    var cx = W*0.5, cy = H*0.42;
+    ctx.fillStyle = "#D8D2C4";
+    ctx.beginPath();
+    ctx.moveTo(cx-14, cy+16);
+    ctx.lineTo(cx-10, cy-16);
+    ctx.lineTo(cx+10, cy-16);
+    ctx.lineTo(cx+14, cy+16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#B7C4CE";
+    ctx.fillRect(cx-18, cy+10, 6, 10);
+    ctx.fillRect(cx+12, cy+10, 6, 10);
+
+    if (throttle > 0 && !ended){
+      var flameLen = 14 + (throttle/100)*40*(0.8+0.2*Math.sin(performance.now()*0.02));
+      var grad = ctx.createLinearGradient(cx, cy+16, cx, cy+16+flameLen);
+      grad.addColorStop(0, "rgba(255,210,120,0.9)");
+      grad.addColorStop(1, "rgba(255,120,60,0)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(cx-8, cy+16);
+      ctx.lineTo(cx, cy+16+flameLen);
+      ctx.lineTo(cx+8, cy+16);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // dust picked up near the ground
+    if (groundT > 0.4){
+      dust.forEach(function(d){
+        ctx.fillStyle = "rgba(200,150,100,"+(0.15+groundT*0.2)+")";
+        ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI*2); ctx.fill();
+        d.y += d.drift + groundT*1.5;
+        if (d.y > H){ d.y = 0; d.x = Math.random()*W; }
+      });
+    }
+  }
+
+  function lerpColor(a,b,t){
+    return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+  }
+  function rgbStr(c){ return "rgb("+Math.round(c[0])+","+Math.round(c[1])+","+Math.round(c[2])+")"; }
+
+  function frame(now){
+    var dt = lastT ? Math.min(0.05,(now-lastT)/1000) : 0;
+    lastT = now;
+    physicsTick(dt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* ---------- welcome modal ---------- */
+  var welcome = document.getElementById("welcome");
+  document.getElementById("welcomeGo").addEventListener("click", function(){
+    welcome.style.display = "none";
+  });
+
+})();
+</script>
+</body>
+</html>
