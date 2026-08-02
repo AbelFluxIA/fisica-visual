@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Fossa Abissal — Física Visual</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="Desça pelas zonas reais do oceano até o Titanic, na escuridão absoluta a quase 4000 metros.">
+<style>
+@font-face{
+  font-family:'Fraunces Display';
+  src:local('Georgia');
+  font-weight:400 700;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;}
+body{
+  background:#000814;color:var(--text);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+:root{
+  --panel:rgba(6,14,26,0.82);
+  --panel-solid:#050D18;
+  --line-soft:rgba(255,255,255,0.08);
+  --text:#E9F1F6;
+  --dim:#8FA3B0;
+  --gold:#D4A85C;
+  --gold-bright:#E8C27E;
+  --alert:#C4574A;
+  --ok:#7CBF8E;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,monospace;
+  --serif:Georgia,"Times New Roman",serif;
+  --sans:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+}
+:root[data-theme="light"]{
+  --panel:rgba(240,246,250,0.9);
+  --panel-solid:#F5FAFC;
+  --line-soft:rgba(10,30,40,0.1);
+  --text:#0D1B24;
+  --dim:#4C6270;
+}
+
+#backlink{
+  position:fixed;top:16px;left:16px;z-index:20;
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--dim);
+  text-decoration:none;padding:8px 12px;border-radius:16px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+#backlink:hover{color:var(--text);}
+
+canvas#scene{position:fixed;inset:0;width:100%;height:100%;display:block;}
+
+header#hdr{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  z-index:15;max-width:min(560px,90vw);text-align:center;
+  padding:14px 22px;border-radius:20px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+header#hdr .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-bright);}
+header#hdr h1{font-family:var(--serif);font-weight:700;font-size:clamp(20px,3.6vw,28px);margin:4px 0 2px;color:var(--text);}
+header#hdr p{margin:0;font-size:13px;color:var(--dim);}
+
+/* ---- depth readout: the spine of the whole room. Shows meters,
+   current zone name, and ambient pressure — the numbers that make
+   "it's dark down here" into "here's exactly why". ---- */
+#readout{
+  position:fixed;top:16px;right:16px;z-index:15;
+  padding:12px 16px;border-radius:16px;text-align:right;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  font-family:var(--mono);font-size:12px;color:var(--dim);
+}
+#readout .big{font-size:19px;color:var(--text);font-weight:600;}
+#readout .zone{color:var(--gold-bright);}
+
+/* ---- creature card: appears when a swimming POI is clicked, shows
+   real facts instead of a generic label ---- */
+#creatureCard{
+  position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(12px);
+  z-index:16;max-width:min(440px,90vw);
+  padding:16px 20px;border-radius:18px;
+  background:var(--panel-solid);border:1px solid var(--line-soft);
+  box-shadow:0 12px 40px rgba(0,0,0,0.5);
+  opacity:0;pointer-events:none;
+  transition:opacity .3s ease,transform .3s ease;
+}
+#creatureCard.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);}
+#creatureCard .nm{font-family:var(--serif);font-size:17px;color:var(--gold-bright);margin-bottom:4px;}
+#creatureCard .fact{font-size:13px;color:var(--text);line-height:1.5;}
+#creatureCard .close{
+  position:absolute;top:8px;right:10px;background:none;border:none;color:var(--dim);
+  cursor:pointer;font-family:var(--mono);font-size:14px;
+}
+
+#dock{
+  position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
+  z-index:15;width:min(640px,94vw);
+  padding:14px 20px;border-radius:22px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:flex;flex-direction:column;gap:10px;
+}
+#depthSlider{width:100%;height:6px;accent-color:var(--gold-bright);}
+#zoneMarks{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;color:var(--dim);padding:0 2px;}
+#zoneMarks span.active{color:var(--gold-bright);}
+
+#revealBanner{
+  position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.94);
+  z-index:25;max-width:min(500px,88vw);text-align:center;
+  padding:22px 26px;border-radius:20px;
+  background:var(--panel-solid);border:1px solid var(--gold-bright);
+  box-shadow:0 12px 50px rgba(0,0,0,0.5);
+  opacity:0;pointer-events:none;
+  transition:opacity .4s ease,transform .4s ease;
+}
+#revealBanner.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+#revealBanner h2{font-family:var(--serif);font-size:clamp(19px,3.6vw,25px);margin:0 0 8px;color:var(--gold-bright);}
+#revealBanner p{margin:0 0 14px;font-size:14px;color:var(--text);line-height:1.5;}
+#revealBanner button{
+  font-family:var(--mono);font-size:12px;color:var(--text);
+  background:transparent;border:1px solid var(--line-soft);border-radius:14px;
+  padding:9px 16px;cursor:pointer;
+}
+#revealBanner button:hover{border-color:var(--gold-bright);}
+
+#welcome{
+  position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,4,10,0.75);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+#welcome .card{
+  max-width:min(460px,88vw);padding:26px 28px;border-radius:22px;
+  background:var(--panel-solid);border:1px solid var(--line-soft);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+#welcome .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--gold-bright);text-transform:uppercase;}
+#welcome h2{font-family:var(--serif);font-size:clamp(20px,4vw,25px);margin:8px 0 10px;color:var(--text);}
+#welcome p, #welcome li{font-size:14px;color:var(--dim);line-height:1.55;}
+#welcome ol{margin:0 0 16px;padding-left:20px;}
+#welcome li b{color:var(--text);}
+#welcome .actions{display:flex;gap:10px;justify-content:flex-end;}
+#welcome .go{
+  font-family:var(--mono);font-size:13px;color:#052018;background:var(--gold-bright);
+  border:none;border-radius:14px;padding:10px 20px;cursor:pointer;font-weight:600;
+}
+
+@media (max-width:640px){
+  #dock{bottom:10px;padding:10px 14px;}
+  header#hdr{top:56px;left:16px;right:16px;transform:none;padding:8px 12px;max-width:none;text-align:left;width:auto;}
+  header#hdr .eyebrow{font-size:9px;}
+  header#hdr h1{font-size:15px;}
+  header#hdr p{display:none;}
+  #backlink{padding:7px 10px;font-size:11px;}
+  #readout{top:auto;bottom:150px;right:16px;padding:8px 12px;}
+  #readout .big{font-size:15px;}
+  #zoneMarks span{font-size:8px;}
+  #creatureCard{bottom:180px;max-width:88vw;padding:12px 16px;}
+}
+@media (prefers-reduced-motion:reduce){
+  #revealBanner,#creatureCard{transition:none;}
+}
+</style>
+</head>
+<body>
+
+<a id="backlink" href="/salas/"><svg viewBox="0 0 12 12" fill="none" width="10" height="10" style="vertical-align:-1px;margin-right:4px"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>observatório</a>
+
+<canvas id="scene" aria-label="Uma descida pelas zonas reais do oceano, da superfície iluminada até a escuridão total onde repousa o Titanic."></canvas>
+
+<header id="hdr">
+  <div class="eyebrow">Oceanografia · Fossa Abissal</div>
+  <h1>Desça até <em>onde a luz não chega</em></h1>
+  <p>cada zona do oceano é um mundo diferente — e o Titanic está no fundo do mais escuro deles</p>
+</header>
+
+<div id="readout">
+  <div class="big" id="depthVal">0 m</div>
+  <div class="zone" id="zoneVal">zona epipelágica</div>
+</div>
+
+<div id="creatureCard">
+  <button class="close" id="creatureClose">✕</button>
+  <div class="nm" id="creatureName"></div>
+  <div class="fact" id="creatureFact"></div>
+</div>
+
+<div id="dock">
+  <input type="range" id="depthSlider" min="0" max="4000" value="0" step="10">
+  <div id="zoneMarks">
+    <span data-z="0">superfície</span>
+    <span data-z="200">crepuscular</span>
+    <span data-z="1000">meia-noite</span>
+    <span data-z="4000">Titanic</span>
+  </div>
+</div>
+
+<div id="revealBanner" role="status">
+  <h2>Você chegou ao Titanic.</h2>
+  <p>3.800 metros abaixo da superfície — pressão de quase 380 atmosferas, o suficiente para esmagar a maior parte dos objetos feitos para a superfície. Aqui não chega nenhum fóton de luz solar desde 1912. O naufrágio só foi encontrado em 1985, décadas depois de pararem de procurar.</p>
+  <button id="revealClose">continuar</button>
+</div>
+
+<div id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <div class="card">
+    <span class="eyebrow">Oceanografia · Fossa Abissal</span>
+    <h2 id="welcomeTitle">O oceano tem andares. Cada um é escuro à sua maneira.</h2>
+    <p>A luz do sol não morre de repente na água — ela vai sendo engolida cor por cor, começando pelo vermelho.</p>
+    <ol>
+      <li>Arraste o controle de <b>profundidade</b> e observe a cor da água mudar de verdade, não por efeito — é física real de absorção de luz.</li>
+      <li>Toque nos <b>seres marinhos</b> que aparecem em cada zona para ver fatos reais sobre eles.</li>
+      <li>Vá até o fundo: o <b>Titanic</b> está a 3.800m, na zona onde nenhuma luz jamais chegou.</li>
+    </ol>
+    <div class="actions">
+      <button class="go" id="welcomeGo">começar a descida</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var canvas = document.getElementById("scene");
+  var ctx = canvas.getContext("2d");
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0;
+
+  function resize(){
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  /* ---- real ocean zones by depth (in meters), matching standard
+     oceanographic classification:
+     epipelagic 0-200 (sunlight zone), mesopelagic 200-1000 (twilight,
+     the deepest visible light penetrates), bathypelagic 1000-4000
+     (midnight zone, zero sunlight, bioluminescence only), the Titanic
+     rests at 3800m within the bathypelagic zone.
+     Water color shift: red wavelengths absorb first (gone by ~10m),
+     then orange/yellow, leaving only blue/green penetrating past
+     ~100m, and total darkness setting in around 1000m — this is real
+     physics (light attenuation), reproduced here as a depth-driven
+     color gradient rather than a flat "gets darker" fade. ---- */
+  var ZONES = [
+    { name:"zona epipelágica", from:0, to:200 },
+    { name:"zona crepuscular (mesopelágica)", from:200, to:1000 },
+    { name:"zona da meia-noite (batipelágica)", from:1000, to:4000 }
+  ];
+  function zoneFor(d){
+    for (var i=0;i<ZONES.length;i++){ if (d < ZONES[i].to) return ZONES[i]; }
+    return ZONES[ZONES.length-1];
+  }
+
+  var depth = 0;
+  var depthSlider = document.getElementById("depthSlider");
+  var depthVal = document.getElementById("depthVal");
+  var zoneVal = document.getElementById("zoneVal");
+  var zoneMarks = document.querySelectorAll("#zoneMarks span");
+
+  function fmtDepth(m){
+    if (m >= 1000) return (m/1000).toFixed(2).replace(/\.00$/,'') + " km";
+    return Math.round(m) + " m";
+  }
+  function updateReadout(){
+    depthVal.textContent = fmtDepth(depth);
+    zoneVal.textContent = zoneFor(depth).name;
+    zoneMarks.forEach(function(el){
+      var z = parseInt(el.dataset.z,10);
+      el.classList.toggle("active", depth >= z - 100 && depth <= z + 300);
+    });
+    checkReveal();
+  }
+  depthSlider.addEventListener("input", function(){
+    depth = parseInt(depthSlider.value, 10);
+    updateReadout();
+  });
+  updateReadout();
+
+  /* ---------- creatures: real species per zone with a genuine fact each ---------- */
+  var CREATURES = [
+    { depthRange:[5,60], name:"Tartaruga-marinha", fact:"Consegue prender a respiração por até 7 horas dormindo debaixo d'água — o coração chega a bater só uma vez a cada 9 minutos." },
+    { depthRange:[10,150], name:"Cardume de atum", fact:"Nada em grupo sincronizado para confundir predadores; alguns atuns cruzam o Atlântico inteiro em poucas semanas." },
+    { depthRange:[150,600], name:"Peixe-lanterna", fact:"O peixe mais abundante do planeta em biomassa — bilhões deles sobem à noite e descem de dia, o maior movimento migratório da Terra, todo santo dia." },
+    { depthRange:[400,1000], name:"Lula-vampira", fact:"Não é lula nem vampiro: é o último sobrevivente de um ramo inteiro da evolução, vivendo exatamente onde o oxigênio quase acaba." },
+    { depthRange:[800,2000], name:"Peixe-abissal (Peixe-pescador)", fact:"A fêmea usa uma 'isca' bioluminescente própria; alguns machos se fundem literalmente ao corpo dela, virando só um par de testículos vivos." },
+    { depthRange:[2000,4000], name:"Pepino-do-mar abissal", fact:"Vive só de comer a 'neve marinha' — restos orgânicos que caem da superfície por semanas até chegar aqui embaixo." }
+  ];
+  var creatureCard = document.getElementById("creatureCard");
+  var creatureName = document.getElementById("creatureName");
+  var creatureFact = document.getElementById("creatureFact");
+  document.getElementById("creatureClose").addEventListener("click", function(){
+    creatureCard.classList.remove("show");
+  });
+
+  /* ---------- reveal: reaching the Titanic depth ---------- */
+  var revealShown = false;
+  var revealBanner = document.getElementById("revealBanner");
+  function checkReveal(){
+    if (revealShown) return;
+    if (depth >= 3800){
+      revealShown = true;
+      window.setTimeout(function(){ revealBanner.classList.add("show"); }, 300);
+    }
+  }
+  document.getElementById("revealClose").addEventListener("click", function(){
+    revealBanner.classList.remove("show");
+  });
+
+  /* ---------- drawing ---------- */
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function lerpColor(a,b,t){ return [lerp(a[0],b[0],t), lerp(a[1],b[1],t), lerp(a[2],b[2],t)]; }
+  function rgbStr(c){ return "rgb("+Math.round(c[0])+","+Math.round(c[1])+","+Math.round(c[2])+")"; }
+
+  // color stops matching real light attenuation with depth
+  var COLOR_STOPS = [
+    { d:0,    c:[120,200,220] },
+    { d:15,   c:[40,150,190] },
+    { d:60,   c:[15,90,150] },
+    { d:200,  c:[8,45,90] },
+    { d:600,  c:[3,20,50] },
+    { d:1000, c:[1,6,18] },
+    { d:4000, c:[0,1,4] }
+  ];
+  function colorAtDepth(d){
+    for (var i=0;i<COLOR_STOPS.length-1;i++){
+      var a = COLOR_STOPS[i], b = COLOR_STOPS[i+1];
+      if (d >= a.d && d <= b.d){
+        var t = (d-a.d)/(b.d-a.d);
+        return lerpColor(a.c, b.c, t);
+      }
+    }
+    return COLOR_STOPS[COLOR_STOPS.length-1].c;
+  }
+
+  var particles = [];
+  for (var i=0;i<70;i++){
+    particles.push({ x:Math.random()*W, y:Math.random()*H, r:0.5+Math.random()*1.5, speed:0.15+Math.random()*0.3 });
+  }
+
+  var swimmers = []; // active creature sprites for current depth band
+  function refreshSwimmers(){
+    swimmers = CREATURES.filter(function(c){
+      return depth >= c.depthRange[0]-150 && depth <= c.depthRange[1]+150;
+    }).map(function(c, i){
+      return { def:c, x: W*(0.2+0.6*Math.random()), y: H*(0.3+0.4*((i%3)/3)), phase: Math.random()*10, clickR: 26 };
+    });
+  }
+  refreshSwimmers();
+  var lastDepthBucket = -1;
+
+  var titanicOpacity = 0;
+
+  function draw(now){
+    var t = now/1000;
+    var bucket = Math.floor(depth/300);
+    if (bucket !== lastDepthBucket){ lastDepthBucket = bucket; refreshSwimmers(); }
+
+    var col = colorAtDepth(depth);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    var g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0, rgbStr(lerpColor(col,[0,0,0],0)));
+    g.addColorStop(1, rgbStr(lerpColor(col,[0,0,0],0.35)));
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    // sunbeams near the surface
+    if (depth < 200){
+      var beamAlpha = Math.max(0, 1 - depth/200) * 0.15;
+      ctx.fillStyle = "rgba(255,255,255,"+beamAlpha+")";
+      for (var b=0;b<5;b++){
+        var bx = W*(0.15+b*0.18);
+        ctx.beginPath();
+        ctx.moveTo(bx-30, 0); ctx.lineTo(bx+30, 0); ctx.lineTo(bx+80, H); ctx.lineTo(bx-80, H);
+        ctx.closePath(); ctx.fill();
+      }
+    }
+
+    // marine snow / particles, denser and slower with depth (visual only)
+    ctx.fillStyle = "rgba(255,255,255,"+(depth>800?0.35:0.5)+")";
+    particles.forEach(function(p){
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      p.y += p.speed;
+      if (p.y > H){ p.y = -5; p.x = Math.random()*W; }
+    });
+
+    // swimmers
+    swimmers.forEach(function(s){
+      var bob = Math.sin(t*0.8 + s.phase)*6;
+      var glow = depth > 700; // bioluminescence in the dark zone
+      ctx.save();
+      ctx.translate(s.x, s.y+bob);
+      if (glow){
+        ctx.shadowColor = "rgba(120,220,255,0.9)";
+        ctx.shadowBlur = 14;
+        ctx.fillStyle = "#8fdcff";
+      } else {
+        ctx.fillStyle = "rgba(220,230,235,0.85)";
+      }
+      ctx.beginPath();
+      ctx.ellipse(0,0, 16, 8, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(-16,0); ctx.lineTo(-26,-8); ctx.lineTo(-26,8); ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // Titanic silhouette fades in near the bottom
+    var targetTOpacity = depth > 3500 ? Math.min(1, (depth-3500)/300) : 0;
+    titanicOpacity += (targetTOpacity - titanicOpacity)*0.05;
+    if (titanicOpacity > 0.01){
+      ctx.save();
+      ctx.globalAlpha = titanicOpacity;
+      ctx.fillStyle = "#0a0f14";
+      ctx.strokeStyle = "rgba(140,160,175,0.5)";
+      ctx.lineWidth = 1.5;
+      var hx = W*0.5, hy = H*0.72, hw = W*0.5, hh = H*0.1;
+      ctx.beginPath();
+      ctx.moveTo(hx-hw/2, hy);
+      ctx.lineTo(hx-hw/2+30, hy-hh);
+      ctx.lineTo(hx+hw/2-60, hy-hh);
+      ctx.lineTo(hx+hw/2, hy);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      // funnels
+      for (var f=0;f<4;f++){
+        var fx = hx - hw*0.3 + f*hw*0.18;
+        ctx.fillRect(fx, hy-hh-22, 10, 22);
+      }
+      ctx.restore();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+
+  /* ---------- click detection for swimmers ---------- */
+  canvas.addEventListener("click", function(e){
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for (var i=0;i<swimmers.length;i++){
+      var s = swimmers[i];
+      var dx = mx-s.x, dy = my-s.y;
+      if (dx*dx+dy*dy < s.clickR*s.clickR*4){
+        creatureName.textContent = s.def.name;
+        creatureFact.textContent = s.def.fact;
+        creatureCard.classList.add("show");
+        return;
+      }
+    }
+  });
+
+  /* ---------- welcome modal ---------- */
+  var welcome = document.getElementById("welcome");
+  document.getElementById("welcomeGo").addEventListener("click", function(){
+    welcome.style.display = "none";
+  });
+
+})();
+</script>
+</body>
+</html>

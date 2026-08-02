@@ -305,6 +305,15 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       scene:"marslanding"
     },
     {
+      id:"oceano", status:"ready", track:null,
+      eyebrow:"Oceanografia",
+      title:"Fossa ", titleEm:"abissal",
+      desc:"Desça pelas zonas reais do oceano — a cor da água muda por física de verdade — até o Titanic, a 3.800m na escuridão total.",
+      hook:"onde a luz não chega",
+      href:"/oceano/",
+      scene:"ocean"
+    },
+    {
       id:"voo", status:"ready", track:null,
       eyebrow:"Exploração livre",
       title:"Voo ", titleEm:"espacial",
@@ -619,6 +628,27 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       ctx.closePath(); ctx.fill();
     }
 
+    function ocean(t){
+      ctx.clearRect(0,0,w,h);
+      var depthT = 0.5 + 0.5*Math.sin(t*0.25);
+      var top = [90,180,205], bot = [1,4,14];
+      function lerp3(a,b,x){ return [a[0]+(b[0]-a[0])*x, a[1]+(b[1]-a[1])*x, a[2]+(b[2]-a[2])*x]; }
+      var c = lerp3(top, bot, depthT);
+      ctx.fillStyle = 'rgb('+c.map(Math.round).join(',')+')';
+      ctx.fillRect(0,0,w,h);
+      // a couple of small swimmer silhouettes, glowing once "deep"
+      var glow = depthT > 0.6;
+      [ {x:w*0.3, y:h*0.4}, {x:w*0.65, y:h*0.6} ].forEach(function(p,i){
+        var bob = Math.sin(t*0.9+i*3)*4;
+        ctx.fillStyle = glow ? '#8fdcff' : 'rgba(230,240,245,0.8)';
+        if (glow){ ctx.shadowColor='rgba(120,220,255,0.9)'; ctx.shadowBlur=8; }
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y+bob, 7, 3.5, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+    }
+
     var flightOrbits = [
       {r:0.22, speed:0.9,  size:1.1, color:"#9fbfff"},
       {r:0.30, speed:0.65, size:1.5, color:plasmaC},
@@ -647,7 +677,7 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       });
     }
 
-    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity, light:light, sound:sound, racetrack:racetrack, timedilation:timedilation, marslanding:marslanding};
+    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity, light:light, sound:sound, racetrack:racetrack, timedilation:timedilation, marslanding:marslanding, ocean:ocean};
     var fn = fns[kind] || function(){};
     var t0 = performance.now();
     function loop(now){
