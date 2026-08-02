@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Sala da Velocidade — Física Visual</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="Corrida entre o som e a luz em três distâncias — do seu quintal até a Lua.">
+<style>
+@font-face{
+  font-family:'Fraunces Display';
+  src:local('Georgia');
+  font-weight:400 700;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+:root{
+  --bg:#07080D;
+  --bg-deep:#020207;
+  --panel:rgba(13,15,24,0.82);
+  --panel-solid:#0D0F18;
+  --line:rgba(212,168,92,0.16);
+  --line-soft:rgba(255,255,255,0.07);
+  --text:#EDEAE2;
+  --dim:#9C9788;
+  --gold:#D4A85C;
+  --gold-bright:#E8C27E;
+  --sky:#6FA8C7;
+  --alert:#C4574A;
+  --ok:#7CBF8E;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,monospace;
+  --serif:Georgia,"Times New Roman",serif;
+  --sans:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+}
+:root[data-theme="light"]{
+  --bg:#F3EFE4;
+  --bg-deep:#EAE4D4;
+  --panel:rgba(255,253,247,0.88);
+  --panel-solid:#FFFDF7;
+  --line:rgba(120,90,30,0.2);
+  --line-soft:rgba(20,20,10,0.08);
+  --text:#221F18;
+  --dim:#6B6656;
+  --sky:#3E7A96;
+}
+
+#backlink{
+  position:fixed;top:16px;left:16px;z-index:20;
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--dim);
+  text-decoration:none;padding:8px 12px;border-radius:16px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+#backlink svg{width:10px;height:10px;}
+#backlink:hover{color:var(--text);}
+
+canvas#scene{position:fixed;inset:0;width:100%;height:100%;display:block;}
+
+header#hdr{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  z-index:15;max-width:min(560px,90vw);text-align:center;
+  padding:14px 22px;border-radius:20px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+header#hdr .eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--gold-bright);
+}
+header#hdr h1{
+  font-family:var(--serif);font-weight:700;font-size:clamp(20px,3.6vw,28px);
+  margin:4px 0 2px;color:var(--text);
+}
+header#hdr p{margin:0;font-size:13px;color:var(--dim);}
+
+/* ---- scenario picker + race control, one dock ---- */
+#dock{
+  position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
+  z-index:15;width:min(640px,94vw);
+  padding:16px 20px;border-radius:22px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:flex;flex-direction:column;gap:12px;
+}
+#scenarios{display:flex;gap:8px;flex-wrap:wrap;}
+.scnBtn{
+  flex:1;min-width:110px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:transparent;border:1px solid var(--line-soft);border-radius:14px;
+  padding:8px 10px;cursor:pointer;color:var(--text);font-family:var(--sans);
+  transition:border-color .2s,background .2s;
+}
+.scnBtn .nm{font-family:var(--mono);font-size:11px;color:var(--text);}
+.scnBtn .dist{font-size:10px;color:var(--dim);}
+.scnBtn.on{border-color:var(--gold-bright);background:rgba(212,168,92,0.12);}
+.scnBtn:hover{border-color:var(--gold);}
+
+#raceRow{display:flex;align-items:center;justify-content:center;padding-top:2px;border-top:1px solid var(--line-soft);}
+#raceBtn{
+  font-family:var(--mono);font-size:13px;letter-spacing:.04em;color:#1a1408;
+  background:var(--gold-bright);border:none;border-radius:16px;
+  padding:12px 26px;cursor:pointer;white-space:nowrap;
+  transition:transform .15s,box-shadow .15s;
+  box-shadow:0 4px 18px rgba(232,194,126,0.25);
+}
+#raceBtn:hover{transform:translateY(-1px);}
+#raceBtn:disabled{opacity:.5;cursor:default;transform:none;}
+
+/* ---- result readout ---- */
+#resultPanel{
+  position:fixed;top:16px;right:16px;z-index:15;
+  width:220px;padding:14px 16px;border-radius:18px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  font-family:var(--mono);font-size:12px;
+  opacity:0;pointer-events:none;transform:translateY(-8px);
+  transition:opacity .3s ease,transform .3s ease;
+}
+#resultPanel.show{opacity:1;pointer-events:auto;transform:translateY(0);}
+#resultPanel .rTitle{color:var(--gold-bright);font-size:11px;letter-spacing:.05em;margin-bottom:8px;}
+#resultPanel .rRow{display:flex;justify-content:space-between;padding:3px 0;color:var(--text);}
+#resultPanel .rRow .t{color:var(--dim);}
+
+#revealBanner{
+  position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.94);
+  z-index:25;max-width:min(500px,88vw);text-align:center;
+  padding:22px 26px;border-radius:20px;
+  background:var(--panel-solid);border:1px solid var(--gold-bright);
+  box-shadow:0 12px 50px rgba(0,0,0,0.5);
+  opacity:0;pointer-events:none;
+  transition:opacity .4s ease,transform .4s ease;
+}
+#revealBanner.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+#revealBanner h2{font-family:var(--serif);font-size:clamp(19px,3.6vw,25px);margin:0 0 8px;color:var(--gold-bright);}
+#revealBanner p{margin:0 0 14px;font-size:14px;color:var(--text);line-height:1.5;}
+#revealBanner button{
+  font-family:var(--mono);font-size:12px;color:var(--text);
+  background:transparent;border:1px solid var(--line-soft);border-radius:14px;
+  padding:9px 16px;cursor:pointer;
+}
+#revealBanner button:hover{border-color:var(--gold-bright);}
+
+#welcome{
+  position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+  background:rgba(2,2,7,0.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+#welcome .card{
+  max-width:min(460px,88vw);padding:26px 28px;border-radius:22px;
+  background:var(--panel-solid);border:1px solid var(--line);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+#welcome .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--gold-bright);text-transform:uppercase;}
+#welcome h2{font-family:var(--serif);font-size:clamp(20px,4vw,25px);margin:8px 0 10px;color:var(--text);}
+#welcome p, #welcome li{font-size:14px;color:var(--dim);line-height:1.55;}
+#welcome ol{margin:0 0 16px;padding-left:20px;}
+#welcome li b{color:var(--text);}
+#welcome .actions{display:flex;gap:10px;justify-content:flex-end;}
+#welcome .go{
+  font-family:var(--mono);font-size:13px;color:#1a1408;background:var(--gold-bright);
+  border:none;border-radius:14px;padding:10px 20px;cursor:pointer;font-weight:600;
+}
+#welcome .skip{
+  font-family:var(--mono);font-size:12px;color:var(--dim);background:transparent;
+  border:1px solid var(--line-soft);border-radius:14px;padding:10px 16px;cursor:pointer;
+}
+
+@media (max-width:640px){
+  #dock{bottom:10px;padding:12px 14px;gap:10px;width:96vw;}
+  .scnBtn{min-width:90px;padding:7px 8px;}
+  header#hdr{top:56px;padding:8px 14px;max-width:92vw;}
+  header#hdr .eyebrow{font-size:9px;}
+  header#hdr h1{font-size:16px;white-space:nowrap;}
+  header#hdr p{display:none;}
+  #backlink{padding:7px 10px;font-size:11px;}
+  #resultPanel{top:56px;width:170px;padding:10px 12px;}
+}
+@media (prefers-reduced-motion:reduce){
+  #revealBanner{transition:none;}
+}
+</style>
+</head>
+<body>
+
+<a id="backlink" href="/salas/"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>observatório</a>
+
+<canvas id="scene" aria-label="Corrida entre a velocidade do som e a velocidade da luz em distâncias diferentes: um estádio, uma cidade, e a distância até a Lua."></canvas>
+
+<header id="hdr">
+  <div class="eyebrow">Escala · Sala da Velocidade</div>
+  <h1>Som contra <em>luz</em></h1>
+  <p>a mesma corrida, três distâncias — uma escala impossível de imaginar</p>
+</header>
+
+<div id="resultPanel">
+  <div class="rTitle">tempo até chegar</div>
+  <div id="resultRows"></div>
+</div>
+
+<div id="dock">
+  <div id="scenarios">
+    <button class="scnBtn on" data-scn="0"><span class="nm">estádio</span><span class="dist">100 m</span></button>
+    <button class="scnBtn" data-scn="1"><span class="nm">cidade</span><span class="dist">5 km</span></button>
+    <button class="scnBtn" data-scn="2"><span class="nm">até a Lua</span><span class="dist">384.400 km</span></button>
+  </div>
+  <div id="raceRow">
+    <button id="raceBtn">iniciar corrida</button>
+  </div>
+</div>
+
+<div id="revealBanner" role="status">
+  <h2>A luz nem entra na corrida.</h2>
+  <p>Na distância até a Lua, o som (se pudesse viajar no vácuo) levaria <b>13 dias</b>. A luz leva <b>1,28 segundo</b> — o mesmo tempo que os astronautas da Apollo esperavam pela resposta de rádio da Terra. A luz é cerca de <b>880 mil vezes</b> mais rápida que o som.</p>
+  <button id="revealClose">continuar</button>
+</div>
+
+<div id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <div class="card">
+    <span class="eyebrow">Escala · Sala da Velocidade</span>
+    <h2 id="welcomeTitle">Um raio cai longe. Por que o trovão demora?</h2>
+    <p>Luz e som viajam nas mesmas distâncias, mas em velocidades tão diferentes que uma escala não serve pras duas.</p>
+    <ol>
+      <li>Escolha uma distância: <b>estádio</b>, <b>cidade</b> ou <b>até a Lua</b>.</li>
+      <li>Aperte <b>"iniciar corrida"</b> e veja o som e a luz percorrerem o caminho em tempo real (escalado para caber na tela).</li>
+      <li>Na distância da Lua, prepare-se: a diferença é maior do que parece possível.</li>
+    </ol>
+    <div class="actions">
+      <button class="skip" id="welcomeSkip">já sei, pular</button>
+      <button class="go" id="welcomeGo">começar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var canvas = document.getElementById("scene");
+  var ctx = canvas.getContext("2d");
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0;
+
+  function resize(){
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  /* ---- physics: real speeds — sound 343 m/s (dry air, 20°C), light
+     299792458 m/s. Real elapsed times are computed exactly (distance/
+     speed) and shown as text; the on-screen animation uses a display
+     duration that's compressed/stretched per scenario so both runners
+     are watchable (sound would otherwise finish in an instant at 100m,
+     or light would arrive before the frame even renders) — the numbers
+     shown in the result panel are always the true physics, only the
+     animation pacing is artistic license. ---- */
+  var SPEED_SOUND = 343;
+  var SPEED_LIGHT = 299792458;
+
+  var SCENARIOS = [
+    { name:"estádio", distM: 100, displayMs: 3200 },
+    { name:"cidade", distM: 5000, displayMs: 4200 },
+    { name:"lua", distM: 384400000, displayMs: 6500 }
+  ];
+  var scnIdx = 0;
+
+  document.querySelectorAll(".scnBtn").forEach(function(b){
+    b.addEventListener("click", function(){
+      scnIdx = parseInt(b.dataset.scn, 10);
+      document.querySelectorAll(".scnBtn").forEach(function(x){ x.classList.toggle("on", x===b); });
+      resultPanel.classList.remove("show");
+      racing = false;
+      soundProgress = 0; lightProgress = 0;
+    });
+  });
+
+  function fmtTime(sec){
+    if (sec < 0.001) return (sec*1e6).toFixed(1) + " µs";
+    if (sec < 1) return (sec*1000).toFixed(1) + " ms";
+    if (sec < 60) return sec.toFixed(2) + " s";
+    if (sec < 3600) return (sec/60).toFixed(1) + " min";
+    if (sec < 86400) return (sec/3600).toFixed(1) + " h";
+    return (sec/86400).toFixed(1) + " dias";
+  }
+
+  /* ---------- race ---------- */
+  var racing = false;
+  var soundProgress = 0, lightProgress = 0; // 0-1
+  var raceStart = 0;
+  var raceBtn = document.getElementById("raceBtn");
+  var resultPanel = document.getElementById("resultPanel");
+  var resultRows = document.getElementById("resultRows");
+
+  raceBtn.addEventListener("click", function(){
+    if (racing) return;
+    racing = true;
+    soundProgress = 0; lightProgress = 0;
+    raceStart = performance.now();
+    resultPanel.classList.remove("show");
+    raceBtn.disabled = true;
+    requestAnimationFrame(raceTick);
+  });
+
+  function raceTick(now){
+    var scn = SCENARIOS[scnIdx];
+    var elapsedMs = now - raceStart;
+    var t = Math.min(1, elapsedMs / scn.displayMs);
+
+    /* light always "wins" the display race (arrives first in scaled
+       time too, since it's genuinely always faster); sound's display
+       progress is scaled relative to light's real time ratio so the
+       relative gap on screen roughly reflects the true ratio without
+       requiring literal real-world durations to play out. ---- */
+    var trueLightTime = scn.distM / SPEED_LIGHT;
+    var trueSoundTime = scn.distM / SPEED_SOUND;
+    var ratio = trueLightTime / trueSoundTime; // <1, light much faster in real time
+
+    lightProgress = Math.min(1, t / Math.max(ratio, 0.06));
+    soundProgress = Math.min(1, t);
+
+    draw();
+
+    if (t < 1){
+      requestAnimationFrame(raceTick);
+    } else {
+      racing = false;
+      raceBtn.disabled = false;
+      showResult(scn, trueSoundTime, trueLightTime);
+    }
+  }
+
+  function showResult(scn, tSound, tLight){
+    resultRows.innerHTML =
+      '<div class="rRow"><span>💡 luz</span><span class="t">'+fmtTime(tLight)+'</span></div>' +
+      '<div class="rRow"><span>🔊 som</span><span class="t">'+fmtTime(tSound)+'</span></div>';
+    resultPanel.classList.add("show");
+    if (scnIdx === 2) checkReveal();
+  }
+
+  var revealShown = false;
+  var revealBanner = document.getElementById("revealBanner");
+  function checkReveal(){
+    if (revealShown) return;
+    revealShown = true;
+    window.setTimeout(function(){ revealBanner.classList.add("show"); }, 500);
+  }
+  document.getElementById("revealClose").addEventListener("click", function(){
+    revealBanner.classList.remove("show");
+  });
+
+  /* ---------- drawing: two lanes, sound (red) and light (gold),
+     runners as dots moving left to right across the track. ---- */
+  function draw(){
+    var isLight = document.documentElement.getAttribute("data-theme") === "light";
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.fillStyle = isLight ? "#EAE4D4" : "#050609";
+    ctx.fillRect(0,0,W,H);
+
+    var trackLeft = Math.max(W*0.12, 210), trackRight = W*0.9;
+    var laneSound = H*0.4, laneLight = H*0.58;
+
+    // start/finish markers, once, spanning both lanes
+    ctx.fillStyle = isLight ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.3)";
+    ctx.font = "11px ui-monospace, monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("largada", trackLeft, laneSound-38);
+    ctx.fillText("chegada", trackRight, laneSound-38);
+    ctx.textAlign = "left";
+
+    [laneSound, laneLight].forEach(function(y){
+      ctx.strokeStyle = isLight ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.12)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(trackLeft, y); ctx.lineTo(trackRight, y); ctx.stroke();
+    });
+
+    // lane labels, once, to the left of the track
+    ctx.font = "12px ui-monospace, monospace";
+    ctx.fillStyle = isLight ? "rgba(0,0,0,0.5)" : "rgba(237,234,226,0.5)";
+    ctx.textAlign = "right";
+    ctx.fillText("som · 343 m/s", trackLeft-16, laneSound+4);
+    ctx.fillText("luz · 299.792.458 m/s", trackLeft-16, laneLight+4);
+    ctx.textAlign = "left";
+
+    // sound runner
+    var sx = trackLeft + (trackRight-trackLeft)*soundProgress;
+    ctx.beginPath(); ctx.arc(sx, laneSound, 9, 0, Math.PI*2);
+    ctx.fillStyle = "#C4574A"; ctx.fill();
+    ctx.font = "22px serif"; ctx.textAlign = "center";
+    ctx.fillText("🔊", sx, laneSound-20);
+
+    // light runner
+    var lx = trackLeft + (trackRight-trackLeft)*lightProgress;
+    ctx.beginPath(); ctx.arc(lx, laneLight, 9, 0, Math.PI*2);
+    ctx.fillStyle = "#E8C27E"; ctx.fill();
+    ctx.shadowColor = "rgba(232,194,126,0.7)"; ctx.shadowBlur = 16;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.font = "22px serif";
+    ctx.fillText("💡", lx, laneLight+34);
+    ctx.textAlign = "left";
+  }
+  draw();
+
+  /* ---------- welcome modal ---------- */
+  var welcome = document.getElementById("welcome");
+  var SEEN_KEY = "fv_velocidade_seen";
+  function closeWelcome(){ welcome.style.display = "none"; }
+  document.getElementById("welcomeGo").addEventListener("click", function(){
+    try{ localStorage.setItem(SEEN_KEY, "1"); }catch(e){}
+    closeWelcome();
+  });
+  document.getElementById("welcomeSkip").addEventListener("click", function(){
+    try{ localStorage.setItem(SEEN_KEY, "1"); }catch(e){}
+    closeWelcome();
+  });
+  try{
+    if (localStorage.getItem(SEEN_KEY)) closeWelcome();
+  }catch(e){}
+
+})();
+</script>
+</body>
+</html>

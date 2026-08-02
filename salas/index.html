@@ -278,6 +278,15 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       scene:"sound"
     },
     {
+      id:"velocidade", status:"ready", track:null,
+      eyebrow:"Escala",
+      title:"Som contra ", titleEm:"luz",
+      desc:"A mesma corrida em três distâncias — do estádio até a Lua. Na última, o resultado é maior do que parece possível.",
+      hook:"uma escala impossível de imaginar",
+      href:"/velocidade/",
+      scene:"racetrack"
+    },
+    {
       id:"voo", status:"ready", track:null,
       eyebrow:"Exploração livre",
       title:"Voo ", titleEm:"espacial",
@@ -530,6 +539,22 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       ctx.stroke();
     }
 
+    function racetrack(t){
+      ctx.clearRect(0,0,w,h);
+      var left=w*0.12, right=w*0.88;
+      var laneA=h*0.4, laneB=h*0.62;
+      ctx.strokeStyle = plasmaC+"33"; ctx.lineWidth=1;
+      [laneA,laneB].forEach(function(y){ ctx.beginPath(); ctx.moveTo(left,y); ctx.lineTo(right,y); ctx.stroke(); });
+      var lightX = left + (right-left) * (((t*0.7)%1));
+      var soundX = left + (right-left) * (((t*0.18)%1));
+      ctx.fillStyle = goldC;
+      ctx.shadowColor = goldC+"cc"; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.arc(lightX, laneA, 4, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#C4574A";
+      ctx.beginPath(); ctx.arc(soundX, laneB, 4, 0, Math.PI*2); ctx.fill();
+    }
+
     var flightOrbits = [
       {r:0.22, speed:0.9,  size:1.1, color:"#9fbfff"},
       {r:0.30, speed:0.65, size:1.5, color:plasmaC},
@@ -558,7 +583,7 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       });
     }
 
-    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity, light:light, sound:sound};
+    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity, light:light, sound:sound, racetrack:racetrack};
     var fn = fns[kind] || function(){};
     var t0 = performance.now();
     function loop(now){
