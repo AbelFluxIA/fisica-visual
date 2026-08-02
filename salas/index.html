@@ -260,6 +260,15 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       scene:"gravity"
     },
     {
+      id:"luz", status:"ready", track:null,
+      eyebrow:"Óptica",
+      title:"Misture ", titleEm:"luz",
+      desc:"Vermelho e verde, de verdade, com luz. O resultado não é o que a tinta te ensinou — e branco sai de só três cores.",
+      hook:"luz não mistura como tinta",
+      href:"/luz/",
+      scene:"light"
+    },
+    {
       id:"voo", status:"ready", track:null,
       eyebrow:"Exploração livre",
       title:"Voo ", titleEm:"espacial",
@@ -471,6 +480,33 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       });
     }
 
+    function light(t){
+      ctx.clearRect(0,0,w,h);
+      ctx.fillStyle = "#050609";
+      ctx.fillRect(0,0,w,h);
+      var cx=w*0.5, cy=h*0.56, spread=Math.min(w,h)*0.2;
+      var pulse = 0.6 + 0.4*Math.sin(t*1.1);
+      var sources = [
+        {x:cx-spread, c:"255,60,60"},
+        {x:cx,        c:"60,255,90"},
+        {x:cx+spread, c:"60,110,255"}
+      ];
+      ctx.globalCompositeOperation = "lighter";
+      sources.forEach(function(s){
+        var grad = ctx.createRadialGradient(cx,cy,2,cx,cy,spread*1.1);
+        grad.addColorStop(0, "rgba("+s.c+","+(0.75*pulse)+")");
+        grad.addColorStop(1, "rgba("+s.c+",0)");
+        ctx.beginPath();
+        ctx.moveTo(s.x, h*0.1);
+        ctx.lineTo(cx-spread*1.2, cy+spread);
+        ctx.lineTo(cx+spread*1.2, cy+spread);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+      });
+      ctx.globalCompositeOperation = "source-over";
+    }
+
     var flightOrbits = [
       {r:0.22, speed:0.9,  size:1.1, color:"#9fbfff"},
       {r:0.30, speed:0.65, size:1.5, color:plasmaC},
@@ -499,7 +535,7 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       });
     }
 
-    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity};
+    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity, light:light};
     var fn = fns[kind] || function(){};
     var t0 = performance.now();
     function loop(now){
