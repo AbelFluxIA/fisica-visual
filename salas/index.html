@@ -287,6 +287,15 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       scene:"racetrack"
     },
     {
+      id:"relatividade", status:"ready", track:null,
+      eyebrow:"Relatividade",
+      title:"O tempo ", titleEm:"não é igual",
+      desc:"Acelere uma nave perto da velocidade da luz e veja dois relógios — o seu e o da Terra — pararem de concordar. De verdade.",
+      hook:"o tempo passa em ritmos diferentes",
+      href:"/relatividade/",
+      scene:"timedilation"
+    },
+    {
       id:"voo", status:"ready", track:null,
       eyebrow:"Exploração livre",
       title:"Voo ", titleEm:"espacial",
@@ -555,6 +564,30 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       ctx.beginPath(); ctx.arc(soundX, laneB, 4, 0, Math.PI*2); ctx.fill();
     }
 
+    function timedilation(t){
+      ctx.clearRect(0,0,w,h);
+      var cx=w*0.5, cy=h*0.55;
+      // ship silhouette
+      ctx.fillStyle = goldC;
+      ctx.beginPath();
+      ctx.moveTo(cx+16, cy);
+      ctx.lineTo(cx-10, cy-7);
+      ctx.lineTo(cx-6, cy);
+      ctx.lineTo(cx-10, cy+7);
+      ctx.closePath();
+      ctx.fill();
+      // two clock hands ticking at different rates (Earth fast, ship slow)
+      [{x:cx-w*0.22, rate:1, r:h*0.09}, {x:cx+w*0.22, rate:0.28, r:h*0.09}].forEach(function(c){
+        ctx.strokeStyle = plasmaC+"66"; ctx.lineWidth=1.4;
+        ctx.beginPath(); ctx.arc(c.x, cy-h*0.24, c.r, 0, Math.PI*2); ctx.stroke();
+        var a = t*c.rate*3;
+        ctx.beginPath();
+        ctx.moveTo(c.x, cy-h*0.24);
+        ctx.lineTo(c.x + Math.sin(a)*c.r*0.8, cy-h*0.24 - Math.cos(a)*c.r*0.8);
+        ctx.stroke();
+      });
+    }
+
     var flightOrbits = [
       {r:0.22, speed:0.9,  size:1.1, color:"#9fbfff"},
       {r:0.30, speed:0.65, size:1.5, color:plasmaC},
@@ -583,7 +616,7 @@ footer p{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:
       });
     }
 
-    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity, light:light, sound:sound, racetrack:racetrack};
+    var fns = {blackhole:blackhole, doubleslit:doubleslit, strings:strings, lightspeed:lightspeed, gravwaves:gravwaves, spaceflight:spaceflight, gravity:gravity, light:light, sound:sound, racetrack:racetrack, timedilation:timedilation};
     var fn = fns[kind] || function(){};
     var t0 = performance.now();
     function loop(now){

@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Sala da Relatividade — Física Visual</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="description" content="Acelere uma nave perto da velocidade da luz e veja dois relógios pararem de concordar.">
+<style>
+@font-face{
+  font-family:'Fraunces Display';
+  src:local('Georgia');
+  font-weight:400 700;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+}
+:root{
+  --bg:#07080D;
+  --bg-deep:#020207;
+  --panel:rgba(13,15,24,0.82);
+  --panel-solid:#0D0F18;
+  --line:rgba(212,168,92,0.16);
+  --line-soft:rgba(255,255,255,0.07);
+  --text:#EDEAE2;
+  --dim:#9C9788;
+  --gold:#D4A85C;
+  --gold-bright:#E8C27E;
+  --sky:#6FA8C7;
+  --alert:#C4574A;
+  --ok:#7CBF8E;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,monospace;
+  --serif:Georgia,"Times New Roman",serif;
+  --sans:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+}
+:root[data-theme="light"]{
+  --bg:#F3EFE4;
+  --bg-deep:#EAE4D4;
+  --panel:rgba(255,253,247,0.88);
+  --panel-solid:#FFFDF7;
+  --line:rgba(120,90,30,0.2);
+  --line-soft:rgba(20,20,10,0.08);
+  --text:#221F18;
+  --dim:#6B6656;
+  --sky:#3E7A96;
+}
+
+#backlink{
+  position:fixed;top:16px;left:16px;z-index:20;
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--dim);
+  text-decoration:none;padding:8px 12px;border-radius:16px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+#backlink svg{width:10px;height:10px;}
+#backlink:hover{color:var(--text);}
+
+canvas#scene{position:fixed;inset:0;width:100%;height:100%;display:block;}
+
+header#hdr{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  z-index:15;max-width:min(560px,90vw);text-align:center;
+  padding:14px 22px;border-radius:20px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+header#hdr .eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--gold-bright);
+}
+header#hdr h1{
+  font-family:var(--serif);font-weight:700;font-size:clamp(20px,3.6vw,28px);
+  margin:4px 0 2px;color:var(--text);
+}
+header#hdr p{margin:0;font-size:13px;color:var(--dim);}
+
+/* ---- twin clocks: Earth (fixed) vs ship (slows down as speed rises).
+   Positioned as two cards so they read as a direct side-by-side
+   comparison — the whole point is that they stop agreeing. ---- */
+#clocks{
+  position:fixed;top:100px;left:50%;transform:translateX(-50%);
+  z-index:15;display:flex;gap:14px;
+}
+.clockCard{
+  padding:12px 20px;border-radius:16px;text-align:center;min-width:130px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.clockCard .who{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--dim);text-transform:uppercase;}
+.clockCard .time{font-family:var(--mono);font-size:22px;color:var(--text);font-weight:600;margin-top:4px;}
+.clockCard.ship .time{color:var(--gold-bright);}
+
+#dock{
+  position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
+  z-index:15;width:min(560px,94vw);
+  padding:16px 20px;border-radius:22px;
+  background:var(--panel);border:1px solid var(--line-soft);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:flex;flex-direction:column;gap:12px;
+}
+.row{display:flex;align-items:center;gap:12px;}
+.row .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.05em;min-width:70px;}
+#speedSlider{flex:1;height:4px;accent-color:var(--gold-bright);}
+#speedVal{font-family:var(--mono);font-size:13px;color:var(--gold-bright);min-width:64px;text-align:right;font-weight:600;}
+
+#presetRow{display:flex;gap:8px;flex-wrap:wrap;}
+.presetBtn{
+  font-family:var(--mono);font-size:11px;color:var(--dim);
+  background:transparent;border:1px solid var(--line-soft);border-radius:12px;
+  padding:6px 12px;cursor:pointer;
+}
+.presetBtn:hover{border-color:var(--gold-bright);color:var(--text);}
+
+#runRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:2px;border-top:1px solid var(--line-soft);}
+#runBtn{
+  font-family:var(--mono);font-size:13px;letter-spacing:.04em;color:#1a1408;
+  background:var(--gold-bright);border:none;border-radius:16px;
+  padding:11px 22px;cursor:pointer;white-space:nowrap;
+}
+#runBtn.running{background:var(--alert);color:#fff;}
+#gammaReadout{font-family:var(--mono);font-size:11px;color:var(--dim);}
+
+#revealBanner{
+  position:fixed;left:50%;top:56%;transform:translate(-50%,-50%) scale(.94);
+  z-index:25;max-width:min(500px,88vw);text-align:center;
+  padding:22px 26px;border-radius:20px;
+  background:var(--panel-solid);border:1px solid var(--gold-bright);
+  box-shadow:0 12px 50px rgba(0,0,0,0.5);
+  opacity:0;pointer-events:none;
+  transition:opacity .4s ease,transform .4s ease;
+}
+#revealBanner.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
+#revealBanner h2{font-family:var(--serif);font-size:clamp(19px,3.6vw,25px);margin:0 0 8px;color:var(--gold-bright);}
+#revealBanner p{margin:0 0 14px;font-size:14px;color:var(--text);line-height:1.5;}
+#revealBanner button{
+  font-family:var(--mono);font-size:12px;color:var(--text);
+  background:transparent;border:1px solid var(--line-soft);border-radius:14px;
+  padding:9px 16px;cursor:pointer;
+}
+#revealBanner button:hover{border-color:var(--gold-bright);}
+
+#welcome{
+  position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+  background:rgba(2,2,7,0.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+#welcome .card{
+  max-width:min(460px,88vw);padding:26px 28px;border-radius:22px;
+  background:var(--panel-solid);border:1px solid var(--line);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+#welcome .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--gold-bright);text-transform:uppercase;}
+#welcome h2{font-family:var(--serif);font-size:clamp(20px,4vw,25px);margin:8px 0 10px;color:var(--text);}
+#welcome p, #welcome li{font-size:14px;color:var(--dim);line-height:1.55;}
+#welcome ol{margin:0 0 16px;padding-left:20px;}
+#welcome li b{color:var(--text);}
+#welcome .actions{display:flex;gap:10px;justify-content:flex-end;}
+#welcome .go{
+  font-family:var(--mono);font-size:13px;color:#1a1408;background:var(--gold-bright);
+  border:none;border-radius:14px;padding:10px 20px;cursor:pointer;font-weight:600;
+}
+#welcome .skip{
+  font-family:var(--mono);font-size:12px;color:var(--dim);background:transparent;
+  border:1px solid var(--line-soft);border-radius:14px;padding:10px 16px;cursor:pointer;
+}
+
+@media (max-width:640px){
+  #dock{bottom:10px;padding:12px 14px;gap:10px;width:96vw;}
+  .row .lbl{min-width:56px;font-size:10px;}
+  header#hdr{top:56px;padding:8px 14px;max-width:92vw;}
+  header#hdr .eyebrow{font-size:9px;}
+  header#hdr h1{font-size:16px;white-space:nowrap;}
+  header#hdr p{display:none;}
+  #backlink{padding:7px 10px;font-size:11px;}
+  #clocks{top:96px;gap:8px;}
+  .clockCard{padding:8px 12px;min-width:100px;}
+  .clockCard .time{font-size:17px;}
+}
+@media (prefers-reduced-motion:reduce){
+  #revealBanner{transition:none;}
+}
+</style>
+</head>
+<body>
+
+<a id="backlink" href="/salas/"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2.5L3 6l4.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>observatório</a>
+
+<canvas id="scene" aria-label="Uma nave voando entre estrelas, acelerando conforme a velocidade sobe, com dois relógios comparando o tempo da nave e o tempo da Terra."></canvas>
+
+<header id="hdr">
+  <div class="eyebrow">Relatividade · Sala da Relatividade</div>
+  <h1>O tempo <em>não</em> é igual pra todo mundo</h1>
+  <p>acelere a nave e veja os dois relógios discordarem</p>
+</header>
+
+<div id="clocks">
+  <div class="clockCard">
+    <div class="who">Terra</div>
+    <div class="time" id="earthClock">00:00:00</div>
+  </div>
+  <div class="clockCard ship">
+    <div class="who">nave</div>
+    <div class="time" id="shipClock">00:00:00</div>
+  </div>
+</div>
+
+<div id="dock">
+  <div class="row">
+    <span class="lbl">velocidade</span>
+    <input type="range" id="speedSlider" min="0" max="99.9" value="0" step="0.1">
+    <span class="val" id="speedVal">0% de c</span>
+  </div>
+  <div id="presetRow">
+    <button class="presetBtn" data-v="50">metade da luz</button>
+    <button class="presetBtn" data-v="90">90% da luz</button>
+    <button class="presetBtn" data-v="99">99% da luz</button>
+    <button class="presetBtn" data-v="0">parado</button>
+  </div>
+  <div id="runRow">
+    <button id="runBtn">▶ ligar motores</button>
+    <span id="gammaReadout">fator: 1,00×</span>
+  </div>
+</div>
+
+<div id="revealBanner" role="status">
+  <h2>A nave envelheceu mais devagar.</h2>
+  <p>Quanto mais perto da velocidade da luz você vai, mais devagar o SEU tempo passa em relação a quem ficou parado. Não é ilusão nem atraso de sinal — é o próprio tempo passando em ritmos diferentes. Já foi medido de verdade com relógios atômicos em aviões.</p>
+  <button id="revealClose">continuar</button>
+</div>
+
+<div id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+  <div class="card">
+    <span class="eyebrow">Relatividade · Sala da Relatividade</span>
+    <h2 id="welcomeTitle">Dois relógios, exatamente iguais. Um vai numa nave.</h2>
+    <p>Quando a nave volta, os dois relógios não mostram mais a mesma hora. Nenhum está quebrado.</p>
+    <ol>
+      <li>Suba o controle de <b>velocidade</b> (em % da velocidade da luz) e aperte <b>"ligar motores"</b>.</li>
+      <li>Observe os dois relógios: <b>Terra</b> (fixo) e <b>nave</b> (o seu). Em baixa velocidade, quase não dá pra notar diferença.</li>
+      <li>Tente <b>99% da luz</b>. A diferença fica impossível de ignorar.</li>
+    </ol>
+    <div class="actions">
+      <button class="skip" id="welcomeSkip">já sei, pular</button>
+      <button class="go" id="welcomeGo">começar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var canvas = document.getElementById("scene");
+  var ctx = canvas.getContext("2d");
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0;
+
+  function resize(){
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  /* ---- physics: real time dilation, γ = 1/√(1-v²/c²). Both clocks
+     run on a simulated timeline (1 real second = 1 simulated hour, so
+     the effect is visible in seconds instead of requiring an actual
+     multi-year space trip) — Earth's clock always advances at the
+     simulated rate; the ship's clock advances at that same rate
+     divided by γ, which is exactly what a real traveling twin would
+     experience relative to the stay-at-home twin. ---- */
+  var speedPct = 0; // 0-99.9, % of c
+  var running = false;
+  var earthElapsedS = 0, shipElapsedS = 0; // simulated seconds
+  var lastFrameT = 0;
+
+  var speedSlider = document.getElementById("speedSlider");
+  var speedVal = document.getElementById("speedVal");
+  var gammaReadout = document.getElementById("gammaReadout");
+  var earthClockEl = document.getElementById("earthClock");
+  var shipClockEl = document.getElementById("shipClock");
+  var runBtn = document.getElementById("runBtn");
+
+  function gamma(){
+    var v = speedPct/100;
+    return 1/Math.sqrt(Math.max(1e-6, 1 - v*v));
+  }
+  function updateGammaReadout(){
+    gammaReadout.textContent = "fator: " + gamma().toFixed(2) + "×";
+  }
+  speedSlider.addEventListener("input", function(){
+    speedPct = parseFloat(speedSlider.value);
+    speedVal.textContent = speedPct.toFixed(1) + "% de c";
+    updateGammaReadout();
+  });
+  document.querySelectorAll(".presetBtn").forEach(function(b){
+    b.addEventListener("click", function(){
+      speedPct = parseFloat(b.dataset.v);
+      speedSlider.value = speedPct;
+      speedVal.textContent = speedPct.toFixed(1) + "% de c";
+      updateGammaReadout();
+    });
+  });
+  updateGammaReadout();
+
+  function fmtClock(totalSeconds){
+    var s = Math.floor(totalSeconds) % 60;
+    var m = Math.floor(totalSeconds/60) % 60;
+    var h = Math.floor(totalSeconds/3600);
+    function pad(n){ return (n<10?"0":"")+n; }
+    return pad(h)+":"+pad(m)+":"+pad(s);
+  }
+
+  runBtn.addEventListener("click", function(){
+    running = !running;
+    runBtn.textContent = running ? "■ parar motores" : "▶ ligar motores";
+    runBtn.classList.toggle("running", running);
+    if (running) lastFrameT = performance.now();
+  });
+
+  var revealShown = false;
+  var revealBanner = document.getElementById("revealBanner");
+  var maxGammaSeen = 1;
+  function checkReveal(){
+    if (revealShown) return;
+    if (gamma() > 3 && shipElapsedS > 3){
+      revealShown = true;
+      window.setTimeout(function(){ revealBanner.classList.add("show"); }, 200);
+    }
+  }
+  document.getElementById("revealClose").addEventListener("click", function(){
+    revealBanner.classList.remove("show");
+  });
+
+  /* ---------- drawing: starfield streaking past a ship, streak speed
+     and star density scale with speedPct for a sense of acceleration. ---- */
+  var stars = [];
+  function initStars(){
+    stars = [];
+    for (var i=0;i<140;i++){
+      stars.push({ x: Math.random()*W, y: Math.random()*H, z: Math.random() });
+    }
+  }
+  initStars();
+  window.addEventListener("resize", initStars);
+
+  function draw(now){
+    var dt = Math.min(0.05, (now-lastFrameT)/1000);
+    if (running){
+      var simRate = 3600; // 1 real second = 1 simulated hour
+      earthElapsedS += dt * simRate;
+      shipElapsedS += dt * simRate / gamma();
+      earthClockEl.textContent = fmtClock(earthElapsedS);
+      shipClockEl.textContent = fmtClock(shipElapsedS);
+      checkReveal();
+    }
+    lastFrameT = now;
+
+    var isLight = document.documentElement.getAttribute("data-theme") === "light";
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.fillStyle = isLight ? "#EAE4D4" : "#050609";
+    ctx.fillRect(0,0,W,H);
+
+    var speedFactor = running ? (0.3 + speedPct/100*4) : 0.15;
+    ctx.strokeStyle = isLight ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.6)";
+    stars.forEach(function(s){
+      var len = 4 + s.z*20*speedFactor;
+      ctx.globalAlpha = 0.3 + s.z*0.6;
+      ctx.lineWidth = 1 + s.z;
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x - len, s.y);
+      ctx.stroke();
+      s.x -= (1+s.z*3) * speedFactor * 6;
+      if (s.x < -30){ s.x = W+30; s.y = Math.random()*H; }
+    });
+    ctx.globalAlpha = 1;
+
+    // ship silhouette, centered
+    var cx = W*0.5, cy = H*0.6;
+    ctx.fillStyle = "#E8C27E";
+    ctx.beginPath();
+    ctx.moveTo(cx+30, cy);
+    ctx.lineTo(cx-20, cy-12);
+    ctx.lineTo(cx-12, cy);
+    ctx.lineTo(cx-20, cy+12);
+    ctx.closePath();
+    ctx.fill();
+    if (running){
+      ctx.fillStyle = "rgba(232,194,126,"+(0.3+0.3*Math.sin(now*0.02))+")";
+      ctx.beginPath();
+      ctx.moveTo(cx-12, cy-6);
+      ctx.lineTo(cx-12-20*speedFactor, cy);
+      ctx.lineTo(cx-12, cy+6);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+
+  /* ---------- welcome modal ---------- */
+  var welcome = document.getElementById("welcome");
+  var SEEN_KEY = "fv_relatividade_seen";
+  function closeWelcome(){ welcome.style.display = "none"; }
+  document.getElementById("welcomeGo").addEventListener("click", function(){
+    try{ localStorage.setItem(SEEN_KEY, "1"); }catch(e){}
+    closeWelcome();
+  });
+  document.getElementById("welcomeSkip").addEventListener("click", function(){
+    try{ localStorage.setItem(SEEN_KEY, "1"); }catch(e){}
+    closeWelcome();
+  });
+  try{
+    if (localStorage.getItem(SEEN_KEY)) closeWelcome();
+  }catch(e){}
+
+})();
+</script>
+</body>
+</html>
