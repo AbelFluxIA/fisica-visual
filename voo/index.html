@@ -1108,6 +1108,16 @@ canvas{display:block;}
     <span class="btext"><span class="btitle">visitar o Horizonte</span><span class="bsub">a sala dedicada — lente gravitacional real, dilatação do tempo</span></span>
     <span class="barrow" aria-hidden="true">→</span>
   </a>
+  <a class="bridge" id="marsBridge" href="/pouso-marte/" hidden>
+    <span class="bico" aria-hidden="true">●</span>
+    <span class="btext"><span class="btitle">pousar em Marte</span><span class="bsub">controle os retropropulsores contra a gravidade real</span></span>
+    <span class="barrow" aria-hidden="true">→</span>
+  </a>
+  <a class="bridge" id="earthBridge" href="/oceano/" hidden>
+    <span class="bico" aria-hidden="true">●</span>
+    <span class="btext"><span class="btitle">mergulhar no oceano</span><span class="bsub">desça até o Titanic, na escuridão a 3.800m</span></span>
+    <span class="barrow" aria-hidden="true">→</span>
+  </a>
   <div class="actions">
     <button class="close" id="orbitLeave">sair da órbita · continuar voo livre</button>
   </div>
@@ -1560,7 +1570,8 @@ PLANETS.forEach(function(def){
 
   POIS.push({
     name: def.name, mesh: mesh, radius: def.radius, layer:'solar',
-    eyebrow: def.eyebrow, facts: def.facts, prose: def.prose
+    eyebrow: def.eyebrow, facts: def.facts, prose: def.prose,
+    isMars: def.id === 'mars', isEarth: def.id === 'earth'
   });
 
   var entry = { mesh:mesh, orbitGroup:orbitGroup, def:def, cloudMesh:cloudMesh, nightMesh:nightMesh };
@@ -2198,6 +2209,8 @@ var orbitFacts = document.getElementById('orbitFacts');
 var orbitProse = document.getElementById('orbitProse');
 var orbitLeaveBtn = document.getElementById('orbitLeave');
 var orbitBridge = document.getElementById('orbitBridge');
+var marsBridge = document.getElementById('marsBridge');
+var earthBridge = document.getElementById('earthBridge');
 var orbitMinBtn = document.getElementById('orbitMin');
 var orbitPill = document.getElementById('orbitPill');
 var orbitPillName = document.getElementById('orbitPillName');
@@ -2271,6 +2284,8 @@ function enterOrbit(poi){
   });
   orbitProse.textContent = poi.prose || '';
   if (orbitBridge){ orbitBridge.hidden = !poi.isBlackHole; }
+  if (marsBridge){ marsBridge.hidden = !poi.isMars; }
+  if (earthBridge){ earthBridge.hidden = !poi.isEarth; }
   if (orbitPillName) orbitPillName.textContent = poi.name;
   orbitPanel.classList.add('open');
   // every NEW orbit always starts expanded (spec: minimized state must
