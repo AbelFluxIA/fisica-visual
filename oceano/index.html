@@ -611,8 +611,39 @@ var snowMat = new THREE.PointsMaterial({ color:0xffffff, size:0.35, transparent:
 var snowPoints = new THREE.Points(snowGeo, snowMat);
 scene.add(snowPoints);
 
+/* Particulate is a realism cue people read without noticing: in real ROV
+   footage the beam is always full of drifting matter, and it is what gives
+   the water depth and the shot a sense of distance. Near the wreck the
+   particles are pulled in tight around the camera so they actually catch
+   the headlight instead of being spread over kilometres. */
 function updateSnow(dt){
   var pos = snowGeo.attributes.position.array;
+  var near = camera.position.distanceTo(titanicGroup.position) < 340;
+  if (near !== snowGeo.userData.near){
+    snowGeo.userData.near = near;
+    var R = near ? 55 : 400;
+    for (var k=0;k<SNOW_COUNT;k++){
+      pos[k*3]   = camera.position.x + (Math.random()-0.5)*R;
+      pos[k*3+1] = camera.position.y + (Math.random()-0.5)*R;
+      pos[k*3+2] = camera.position.z + (Math.random()-0.5)*R;
+    }
+    snowMat.size = near ? 0.14 : 0.35;
+    snowMat.opacity = near ? 0.8 : 0.55;
+  }
+  if (near){
+    // recycle within a small box that follows the submersible
+    for (var n=0;n<SNOW_COUNT;n++){
+      pos[n*3+1] -= (1.1 + 0.7*Math.random())*dt;
+      var dx = pos[n*3]-camera.position.x, dy = pos[n*3+1]-camera.position.y, dz = pos[n*3+2]-camera.position.z;
+      if (dy < -28 || dx*dx+dz*dz > 55*55){
+        pos[n*3]   = camera.position.x + (Math.random()-0.5)*70;
+        pos[n*3+1] = camera.position.y + 28;
+        pos[n*3+2] = camera.position.z + (Math.random()-0.5)*70;
+      }
+    }
+    snowGeo.attributes.position.needsUpdate = true;
+    return;
+  }
   for (var i=0;i<SNOW_COUNT;i++){
     pos[i*3+1] -= (0.4 + 0.3*Math.random())*dt;
     if (pos[i*3+1] < -MAX_DEPTH){
@@ -1261,22 +1292,52 @@ var HULL_STATIONS = [
   [1.000,  0.90,   0.0,  26.8, 0.65]   // torn edge, NOT a taper
 ];
 
+/* Hull skin. The plate seams and rivet lines matter more than they look:
+   they are objects whose real size the eye already knows, so they are what
+   lets someone judge that the hull is enormous. A smooth rusty surface
+   gives the brain nothing to scale against, which is exactly why the ship
+   read as small no matter how many metres wide it actually was. */
 var rustTex = (function(){
-  var c = document.createElement('canvas'); c.width = c.height = 256;
+  var c = document.createElement('canvas'); c.width = c.height = 512;
   var g = c.getContext('2d');
-  g.fillStyle = '#4a3526'; g.fillRect(0,0,256,256);
-  for (var i=0;i<260;i++){          // vertical rust streaks
-    var x = Math.random()*256, w = 1+Math.random()*7, h = 30+Math.random()*200;
-    g.fillStyle = 'rgba('+(60+Math.random()*70|0)+','+(34+Math.random()*36|0)+',18,'+(0.10+Math.random()*0.30).toFixed(2)+')';
-    g.fillRect(x, Math.random()*256, w, h);
+  g.fillStyle = '#4a3526'; g.fillRect(0,0,512,512);
+  // horizontal plate seams (strakes), with a lap edge shadow
+  for (var py=0; py<512; py+=64){
+    g.fillStyle = 'rgba(20,12,6,0.55)';  g.fillRect(0, py, 512, 2.5);
+    g.fillStyle = 'rgba(150,110,70,0.16)'; g.fillRect(0, py+2.5, 512, 1.5);
   }
-  for (var j=0;j<1800;j++){
+  // vertical butt joints, staggered per strake
+  for (var sy=0; sy<8; sy++){
+    var off = (sy%2)*48;
+    for (var px=off; px<512; px+=96){
+      g.fillStyle = 'rgba(20,12,6,0.45)';
+      g.fillRect(px, sy*64, 2, 64);
+    }
+  }
+  // rivet rows along every seam — the signature of a 1912 riveted hull
+  for (var ry=0; ry<512; ry+=64){
+    for (var rx=4; rx<512; rx+=9){
+      g.fillStyle = 'rgba(24,16,9,0.5)';
+      g.beginPath(); g.arc(rx, ry+6, 1.5, 0, 6.3); g.fill();
+      g.fillStyle = 'rgba(168,128,84,0.22)';
+      g.beginPath(); g.arc(rx-0.4, ry+5.4, 0.9, 0, 6.3); g.fill();
+      g.fillStyle = 'rgba(24,16,9,0.5)';
+      g.beginPath(); g.arc(rx, ry+57, 1.5, 0, 6.3); g.fill();
+    }
+  }
+  for (var i=0;i<420;i++){          // rust bleeding down from the seams
+    var x = Math.random()*512, w = 1+Math.random()*9, h = 40+Math.random()*260;
+    g.fillStyle = 'rgba('+(60+Math.random()*70|0)+','+(34+Math.random()*36|0)+',18,'+(0.10+Math.random()*0.34).toFixed(2)+')';
+    g.fillRect(x, Math.random()*512, w, h);
+  }
+  for (var j=0;j<3200;j++){
     var v = 20+Math.random()*60;
     g.fillStyle = 'rgba('+(v+40)+','+(v+14)+','+v+',0.4)';
-    g.fillRect(Math.random()*256, Math.random()*256, 2, 2);
+    g.fillRect(Math.random()*512, Math.random()*512, 2, 2);
   }
   var t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6,2);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(9,4);
+  t.anisotropy = 4;
   return t;
 })();
 
@@ -1493,6 +1554,111 @@ titanicGroup.add(titanicBow);
       plate.rotation.set(Math.PI/2 + (Math.random()-0.5)*0.5, ang3, (Math.random()-0.5)*0.6);
       titanicBow.add(plate);
     }
+
+    /* ---- scale references ----------------------------------------
+       Everything below exists because the eye needs objects of KNOWN size
+       to judge how big the hull is. A porthole is about 30cm; a railing is
+       waist-high; a lifeboat davit is a few metres. Put a few hundred of
+       them on a surface and the same geometry suddenly reads as enormous.
+       This is the single biggest lever on "it feels small". */
+
+    /* portholes: three rows down each side, following the hull curve */
+    var portGeo = new THREE.TorusGeometry(0.30, 0.075, 4, 10);
+    var PORT_ROWS = [11.5, 15.5, 19.5];
+    var portPerRow = LOW_TIER ? 26 : 46;
+    var portTotal = PORT_ROWS.length * portPerRow * 2;
+    var portMesh = new THREE.InstancedMesh(portGeo,
+      new THREE.MeshStandardMaterial({ color:0x30251a, roughness:0.85, metalness:0.25 }), portTotal);
+    var glassMesh = new THREE.InstancedMesh(new THREE.CircleGeometry(0.26, 10),
+      new THREE.MeshBasicMaterial({ color:0x03060b }), portTotal);
+    var pd = new THREE.Object3D(); var pi = 0;
+    PORT_ROWS.forEach(function(py2){
+      for (var k2=0;k2<portPerRow;k2++){
+        var s4 = 0.10 + (k2/(portPerRow-1))*0.84;
+        var st4 = lerpStation(s4);
+        if (st4.deck < py2 + 2) continue;               // no porthole above the deck line
+        var z4 = BOW_LEN*0.5 - s4*BOW_LEN;
+        [1,-1].forEach(function(sd){
+          pd.position.set(sd*(st4.hb-0.15), py2, z4);
+          pd.rotation.set(0, sd>0 ? Math.PI/2 : -Math.PI/2, 0);
+          pd.scale.setScalar(1);
+          pd.updateMatrix();
+          portMesh.setMatrixAt(pi, pd.matrix);
+          glassMesh.setMatrixAt(pi, pd.matrix);
+          pi++;
+        });
+      }
+    });
+    portMesh.count = pi; glassMesh.count = pi;
+    portMesh.instanceMatrix.needsUpdate = true; glassMesh.instanceMatrix.needsUpdate = true;
+    titanicBow.add(portMesh); titanicBow.add(glassMesh);
+
+    /* promenade windows: the long rectangular run on A deck */
+    var promN = LOW_TIER ? 14 : 26;
+    var promMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(0.25, 1.5, 1.1),
+      new THREE.MeshStandardMaterial({ color:0x0a0d12, roughness:0.7 }), promN*2);
+    var qd = new THREE.Object3D(); var qi = 0;
+    for (var w2=0; w2<promN; w2++){
+      var s5 = 0.34 + (w2/(promN-1))*0.44;
+      var st5 = lerpStation(s5);
+      var z5 = BOW_LEN*0.5 - s5*BOW_LEN;
+      [1,-1].forEach(function(sd2){
+        qd.position.set(sd2*(st5.hb-0.05), 24.2, z5);
+        qd.updateMatrix();
+        promMesh.setMatrixAt(qi++, qd.matrix);
+      });
+    }
+    promMesh.count = qi; promMesh.instanceMatrix.needsUpdate = true;
+    titanicBow.add(promMesh);
+
+    /* deck railing running the length of both sides */
+    var railN = LOW_TIER ? 30 : 58;
+    var stanchMesh = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.06,0.06,1.15,4),
+      new THREE.MeshStandardMaterial({ color:0x3d3025, roughness:1 }), railN*2);
+    var rd = new THREE.Object3D(); var rdi = 0;
+    for (var v2=0; v2<railN; v2++){
+      var s6 = 0.12 + (v2/(railN-1))*0.80;
+      var st6 = lerpStation(s6);
+      var z6 = BOW_LEN*0.5 - s6*BOW_LEN;
+      [1,-1].forEach(function(sd3){
+        rd.position.set(sd3*(st6.hb-0.5), st6.deck+0.6, z6);
+        rd.updateMatrix();
+        stanchMesh.setMatrixAt(rdi++, rd.matrix);
+      });
+    }
+    stanchMesh.count = rdi; stanchMesh.instanceMatrix.needsUpdate = true;
+    titanicBow.add(stanchMesh);
+
+    /* lifeboat davits — the empty ones are one of the most quoted images
+       of the wreck, because they are why so few people got off */
+    for (var dv=0; dv<8; dv++){
+      var sdv = (dv%2) ? 1 : -1;
+      var zdv = zF - 44 - Math.floor(dv/2)*11;
+      var stdv = lerpStation((zF-zdv)/BOW_LEN);
+      var post = new THREE.Mesh(new THREE.CylinderGeometry(0.19,0.22,4.2,6), railMat);
+      post.position.set(sdv*(stdv.hb-1.2), 28.6, zdv);
+      titanicBow.add(post);
+      var armCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(sdv*(stdv.hb-1.2), 30.6, zdv),
+        new THREE.Vector3(sdv*(stdv.hb-0.2), 31.4, zdv),
+        new THREE.Vector3(sdv*(stdv.hb+1.4), 30.6, zdv)
+      ]);
+      var arm = new THREE.Mesh(new THREE.TubeGeometry(armCurve, 6, 0.16, 5, false), railMat);
+      titanicBow.add(arm);
+    }
+
+    /* anchor chain running out over the forecastle */
+    var chainMesh = new THREE.InstancedMesh(new THREE.TorusGeometry(0.28, 0.09, 4, 7),
+      new THREE.MeshStandardMaterial({ color:0x3a2f24, roughness:1 }), 40);
+    var cd = new THREE.Object3D();
+    for (var ch=0; ch<40; ch++){
+      cd.position.set(3.4, 30.0 - ch*0.05, zF-8 - ch*0.62);
+      cd.rotation.set(Math.PI/2, (ch%2)*Math.PI/2, 0);
+      cd.updateMatrix();
+      chainMesh.setMatrixAt(ch, cd.matrix);
+    }
+    chainMesh.instanceMatrix.needsUpdate = true;
+    titanicBow.add(chainMesh);
 
     /* rusticles: the iron-eating bacterial formations (Halomonas
        titanicae, isolated from this wreck in 2010 and named after it).
@@ -2033,10 +2199,12 @@ function updateCamera(dt){
      ROV footage does. Inside, a 160 un/s submarine in a 25 un room is
      simply unplayable. */
   if (insideWreck){
-    speed = Math.min(speed, 11);
+    speed = Math.min(speed, 7);
   } else {
     var dWreck = camera.position.distanceTo(titanicGroup.position);
-    if (dWreck < 320) speed = Math.min(speed, 16 + (dWreck/320)*80);
+    /* a real ROV works at well under 1 m/s. Getting anywhere near that
+       pace is what makes 143 metres of steel feel like 143 metres. */
+    if (dWreck < 340) speed = Math.min(speed, 7 + (dWreck/340)*44);
   }
 
   resolveColliders();
