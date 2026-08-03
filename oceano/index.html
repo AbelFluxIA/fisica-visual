@@ -181,6 +181,24 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
 }
 #porthole.show{opacity:1;}
 
+/* ---- inside-the-wreck badge, with an always-available escape. With
+   hand-rolled AABB collision this button is a requirement, not a nicety:
+   getting wedged is the most likely failure mode in the whole room. ---- */
+#wreckBadge{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  z-index:18;display:none;align-items:center;gap:10px;
+  padding:9px 12px 9px 14px;border-radius:18px;
+  background:var(--panel-solid);border:1px solid var(--gold-bright);
+  font-family:var(--mono);font-size:11.5px;color:var(--text);
+}
+#wreckBadge.show{display:flex;}
+#wreckBadge .dot{width:7px;height:7px;border-radius:50%;background:var(--gold-bright);}
+#wreckExit{
+  font-family:var(--mono);font-size:10.5px;color:var(--dim);background:transparent;
+  border:1px solid var(--line-soft);border-radius:11px;padding:4px 10px;cursor:pointer;
+}
+#wreckExit:hover{color:var(--text);border-color:var(--gold-bright);}
+
 /* ---- descent HUD (caption + depth progress) ---- */
 #descentHud{
   position:fixed;top:16px;left:50%;transform:translateX(-50%);
@@ -328,6 +346,12 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
 
 <div id="porthole" aria-hidden="true"></div>
 
+<div id="wreckBadge">
+  <span class="dot" aria-hidden="true"></span>
+  <span id="wreckRoom">dentro do naufrágio</span>
+  <button id="wreckExit" type="button">sair</button>
+</div>
+
 <div id="descentHud" aria-live="polite">
   <div id="descentHudTop">
     <span class="eyebrow">Descida assistida</span>
@@ -359,7 +383,8 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
     <ol>
       <li><b>WASD</b> (ou setas) move o submersível; arraste o <b>mouse</b> para olhar ao redor; <b>scroll</b> acelera ou freia.</li>
       <li>Desça e observe a cor da água mudar de verdade — física real de absorção de luz, não um efeito.</li>
-      <li>Toque nos <b>seres marinhos</b> ao redor para ver fatos reais. Vá até o fundo: o <b>Titanic</b> está a 3.800m.</li>
+      <li>Ligue e apague o <b>farol</b> (tecla <b>F</b>) — no fundo, ele é a única luz que existe.</li>
+      <li>Toque nos <b>seres marinhos</b> para ver fatos reais. Sem pressa de achar o caminho: o botão <b>"descer até o Titanic"</b> leva você até lá, e dá para <b>entrar no naufrágio</b>.</li>
     </ol>
     <div class="actions">
       <button class="go" id="welcomeGo">iniciar mergulho</button>
@@ -1420,11 +1445,265 @@ CREATURES.forEach(function(c){
       new THREE.Vector3(cx+sx/2, cy+sy/2, cz+sz/2).add(titanicGroup.position));
     COLLIDERS.push({ box:b, tag:'hull' });
   }
-  var zF = BOW_LEN*0.5;
-  box(0, 13, zF-90, BEAM,   27, 100);  // main body
-  box(0, 13, zF-25, BEAM*0.7,27, 40);  // forward
-  box(0, 13, zF-6,  BEAM*0.3,27, 16);  // stem
+  var zF = BOW_LEN*0.5, wz = zF-61;
+  /* The hull is solid EXCEPT directly over the Grand Staircase well — that
+     gap is what lets a submersible drop in, exactly as ROVs do on the real
+     wreck since the glass dome collapsed. The two main-body boxes stop
+     short of the well on either side, leaving the slot genuinely open;
+     get this wrong by even a couple of units and the entrance is sealed. */
+  var aftEnd = wz-5, fwdStart = wz+5;
+  box(0, 13, (zF-139+aftEnd)/2, BEAM,     27, aftEnd-(zF-139)); // aft of the well
+  box(0, 13, (fwdStart+zF-24)/2, BEAM,    27, (zF-24)-fwdStart); // forward of the well
+  box(0, 13, zF-16,  BEAM*0.7, 27, 22);
+  box(0, 13, zF-4,   BEAM*0.3, 27, 12);
 })();
+
+/* ============================================================
+   TITANIC INTERIOR — four real spaces on the bow section
+   ------------------------------------------------------------
+   Entry is the Grand Staircase well: the wrought-iron and glass dome over
+   it collapsed, leaving an opening in the Boat Deck that is genuinely how
+   remotely-operated vehicles get inside today. From the bottom of that
+   shaft the D-deck reception and the First Class Dining Saloon open aft;
+   Captain Smith's cabin sits off the top landing.
+
+   The engine/boiler rooms are deliberately NOT here: they are in the
+   STERN section, which broke away and is destroyed. Pretending you can
+   swim through them would be inventing history.
+
+   Collision here is volume-based, not wall-based: rooms are boxes you are
+   confined inside, joined by portal boxes where confinement is suspended.
+   Four rooms plus a handful of solids beats thirty wall planes, and it
+   cannot produce the "invisible wall in a doorway" failure.
+   ============================================================ */
+var ZF = BOW_LEN*0.5;
+var insideWreck = false;
+var interiorBuilt = false;
+var interiorGroup = new THREE.Group();
+interiorGroup.visible = false;
+titanicGroup.add(interiorGroup);
+
+function wbox(x0,y0,z0, x1,y1,z1){
+  return new THREE.Box3(
+    new THREE.Vector3(Math.min(x0,x1), Math.min(y0,y1), Math.min(z0,z1)).add(titanicGroup.position),
+    new THREE.Vector3(Math.max(x0,x1), Math.max(y0,y1), Math.max(z0,z1)).add(titanicGroup.position));
+}
+
+var WELL_Z = ZF-61;
+var ROOMS = [
+  { name:'Escadaria Grande',   box: wbox(-5.5,  3.5, WELL_Z-4.5,  5.5, 27.5, WELL_Z+4.5) },
+  { name:'Recepção do convés D', box: wbox(-5.5, 3.5, WELL_Z+4.5,  5.5, 10.5, WELL_Z+31) },
+  { name:'Salão de Jantar',    box: wbox(-11.5, 3.5, WELL_Z+31,  11.5, 11.5, WELL_Z+56) },
+  { name:'Camarote do Capitão',box: wbox( 5.0, 21.5, WELL_Z-3.5, 13.5, 27.5, WELL_Z+4.0) }
+];
+var PORTALS = [
+  wbox(-5.5, 24.5, WELL_Z-4.5,  5.5, 30.5, WELL_Z+4.5), // deck opening (entry)
+  wbox(-5.5,  3.5, WELL_Z+2.5,  5.5, 10.5, WELL_Z+7.5), // well -> reception
+  wbox(-5.5,  3.5, WELL_Z+28,   5.5, 10.5, WELL_Z+34),  // reception -> saloon
+  wbox( 4.0, 21.5, WELL_Z-2.0,  6.5, 27.5, WELL_Z+3.0)  // well -> cabin
+];
+var ENTRY_PORTAL = PORTALS[0];
+var INTERIOR_SOLIDS = [];
+
+function buildInterior(){
+  if (interiorBuilt) return;
+  interiorBuilt = true;
+  try{
+    var woodTex = (function(){
+      var c = document.createElement('canvas'); c.width=c.height=128;
+      var g = c.getContext('2d');
+      g.fillStyle='#3a2b1e'; g.fillRect(0,0,128,128);
+      for (var i=0;i<70;i++){
+        g.fillStyle='rgba('+(50+Math.random()*40|0)+','+(34+Math.random()*24|0)+',22,0.5)';
+        g.fillRect(0, i*2, 128, 1.2);
+      }
+      var t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(3,3); return t;
+    })();
+    /* deliberately drab and dark: this is a ruin at 3.800m being eaten by
+       bacteria, not a period interior. The headlight does the revealing. */
+    var wallMat = new THREE.MeshStandardMaterial({ color:0x2e2419, roughness:1, map:woodTex, side:THREE.BackSide });
+    var siltMat = new THREE.MeshStandardMaterial({ color:0x3a352c, roughness:1 });
+    var metalMat = new THREE.MeshStandardMaterial({ color:0x2a231b, roughness:0.98 });
+
+    /* one inward-facing box per room = one draw call each */
+    ROOMS.forEach(function(r){
+      var s = r.box.getSize(new THREE.Vector3());
+      var c = r.box.getCenter(new THREE.Vector3()).sub(titanicGroup.position);
+      var shell = new THREE.Mesh(new THREE.BoxGeometry(s.x, s.y, s.z), wallMat);
+      shell.position.copy(c);
+      interiorGroup.add(shell);
+      // silted floor
+      var fl = new THREE.Mesh(new THREE.PlaneGeometry(s.x*0.98, s.z*0.98), siltMat);
+      fl.rotation.x = -Math.PI/2;
+      fl.position.set(c.x, c.y - s.y/2 + 0.12, c.z);
+      interiorGroup.add(fl);
+    });
+
+    /* Grand Staircase: the balustrade spiral survives in fragments; the
+       oak treads themselves are long gone, eaten away. */
+    for (var t2=0;t2<5;t2++){
+      var land = new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.4, 2.2), metalMat);
+      land.position.set(0, 6 + t2*4.6, WELL_Z - 2 + (t2%2)*3.4);
+      interiorGroup.add(land);
+      INTERIOR_SOLIDS.push(wbox(-3.75, 6+t2*4.6-0.3, WELL_Z-3.2+(t2%2)*3.4,
+                                 3.75, 6+t2*4.6+0.3, WELL_Z-0.8+(t2%2)*3.4));
+    }
+
+    /* Dining Saloon: the standing columns are what you actually see in
+       footage — the ceiling between them has come down. */
+    for (var col=0; col<8; col++){
+      var cx = (col%2 ? 1 : -1) * 7.2;
+      var cz = WELL_Z + 36 + Math.floor(col/2)*6.2;
+      var pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.62, 7.4, 8), metalMat);
+      pillar.position.set(cx, 7.2, cz);
+      interiorGroup.add(pillar);
+      INTERIOR_SOLIDS.push(wbox(cx-0.8, 3.5, cz-0.8, cx+0.8, 11.0, cz+0.8));
+    }
+    /* collapsed ceiling debris */
+    for (var db=0; db<14; db++){
+      var d = new THREE.Mesh(new THREE.BoxGeometry(1+Math.random()*3, 0.35, 1+Math.random()*2.6), metalMat);
+      d.position.set((Math.random()-0.5)*19, 4.1, WELL_Z+33+Math.random()*21);
+      d.rotation.set((Math.random()-0.5)*0.6, Math.random()*Math.PI, (Math.random()-0.5)*0.6);
+      interiorGroup.add(d);
+    }
+
+    /* Reception: the light fixtures still hanging are the single most
+       photographed detail inside the wreck. */
+    var fixtures = [];
+    for (var lf=0; lf<5; lf++){
+      var zc = WELL_Z + 9 + lf*4.4;
+      var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,1.1,4), metalMat);
+      stem.position.set(0, 9.6, zc); interiorGroup.add(stem);
+      var glass = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 6),
+        new THREE.MeshStandardMaterial({ color:0xd8c9a8, emissive:0x6b5a34, emissiveIntensity:0.5, roughness:0.4 }));
+      glass.position.set(0, 8.9, zc); interiorGroup.add(glass);
+      fixtures.push(glass.position.clone());
+    }
+    interiorGroup.userData.fixtures = fixtures;
+
+    /* Captain's cabin: the bathtub, one of the most recognisable objects
+       down there. */
+    var tub = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.0, 1.4),
+      new THREE.MeshStandardMaterial({ color:0xa8a094, roughness:0.6 }));
+    tub.position.set(9.5, 22.6, WELL_Z+0.5);
+    interiorGroup.add(tub);
+    INTERIOR_SOLIDS.push(wbox(8.2, 21.5, WELL_Z-0.2, 10.8, 23.2, WELL_Z+1.2));
+
+    /* rusticles hanging from every ceiling */
+    var ruC = new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0), new THREE.Vector3(0.2,-0.9,0.1),
+      new THREE.Vector3(-0.1,-1.8,0.2), new THREE.Vector3(0.05,-2.6,0)]);
+    var ruG = new THREE.TubeGeometry(ruC, 4, 0.16, 4, false);
+    var ruM = new THREE.MeshStandardMaterial({ color:0x6b4a2c, roughness:1 });
+    var ruN = LOW_TIER ? 40 : 90;
+    var ruI = new THREE.InstancedMesh(ruG, ruM, ruN);
+    var dm2 = new THREE.Object3D();
+    for (var ri2=0; ri2<ruN; ri2++){
+      var room = ROOMS[(Math.random()*ROOMS.length)|0];
+      var sz = room.box.getSize(new THREE.Vector3());
+      var ct = room.box.getCenter(new THREE.Vector3()).sub(titanicGroup.position);
+      dm2.position.set(ct.x + (Math.random()-0.5)*sz.x*0.8,
+                       ct.y + sz.y*0.5 - 0.3,
+                       ct.z + (Math.random()-0.5)*sz.z*0.8);
+      dm2.rotation.set((Math.random()-0.5)*0.4, Math.random()*Math.PI, (Math.random()-0.5)*0.4);
+      dm2.scale.setScalar(0.5+Math.random()*1.1);
+      dm2.updateMatrix();
+      ruI.setMatrixAt(ri2, dm2.matrix);
+    }
+    interiorGroup.add(ruI);
+
+    /* one shared lamp, moved to whichever fixture is nearest */
+    var lamp = new THREE.PointLight(0xffd9a0, 9, 18, 1.6);
+    lamp.position.set(0, 8.9, WELL_Z+14);
+    interiorGroup.add(lamp);
+    interiorGroup.userData.lamp = lamp;
+
+    /* interior points of interest */
+    ROOMS.forEach(function(r){
+      var c2 = r.box.getCenter(new THREE.Vector3()).sub(titanicGroup.position);
+      var anchor = new THREE.Object3D();
+      anchor.position.copy(c2);
+      interiorGroup.add(anchor);
+      var facts = {
+        'Escadaria Grande':'A cúpula de vidro que cobria esta escadaria desabou durante o naufrágio — é exatamente por esse buraco que os ROVs entram no navio até hoje. A madeira dos degraus foi devorada há décadas.',
+        'Recepção do convés D':'As luminárias que ainda pendem aqui são o detalhe mais fotografado do interior do Titanic.',
+        'Salão de Jantar':'O maior salão a bordo de qualquer navio em 1912: servia 554 passageiros de primeira classe de uma só vez. Hoje as colunas continuam de pé e o teto entre elas veio abaixo.',
+        'Camarote do Capitão':'A banheira do capitão Edward Smith continua reconhecível — um dos objetos mais fotografados do naufrágio.'
+      };
+      POIS.push({ name:r.name, mesh:anchor, radius:3, interior:true, fact:facts[r.name] || '' });
+      addMarkerFor(POIS[POIS.length-1]);
+    });
+  }catch(err){
+    console.warn('interior build failed', err);
+  }
+}
+
+/* interior confinement: portals suspend room clamping, which is what
+   prevents the classic "stuck in the doorway" bug */
+function inAnyPortal(p){
+  for (var i=0;i<PORTALS.length;i++) if (PORTALS[i].containsPoint(p)) return true;
+  return false;
+}
+function roomContaining(p){
+  for (var i=0;i<ROOMS.length;i++) if (ROOMS[i].box.containsPoint(p)) return ROOMS[i];
+  return null;
+}
+function resolveInterior(){
+  var p = camera.position;
+  for (var i=0;i<INTERIOR_SOLIDS.length;i++) pushOutOfBox(INTERIOR_SOLIDS[i]);
+  if (inAnyPortal(p)) return;
+  var room = roomContaining(p);
+  if (!room){ exitWreck(); return; }   // failsafe: never trap the player
+  var b = room.box, r = PLAYER_R;
+  p.x = Math.min(Math.max(p.x, b.min.x+r), b.max.x-r);
+  p.y = Math.min(Math.max(p.y, b.min.y+r), b.max.y-r);
+  p.z = Math.min(Math.max(p.z, b.min.z+r), b.max.z-r);
+}
+
+var wreckBadge = document.getElementById('wreckBadge');
+var wreckRoomEl = document.getElementById('wreckRoom');
+function enterWreck(){
+  if (insideWreck) return;
+  buildInterior();
+  insideWreck = true;
+  interiorGroup.visible = true;
+  snowPoints.visible = false;      // there is no marine snow inside a hull
+  speed = Math.min(speed, 10);
+  if (wreckBadge) wreckBadge.classList.add('show');
+}
+function exitWreck(){
+  if (!insideWreck) return;
+  insideWreck = false;
+  interiorGroup.visible = false;
+  snowPoints.visible = true;
+  if (wreckBadge) wreckBadge.classList.remove('show');
+}
+/* emergency exit: with hand-rolled AABB collision and no automated
+   physics tests, getting stuck is the likeliest failure — this always
+   works, no matter what state the player wedged themselves into */
+var wreckExitBtn = document.getElementById('wreckExit');
+if (wreckExitBtn) wreckExitBtn.addEventListener('click', function(){
+  camera.position.set(titanicGroup.position.x, titanicGroup.position.y + 46,
+                      titanicGroup.position.z + WELL_Z);
+  speed = 0;
+  exitWreck();
+});
+
+function updateWreckState(dt){
+  if (!insideWreck){
+    if (camera.position.distanceTo(titanicGroup.position) < 200) buildInterior();
+    if (interiorBuilt && ENTRY_PORTAL.containsPoint(camera.position)) enterWreck();
+    return;
+  }
+  resolveInterior();
+  var room = roomContaining(camera.position);
+  if (room && wreckRoomEl && wreckRoomEl.textContent !== room.name) wreckRoomEl.textContent = room.name;
+  var lamp = interiorGroup.userData.lamp, fx = interiorGroup.userData.fixtures;
+  if (lamp && fx && fx.length){
+    var best = fx[0], bd = 1e9, lp = camera.position.clone().sub(titanicGroup.position);
+    for (var i=0;i<fx.length;i++){ var d = fx[i].distanceToSquared(lp); if (d<bd){ bd=d; best=fx[i]; } }
+    lamp.position.copy(best);
+  }
+}
 
 /* ============================================================
    FLIGHT CONTROLS — ported from /voo/index.html, same feel
@@ -1565,6 +1844,10 @@ function resolveColliders(){
   for (var j=0;j<COLLIDERS.length;j++){
     var c = COLLIDERS[j];
     if (c.disabled) continue;
+    /* once inside, the room volumes own confinement — leaving the hull
+       shells active as well would have them fight each other and eject
+       the player through a wall */
+    if (insideWreck && c.tag === 'hull') continue;
     if (c.box.distanceToPoint(camera.position) > 40) continue; // broad phase
     pushOutOfBox(c.box);
   }
@@ -1591,12 +1874,15 @@ function updateCamera(dt){
   var vert = 0;
   if (keys['KeyQ']||vertDown) vert -= 1;
   if (keys['KeyE']||vertUp) vert += 1;
-  if (vert) camera.position.addScaledVector(tmpUp, vert*45*dt);
+  if (vert) camera.position.addScaledVector(tmpUp, vert*(insideWreck?9:45)*dt);
 
   if (brakeActive){
     if (speed > 0) speed = Math.max(0, speed - (MAX_SPEED/BRAKE_RAMP_SECONDS)*dt);
     if (Math.abs(speed) < 0.05){ speed = 0; brakeActive = false; }
   }
+
+  /* inside the hull a 160 un/s submarine in a 25 un room is unplayable */
+  if (insideWreck) speed = Math.min(speed, 11);
 
   resolveColliders();
 }
@@ -1745,7 +2031,9 @@ var markerLayer = document.createElement('div');
 markerLayer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:4;';
 document.body.appendChild(markerLayer);
 
-POIS.forEach(function(poi){
+/* extracted so POIs created later (the interior spaces, built lazily on
+   approach) get markers too */
+function addMarkerFor(poi){
   var m = document.createElement('button');
   m.className = 'poi-marker';
   m.setAttribute('aria-label', poi.name);
@@ -1761,17 +2049,24 @@ POIS.forEach(function(poi){
     poiFact.textContent = poi.fact || '';
     poiCard.classList.add('show');
   });
-});
+}
+POIS.forEach(addMarkerFor);
 
 var _wv = new THREE.Vector3();
 function updateMarkers(){
   POIS.forEach(function(poi){
+    /* interior markers must not bleed through the hull, and outside
+       markers must not bleed into the rooms */
+    if (poi.interior !== !!insideWreck && (poi.interior || poi.isCreature)){
+      poi._el.style.display = 'none'; poi._lbl.style.display = 'none';
+      return;
+    }
     poi.mesh.getWorldPosition(_wv);
     var camDist = camera.position.distanceTo(_wv);
     var proj = _wv.clone().project(camera);
     var inFront = proj.z < 1;
-    var maxDist = poi.isCreature ? 200 : 1400; // Titanic must be findable from far away, not just by luck
-    var visible = camDist < maxDist && camDist > (poi.isCreature ? 0 : poi.radius+4);
+    var maxDist = poi.isCreature ? 200 : (poi.interior ? 40 : 1400);
+    var visible = camDist < maxDist && camDist > (poi.isCreature||poi.interior ? 0 : poi.radius+4);
     if (!visible || !inFront || proj.x < -1.05 || proj.x > 1.05 || proj.y < -1.05 || proj.y > 1.05){
       poi._el.style.display = 'none'; poi._lbl.style.display = 'none';
       return;
@@ -1868,8 +2163,11 @@ function updateDepthZone(dt){
      is always what decides — see setHeadlight(). */
   var tgt = headlightOn ? 1 : 0;
   headlightLevel += (tgt - headlightLevel) * (1 - Math.exp(-(REDUCE_MOTION?12:5)*(dt||0.016)));
-  subLight.intensity   = SUB_SPOT_MAX  * headlightLevel;
-  floodLight.intensity = SUB_FLOOD_MAX * headlightLevel;
+  /* indoors everything is within a few metres, so the open-water beam
+     blows the walls out completely — dim it hard once inside the hull */
+  var closeQuarters = insideWreck ? 0.13 : 1;
+  subLight.intensity   = SUB_SPOT_MAX  * headlightLevel * closeQuarters;
+  floodLight.intensity = SUB_FLOOD_MAX * headlightLevel * (insideWreck ? 0.06 : 1);
 
   beamGroup.visible = depth < 250;
 
@@ -2038,8 +2336,9 @@ function animate(){
   else                  updateCamera(dt);
   clampToWorld();
 
+  updateWreckState(dt);
   updateCreatures(t, dt);
-  updateSnow(dt);
+  if (!insideWreck) updateSnow(dt);
   updateDepthZone(dt);
 
   frameCount++;
