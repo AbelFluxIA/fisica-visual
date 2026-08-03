@@ -200,11 +200,13 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
 }
 #wreckBadge.show{display:flex;}
 #wreckBadge .dot{width:7px;height:7px;border-radius:50%;background:var(--gold-bright);}
-#wreckExit{
+#wreckExit,#eraBtn{
   font-family:var(--mono);font-size:10.5px;color:var(--dim);background:transparent;
   border:1px solid var(--line-soft);border-radius:11px;padding:4px 10px;cursor:pointer;
 }
-#wreckExit:hover{color:var(--text);border-color:var(--gold-bright);}
+#wreckExit:hover,#eraBtn:hover{color:var(--text);border-color:var(--gold-bright);}
+#eraBtn.on{color:#052018;background:var(--gold-bright);border-color:var(--gold-bright);font-weight:600;}
+#eraBtn[hidden]{display:none;}
 
 /* ---- descent HUD (caption + depth progress) ---- */
 #descentHud{
@@ -364,6 +366,7 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
 <div id="wreckBadge">
   <span class="dot" aria-hidden="true"></span>
   <span id="wreckRoom">dentro do naufrágio</span>
+  <button id="eraBtn" type="button" hidden>ver como era em 1912</button>
   <button id="wreckExit" type="button">sair</button>
 </div>
 
@@ -1801,6 +1804,11 @@ var PORTALS = [
 ];
 var ENTRY_PORTAL = PORTALS[0];
 var INTERIOR_SOLIDS = [];
+/* everything that only belongs to the ruin, so it can be hidden when the
+   Grand Staircase is shown as it was in 1912 */
+var ruinDecor = [];
+var era1912Group = null;
+var era1912 = false;
 
 function buildInterior(){
   if (interiorBuilt) return;
@@ -1846,10 +1854,10 @@ function buildInterior(){
       var side = (t2%2) ? 1 : -1;
       var land = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.35, 5.5), metalMat);
       land.position.set(side*5.4, 6 + t2*3.6, WELL_Z + (t2%2 ? 2 : -2));
-      interiorGroup.add(land);
+      interiorGroup.add(land); ruinDecor.push(land);
       var rail = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.9, 0.22), metalMat);
       rail.position.set(side*5.4, 6.7 + t2*3.6, WELL_Z + (t2%2 ? 4.6 : -4.6));
-      interiorGroup.add(rail);
+      interiorGroup.add(rail); ruinDecor.push(rail);
     }
 
     /* Dining Saloon: the standing columns are what you actually see in
@@ -1923,6 +1931,8 @@ function buildInterior(){
     }
     interiorGroup.add(ruI);
 
+    buildEra1912();
+
     /* one shared lamp, moved to whichever fixture is nearest */
     var lamp = new THREE.PointLight(0xffd9a0, 9, 18, 1.6);
     lamp.position.set(0, 8.9, WELL_Z+14);
@@ -1946,6 +1956,161 @@ function buildInterior(){
     });
   }catch(err){
     console.warn('interior build failed', err);
+  }
+}
+
+/* ============================================================
+   THE GRAND STAIRCASE IN 1912
+   ------------------------------------------------------------
+   The same volume you're floating in, reconstructed as it was: the
+   wrought-iron and glass dome that is now a hole in the deck, the carved
+   oak balustrade, the panelling, and the clock on the landing — the
+   carved panel called "Honour and Glory Crowning Time". Everything the
+   sea has since eaten.
+
+   This is not a restoration of the wreck; it is the room before the ship
+   sank, shown in the place where the ruin actually is. The toggle exists
+   so the two can be compared standing in the same spot, which says more
+   about 3.800 metres of water and a century of Halomonas titanicae than
+   any caption could.
+   ============================================================ */
+function buildEra1912(){
+  if (era1912Group) return;
+  era1912Group = new THREE.Group();
+  era1912Group.visible = false;
+  interiorGroup.add(era1912Group);
+
+  var oakTex = (function(){
+    var c = document.createElement('canvas'); c.width=c.height=128;
+    var g=c.getContext('2d');
+    g.fillStyle='#7b4a24'; g.fillRect(0,0,128,128);
+    for (var i=0;i<160;i++){
+      g.strokeStyle='rgba('+(120+Math.random()*60|0)+','+(70+Math.random()*40|0)+',30,0.35)';
+      g.lineWidth=0.6+Math.random()*1.4;
+      g.beginPath(); g.moveTo(0,Math.random()*128);
+      g.bezierCurveTo(40,Math.random()*128,90,Math.random()*128,128,Math.random()*128);
+      g.stroke();
+    }
+    var t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(2,2); return t;
+  })();
+  var oak = new THREE.MeshStandardMaterial({ color:0xa9703c, roughness:0.45, map:oakTex });
+  var brass = new THREE.MeshStandardMaterial({ color:0xc9a227, roughness:0.3, metalness:0.75 });
+  var marble = (function(){
+    var c=document.createElement('canvas'); c.width=c.height=128; var g=c.getContext('2d');
+    // the black-and-white tiled floor of the entrance hall
+    for (var y=0;y<8;y++) for (var x=0;x<8;x++){
+      g.fillStyle = ((x+y)%2) ? '#e8e2d4' : '#2a2622';
+      g.fillRect(x*16,y*16,16,16);
+    }
+    var t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(3,3);
+    return new THREE.MeshStandardMaterial({ map:t, roughness:0.25, metalness:0.05 });
+  })();
+
+  var baseY = 4.2, zc = WELL_Z;
+
+  var floor = new THREE.Mesh(new THREE.PlaneGeometry(18, 16), marble);
+  floor.rotation.x = -Math.PI/2; floor.position.set(0, baseY, zc);
+  era1912Group.add(floor);
+
+  /* panelled walls */
+  [[0,-8],[0,8]].forEach(function(p){
+    var w = new THREE.Mesh(new THREE.PlaneGeometry(18, 20), oak);
+    w.position.set(p[0], baseY+10, zc+p[1]);
+    if (p[1] > 0) w.rotation.y = Math.PI;
+    era1912Group.add(w);
+  });
+  [[-9,0],[9,0]].forEach(function(p){
+    var w2 = new THREE.Mesh(new THREE.PlaneGeometry(16, 20), oak);
+    w2.position.set(p[0], baseY+10, zc);
+    w2.rotation.y = p[0] < 0 ? Math.PI/2 : -Math.PI/2;
+    era1912Group.add(w2);
+  });
+
+  /* the staircase: a broad flight up to a landing, then two side flights */
+  var STEPS = 14;
+  for (var s=0;s<STEPS;s++){
+    var step = new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.28, 0.62), oak);
+    step.position.set(0, baseY + 0.28 + s*0.42, zc - 3.2 + s*0.42);
+    era1912Group.add(step);
+  }
+  var landing = new THREE.Mesh(new THREE.BoxGeometry(11, 0.35, 4.2), oak);
+  landing.position.set(0, baseY + 0.28 + STEPS*0.42, zc + 4.4);
+  era1912Group.add(landing);
+
+  /* balustrade: newel posts and turned balusters down both sides */
+  for (var b2=0;b2<STEPS;b2+=1){
+    [-1,1].forEach(function(sd){
+      var bal = new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.10,0.95,6), oak);
+      bal.position.set(sd*3.9, baseY + 0.85 + b2*0.42, zc - 3.2 + b2*0.42);
+      era1912Group.add(bal);
+    });
+  }
+  [-1,1].forEach(function(sd){
+    var handrail = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.16, 9.2), oak);
+    handrail.position.set(sd*3.9, baseY + 2.6, zc + 0.6);
+    handrail.rotation.x = -Math.atan2(STEPS*0.42, STEPS*0.42);
+    era1912Group.add(handrail);
+    var newel = new THREE.Mesh(new THREE.CylinderGeometry(0.20,0.24,1.9,8), oak);
+    newel.position.set(sd*3.9, baseY + 0.95, zc - 3.4);
+    era1912Group.add(newel);
+    /* the cherub lamp that stood on the newel post at the foot */
+    var cherub = new THREE.Mesh(new THREE.SphereGeometry(0.26, 8, 6), brass);
+    cherub.position.set(sd*3.9, baseY + 2.1, zc - 3.4);
+    era1912Group.add(cherub);
+    var globe = new THREE.Mesh(new THREE.SphereGeometry(0.20, 8, 6),
+      new THREE.MeshStandardMaterial({ color:0xfff0c8, emissive:0xffd489, emissiveIntensity:1.5 }));
+    globe.position.set(sd*3.9, baseY + 2.55, zc - 3.4);
+    era1912Group.add(globe);
+  });
+
+  /* "Honour and Glory Crowning Time" — the carved clock panel on the
+     landing, the most famous fitting on the ship */
+  var panel = new THREE.Mesh(new THREE.BoxGeometry(4.2, 3.4, 0.3), oak);
+  panel.position.set(0, baseY + 8.2, zc + 6.3);
+  era1912Group.add(panel);
+  var clockFace = new THREE.Mesh(new THREE.CircleGeometry(0.85, 20),
+    new THREE.MeshStandardMaterial({ color:0xf3ead6, roughness:0.4 }));
+  clockFace.position.set(0, baseY + 8.6, zc + 6.14);
+  clockFace.rotation.y = Math.PI;
+  era1912Group.add(clockFace);
+  var hand = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.62, 0.04), new THREE.MeshStandardMaterial({ color:0x1a1a1a }));
+  hand.position.set(0, baseY + 8.85, zc + 6.10); era1912Group.add(hand);
+  var hand2 = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.05, 0.04), new THREE.MeshStandardMaterial({ color:0x1a1a1a }));
+  hand2.position.set(-0.16, baseY + 8.6, zc + 6.10); era1912Group.add(hand2);
+
+  /* the wrought-iron and glass dome — the very thing whose collapse left
+     the opening the player came in through */
+  var domeGlass = new THREE.Mesh(new THREE.SphereGeometry(6.6, 20, 12, 0, Math.PI*2, 0, Math.PI/2),
+    new THREE.MeshStandardMaterial({ color:0xdfeaf2, roughness:0.08, metalness:0.0,
+      transparent:true, opacity:0.30, side:THREE.DoubleSide }));
+  domeGlass.position.set(0, baseY + 19.5, zc);
+  era1912Group.add(domeGlass);
+  for (var ri3=0; ri3<12; ri3++){
+    var a3 = ri3/12*Math.PI*2;
+    var ribCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(Math.cos(a3)*6.6, baseY+19.5, zc+Math.sin(a3)*6.6),
+      new THREE.Vector3(Math.cos(a3)*4.7, baseY+23.2, zc+Math.sin(a3)*4.7),
+      new THREE.Vector3(0, baseY+26.1, zc)
+    ]);
+    era1912Group.add(new THREE.Mesh(new THREE.TubeGeometry(ribCurve, 8, 0.09, 4, false), brass));
+  }
+  /* daylight pouring through the dome — the thing this room has not had
+     since 1912 */
+  var domeLight = new THREE.PointLight(0xffeccc, 300, 46, 1.6);
+  domeLight.position.set(0, baseY + 17, zc);
+  era1912Group.add(domeLight);
+  var warm = new THREE.PointLight(0xffd9a0, 90, 30, 1.6);
+  warm.position.set(0, baseY + 5, zc);
+  era1912Group.add(warm);
+
+  /* wall sconces down both sides */
+  for (var sc2=0; sc2<6; sc2++){
+    [-1,1].forEach(function(sd4){
+      var lampG = new THREE.Mesh(new THREE.SphereGeometry(0.22, 7, 5),
+        new THREE.MeshStandardMaterial({ color:0xfff2d0, emissive:0xffcf87, emissiveIntensity:1.6 }));
+      lampG.position.set(sd4*8.4, baseY + 3.4 + sc2*2.6, zc - 5 + (sc2%3)*4);
+      era1912Group.add(lampG);
+    });
   }
 }
 
@@ -1992,6 +2157,22 @@ function exitWreck(){
 /* emergency exit: with hand-rolled AABB collision and no automated
    physics tests, getting stuck is the likeliest failure — this always
    works, no matter what state the player wedged themselves into */
+/* 1912 / today toggle — only offered inside the Grand Staircase, because
+   that is the one space reconstructed */
+var eraBtn = document.getElementById('eraBtn');
+function setEra(on){
+  era1912 = on;
+  if (era1912Group) era1912Group.visible = on;
+  for (var i=0;i<ruinDecor.length;i++) ruinDecor[i].visible = !on;
+  if (interiorGroup.userData.ruinExtras)
+    interiorGroup.userData.ruinExtras.forEach(function(o){ o.visible = !on; });
+  if (eraBtn){
+    eraBtn.textContent = on ? 'ver como está hoje' : 'ver como era em 1912';
+    eraBtn.classList.toggle('on', on);
+  }
+}
+if (eraBtn) eraBtn.addEventListener('click', function(){ setEra(!era1912); });
+
 var wreckExitBtn = document.getElementById('wreckExit');
 if (wreckExitBtn) wreckExitBtn.addEventListener('click', function(){
   camera.position.set(titanicGroup.position.x, titanicGroup.position.y + 46,
@@ -2009,6 +2190,11 @@ function updateWreckState(dt){
   resolveInterior();
   var room = roomContaining(camera.position);
   if (room && wreckRoomEl && wreckRoomEl.textContent !== room.name) wreckRoomEl.textContent = room.name;
+  /* the reconstruction only covers the Grand Staircase, so the toggle is
+     only offered there — and leaving the room drops you back to the ruin */
+  var inStair = room && room.name === 'Escadaria Grande';
+  if (eraBtn) eraBtn.hidden = !inStair;
+  if (!inStair && era1912) setEra(false);
   var lamp = interiorGroup.userData.lamp, fx = interiorGroup.userData.fixtures;
   if (lamp && fx && fx.length){
     var best = fx[0], bd = 1e9, lp = camera.position.clone().sub(titanicGroup.position);
