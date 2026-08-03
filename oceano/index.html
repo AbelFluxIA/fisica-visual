@@ -112,6 +112,13 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
   position:absolute;top:8px;right:10px;background:none;border:none;color:var(--dim);
   cursor:pointer;font-family:var(--mono);font-size:14px;
 }
+#poiGo{
+  margin-top:12px;font-family:var(--mono);font-size:12px;font-weight:600;
+  color:#052018;background:var(--gold-bright);border:none;border-radius:14px;
+  padding:9px 16px;cursor:pointer;
+}
+#poiGo:hover{filter:brightness(1.08);}
+#poiGo[hidden]{display:none;}
 
 #dock{
   position:fixed;left:50%;bottom:16px;transform:translateX(-50%);
@@ -325,6 +332,7 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
   <button class="close" id="poiClose">✕</button>
   <div class="nm" id="poiName"></div>
   <div class="fact" id="poiFact"></div>
+  <button id="poiGo" type="button">ir até lá →</button>
 </div>
 
 <div id="dock">WASD move · mouse olha · scroll acelera · Q/E sobe/desce · F farol</div>
@@ -1382,7 +1390,7 @@ titanicGroup.add(titanicBow);
        down in the sinking. It has to be findable: a coaming around the
        opening catches the headlight, and the void inside is genuinely
        black so it reads as a hole rather than a painted rectangle. */
-    var wellZ = zF-61, WELL_W = 11, WELL_L = 9;
+    var wellZ = zF-61, WELL_W = 17, WELL_L = 15;
     var coamMat = new THREE.MeshStandardMaterial({ color:0x8a6b4a, roughness:0.9, map:rustTex });
     [[-WELL_W/2,0],[WELL_W/2,0],[0,-WELL_L/2],[0,WELL_L/2]].forEach(function(p,i){
       var horiz = i < 2;
@@ -1568,7 +1576,7 @@ CREATURES.forEach(function(c){
      wreck since the glass dome collapsed. The two main-body boxes stop
      short of the well on either side, leaving the slot genuinely open;
      get this wrong by even a couple of units and the entrance is sealed. */
-  var aftEnd = wz-5, fwdStart = wz+5;
+  var aftEnd = wz-9, fwdStart = wz+9;
   box(0, 13, (zF-139+aftEnd)/2, BEAM,     27, aftEnd-(zF-139)); // aft of the well
   box(0, 13, (fwdStart+zF-24)/2, BEAM,    27, (zF-24)-fwdStart); // forward of the well
   box(0, 13, zF-16,  BEAM*0.7, 27, 22);
@@ -1607,17 +1615,23 @@ function wbox(x0,y0,z0, x1,y1,z1){
 }
 
 var WELL_Z = ZF-61;
+/* Rooms are generous on purpose. The first pass used tight, literal
+   dimensions and the result felt like crawling through cardboard boxes —
+   a submersible needs room to turn, and the ship should feel big. These
+   keep the real proportions (the Dining Saloon was the widest space
+   afloat in 1912, spanning nearly the full beam) but with headroom to
+   actually fly in. */
 var ROOMS = [
-  { name:'Escadaria Grande',   box: wbox(-5.5,  3.5, WELL_Z-4.5,  5.5, 27.5, WELL_Z+4.5) },
-  { name:'Recepção do convés D', box: wbox(-5.5, 3.5, WELL_Z+4.5,  5.5, 10.5, WELL_Z+31) },
-  { name:'Salão de Jantar',    box: wbox(-11.5, 3.5, WELL_Z+31,  11.5, 11.5, WELL_Z+56) },
-  { name:'Camarote do Capitão',box: wbox( 5.0, 21.5, WELL_Z-3.5, 13.5, 27.5, WELL_Z+4.0) }
+  { name:'Escadaria Grande',     box: wbox(-9.5,  3.0, WELL_Z-8.5,  9.5, 28.0, WELL_Z+8.5) },
+  { name:'Recepção do convés D', box: wbox(-8.5,  3.0, WELL_Z+8.5,  8.5, 13.0, WELL_Z+40) },
+  { name:'Salão de Jantar',      box: wbox(-13.5, 3.0, WELL_Z+40,  13.5, 14.0, WELL_Z+76) },
+  { name:'Camarote do Capitão',  box: wbox(  8.0, 20.5, WELL_Z-6.0, 18.0, 28.0, WELL_Z+6.0) }
 ];
 var PORTALS = [
-  wbox(-5.5, 24.5, WELL_Z-4.5,  5.5, 30.5, WELL_Z+4.5), // deck opening (entry)
-  wbox(-5.5,  3.5, WELL_Z+2.5,  5.5, 10.5, WELL_Z+7.5), // well -> reception
-  wbox(-5.5,  3.5, WELL_Z+28,   5.5, 10.5, WELL_Z+34),  // reception -> saloon
-  wbox( 4.0, 21.5, WELL_Z-2.0,  6.5, 27.5, WELL_Z+3.0)  // well -> cabin
+  wbox(-9.5, 25.0, WELL_Z-8.5,  9.5, 31.0, WELL_Z+8.5), // deck opening (entry)
+  wbox(-8.5,  3.0, WELL_Z+5.5,  8.5, 13.0, WELL_Z+12),  // well -> reception
+  wbox(-8.5,  3.0, WELL_Z+36,   8.5, 13.0, WELL_Z+44),  // reception -> saloon
+  wbox( 6.5, 20.5, WELL_Z-5.0, 10.0, 28.0, WELL_Z+5.0)  // well -> cabin
 ];
 var ENTRY_PORTAL = PORTALS[0];
 var INTERIOR_SOLIDS = [];
@@ -1658,28 +1672,41 @@ function buildInterior(){
 
     /* Grand Staircase: the balustrade spiral survives in fragments; the
        oak treads themselves are long gone, eaten away. */
-    for (var t2=0;t2<5;t2++){
-      var land = new THREE.Mesh(new THREE.BoxGeometry(7.5, 0.4, 2.2), metalMat);
-      land.position.set(0, 6 + t2*4.6, WELL_Z - 2 + (t2%2)*3.4);
+    /* Landings hug the walls instead of blocking the middle of the shaft,
+       and they are NOT collidable. A slab across a vertical well you drop
+       into is exactly how a player gets wedged — and being stuck is far
+       worse than passing through a handrail. */
+    for (var t2=0;t2<6;t2++){
+      var side = (t2%2) ? 1 : -1;
+      var land = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.35, 5.5), metalMat);
+      land.position.set(side*5.4, 6 + t2*3.6, WELL_Z + (t2%2 ? 2 : -2));
       interiorGroup.add(land);
-      INTERIOR_SOLIDS.push(wbox(-3.75, 6+t2*4.6-0.3, WELL_Z-3.2+(t2%2)*3.4,
-                                 3.75, 6+t2*4.6+0.3, WELL_Z-0.8+(t2%2)*3.4));
+      var rail = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.9, 0.22), metalMat);
+      rail.position.set(side*5.4, 6.7 + t2*3.6, WELL_Z + (t2%2 ? 4.6 : -4.6));
+      interiorGroup.add(rail);
     }
 
     /* Dining Saloon: the standing columns are what you actually see in
        footage — the ceiling between them has come down. */
-    for (var col=0; col<8; col++){
-      var cx = (col%2 ? 1 : -1) * 7.2;
-      var cz = WELL_Z + 36 + Math.floor(col/2)*6.2;
-      var pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.62, 7.4, 8), metalMat);
-      pillar.position.set(cx, 7.2, cz);
+    for (var col=0; col<10; col++){
+      var cx = (col%2 ? 1 : -1) * 9.4;
+      var cz = WELL_Z + 45 + Math.floor(col/2)*6.4;
+      var pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.62, 10.4, 8), metalMat);
+      pillar.position.set(cx, 8.2, cz);
       interiorGroup.add(pillar);
-      INTERIOR_SOLIDS.push(wbox(cx-0.8, 3.5, cz-0.8, cx+0.8, 11.0, cz+0.8));
+      INTERIOR_SOLIDS.push(wbox(cx-0.8, 3.0, cz-0.8, cx+0.8, 13.5, cz+0.8));
+    }
+    /* long dining tables, still in rows in the silt */
+    for (var tb=0; tb<6; tb++){
+      var tbl = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 5.5), metalMat);
+      tbl.position.set((tb%2?1:-1)*4.6, 3.9, WELL_Z + 46 + Math.floor(tb/2)*8);
+      tbl.rotation.y = (Math.random()-0.5)*0.3;
+      interiorGroup.add(tbl);
     }
     /* collapsed ceiling debris */
-    for (var db=0; db<14; db++){
+    for (var db=0; db<16; db++){
       var d = new THREE.Mesh(new THREE.BoxGeometry(1+Math.random()*3, 0.35, 1+Math.random()*2.6), metalMat);
-      d.position.set((Math.random()-0.5)*19, 4.1, WELL_Z+33+Math.random()*21);
+      d.position.set((Math.random()-0.5)*23, 3.6, WELL_Z+42+Math.random()*32);
       d.rotation.set((Math.random()-0.5)*0.6, Math.random()*Math.PI, (Math.random()-0.5)*0.6);
       interiorGroup.add(d);
     }
@@ -1687,13 +1714,13 @@ function buildInterior(){
     /* Reception: the light fixtures still hanging are the single most
        photographed detail inside the wreck. */
     var fixtures = [];
-    for (var lf=0; lf<5; lf++){
-      var zc = WELL_Z + 9 + lf*4.4;
+    for (var lf=0; lf<7; lf++){
+      var zc = WELL_Z + 12 + lf*4.2;
       var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,1.1,4), metalMat);
-      stem.position.set(0, 9.6, zc); interiorGroup.add(stem);
+      stem.position.set(0, 12.2, zc); interiorGroup.add(stem);
       var glass = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 6),
         new THREE.MeshStandardMaterial({ color:0xd8c9a8, emissive:0x6b5a34, emissiveIntensity:0.5, roughness:0.4 }));
-      glass.position.set(0, 8.9, zc); interiorGroup.add(glass);
+      glass.position.set(0, 11.5, zc); interiorGroup.add(glass);
       fixtures.push(glass.position.clone());
     }
     interiorGroup.userData.fixtures = fixtures;
@@ -1702,9 +1729,11 @@ function buildInterior(){
        down there. */
     var tub = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.0, 1.4),
       new THREE.MeshStandardMaterial({ color:0xa8a094, roughness:0.6 }));
-    tub.position.set(9.5, 22.6, WELL_Z+0.5);
+    tub.position.set(14.5, 21.4, WELL_Z+1.5);
     interiorGroup.add(tub);
-    INTERIOR_SOLIDS.push(wbox(8.2, 21.5, WELL_Z-0.2, 10.8, 23.2, WELL_Z+1.2));
+    var bunk = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.5, 4.2), metalMat);
+    bunk.position.set(10.5, 21.2, WELL_Z-2.5);
+    interiorGroup.add(bunk);
 
     /* rusticles hanging from every ceiling */
     var ruC = new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0), new THREE.Vector3(0.2,-0.9,0.1),
@@ -1998,8 +2027,17 @@ function updateCamera(dt){
     if (Math.abs(speed) < 0.05){ speed = 0; brakeActive = false; }
   }
 
-  /* inside the hull a 160 un/s submarine in a 25 un room is unplayable */
-  if (insideWreck) speed = Math.min(speed, 11);
+  /* Speed limits are what actually convey scale. At 160 un/s you cross a
+     143-metre ship in under a second and it reads as a toy; slowing down
+     as you close in makes the same geometry feel enormous — the way real
+     ROV footage does. Inside, a 160 un/s submarine in a 25 un room is
+     simply unplayable. */
+  if (insideWreck){
+    speed = Math.min(speed, 11);
+  } else {
+    var dWreck = camera.position.distanceTo(titanicGroup.position);
+    if (dWreck < 320) speed = Math.min(speed, 16 + (dWreck/320)*80);
+  }
 
   resolveColliders();
 }
@@ -2162,12 +2200,45 @@ function addMarkerFor(poi){
   markerLayer.appendChild(lbl);
   poi._el = m; poi._lbl = lbl;
   m.addEventListener('click', function(){
+    activePoi = poi;
     poiName.textContent = poi.name;
     poiFact.textContent = poi.fact || '';
+    poiGoBtn.hidden = false;
+    poiGoBtn.textContent = (poi.isEntry || (poi.interior && !insideWreck))
+      ? 'entrar no naufrágio →' : 'ir até lá →';
     poiCard.classList.add('show');
   });
 }
 POIS.forEach(addMarkerFor);
+
+/* "ir até lá" — clicking a point used to only print a paragraph, which
+   left the player reading about a place with no way to actually reach it.
+   Now every marker can fly you there, and points inside the hull route
+   through the entrance first if you're still outside. */
+var activePoi = null;
+var poiGoBtn = document.getElementById('poiGo');
+function flyToPoi(poi){
+  if (!poi || !poi.mesh) return;
+  var interiorTarget = !!poi.interior;
+  if (interiorTarget && !insideWreck){
+    // get inside first, then continue to the room the player asked for
+    goToEntry(function(){ flyToPoi(poi); });
+    return;
+  }
+  var d = interiorTarget ? 7 : (poi.isCreature ? 9 : (poi.isEntry ? 30 : poi.orbitDist || 96));
+  travelToPoi(poi, null, {
+    dist: d, k: 1.0,
+    maxSpeed: interiorTarget ? 12 : (poi.isCreature ? 45 : 70),
+    arriveAt: interiorTarget ? 1.5 : 2.5,
+    noOrbit: true,
+    dir: poi.isEntry ? new THREE.Vector3(0,1,0) : null,
+    lookMode: 'target'
+  });
+}
+if (poiGoBtn) poiGoBtn.addEventListener('click', function(){
+  poiCard.classList.remove('show');
+  flyToPoi(activePoi);
+});
 
 var _wv = new THREE.Vector3();
 function updateMarkers(){
@@ -2326,12 +2397,12 @@ document.getElementById('revealClose').addEventListener('click', function(){
    falls past the ship. The second leg lowers you through the well itself,
    so entering never depends on the player threading an 11-metre hole by
    hand in the dark. */
-function goToEntry(){
+function goToEntry(then){
   var entry = POIS.filter(function(p){ return p.isEntry; })[0];
   if (!entry) return;
   travelToPoi(entry, function(){
     var w = entryAnchor.getWorldPosition(new THREE.Vector3());
-    travelToPoint(new THREE.Vector3(w.x, w.y - 24, w.z), null,
+    travelToPoint(new THREE.Vector3(w.x, w.y - 26, w.z), then || null,
       { k:0.9, maxSpeed:12, arriveAt:2, lookMode:'free' });
   }, { dir: new THREE.Vector3(0, 1, 0), dist: 30, k: 1.0, maxSpeed: 45,
        arriveAt: 2.5, noOrbit: true, lookMode: 'target' });
