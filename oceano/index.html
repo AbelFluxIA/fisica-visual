@@ -156,9 +156,9 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
 #hudBtns button svg{width:17px;height:17px;}
 #hudBtns button:hover{color:var(--gold-bright);border-color:rgba(232,194,126,0.45);}
 #hudBtns button:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
-#farolBtn .off-slash{display:none;}
-#farolBtn:not(.on) .off-slash{display:block;}
-#farolBtn.on{color:var(--gold-bright);border-color:rgba(232,194,126,0.5);}
+#hudBtns .off-slash{display:none;}
+#hudBtns button:not(.on) .off-slash{display:block;}
+#hudBtns button.on{color:var(--gold-bright);border-color:rgba(232,194,126,0.5);}
 
 /* ---- descent button: the direct answer to "não achei o titanic" ---- */
 #descentBtn{
@@ -342,6 +342,13 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
       <path class="off-slash" d="M3 3l14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
   </button>
+  <button id="somBtn" type="button" aria-pressed="false" aria-label="Som ambiente: desligado. Toque para ativar.">
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M3 8v4h3.2L11 15.5v-11L6.2 8H3z" fill="currentColor" stroke="none"/>
+      <path d="M13.2 7.2a4 4 0 0 1 0 5.6M15.3 5.1a7 7 0 0 1 0 9.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      <path class="off-slash" d="M3 3l14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
 </div>
 
 <div id="porthole" aria-hidden="true"></div>
@@ -372,7 +379,7 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
 <div id="revealBanner" role="status">
   <h2>Você chegou ao Titanic.</h2>
   <p>3.800 metros abaixo da superfície — pressão de quase 380 atmosferas, o suficiente para esmagar a maior parte dos objetos feitos para a superfície. Aqui não chega nenhum fóton de luz solar desde 1912. O naufrágio só foi encontrado em 1985, décadas depois de pararem de procurar.</p>
-  <button id="revealClose">continuar</button>
+  <button id="revealClose">entrar no naufrágio →</button>
 </div>
 
 <div id="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
@@ -610,19 +617,65 @@ function updateSnow(dt){
 }
 
 /* ============================================================
-   SUNBEAMS — near the surface only, simple additive planes
+   SUNBEAMS (godrays)
+   ------------------------------------------------------------
+   The first attempt laid these flat (rotation.x = PI/2) and then spun
+   them, so they read as hard diagonal bars slashing across the screen
+   rather than light coming down through the surface. Rebuilt as tall,
+   near-vertical shafts with a gradient that fades at both ends and a
+   soft edge, drawn additively — light has no hard border. They also
+   fade out with depth instead of switching off at a threshold.
    ============================================================ */
+var beamTex = (function(){
+  var c = document.createElement('canvas'); c.width = 32; c.height = 256;
+  var g = c.getContext('2d');
+  // vertical fade: brightest just under the surface, gone by the bottom
+  var vg = g.createLinearGradient(0,0,0,256);
+  vg.addColorStop(0,   'rgba(255,255,255,0)');
+  vg.addColorStop(0.12,'rgba(255,255,255,0.85)');
+  vg.addColorStop(0.55,'rgba(255,255,255,0.28)');
+  vg.addColorStop(1,   'rgba(255,255,255,0)');
+  g.fillStyle = vg; g.fillRect(0,0,32,256);
+  // horizontal soft edge so the shaft has no visible border
+  var hg = g.createLinearGradient(0,0,32,0);
+  hg.addColorStop(0,   'rgba(0,0,0,1)');
+  hg.addColorStop(0.5, 'rgba(0,0,0,0)');
+  hg.addColorStop(1,   'rgba(0,0,0,1)');
+  g.globalCompositeOperation = 'destination-out';
+  g.fillStyle = hg; g.fillRect(0,0,32,256);
+  return new THREE.CanvasTexture(c);
+})();
 var beamGroup = new THREE.Group();
-for (var b=0;b<6;b++){
-  var beamGeo = new THREE.PlaneGeometry(6, 220);
-  var beamMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.06, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide });
+var BEAM_N = LOW_TIER ? 7 : 12;
+for (var b=0;b<BEAM_N;b++){
+  var bw = 7 + Math.random()*13;
+  var beamGeo = new THREE.PlaneGeometry(bw, 300);
+  var beamMat = new THREE.MeshBasicMaterial({ map:beamTex, transparent:true, opacity:0.13,
+    blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide });
   var beamMesh = new THREE.Mesh(beamGeo, beamMat);
-  beamMesh.position.set((Math.random()-0.5)*160, -100, (Math.random()-0.5)*160);
-  beamMesh.rotation.x = Math.PI/2;
-  beamMesh.rotation.z = Math.random()*Math.PI;
+  beamMesh.position.set((Math.random()-0.5)*230, -120, (Math.random()-0.5)*230);
+  beamMesh.rotation.y = Math.random()*Math.PI;   // spin about the vertical only
+  beamMesh.rotation.z = (Math.random()-0.5)*0.16; // a slight lean, like refracted light
   beamGroup.add(beamMesh);
 }
 scene.add(beamGroup);
+
+/* keep the shafts around the player and always edge-on-ish to the camera,
+   so they never present as flat slabs */
+function updateBeams(){
+  var depth = Math.max(0, -camera.position.y);
+  var vis = depth < 320;
+  beamGroup.visible = vis;
+  if (!vis) return;
+  for (var i=0;i<beamGroup.children.length;i++){
+    var m = beamGroup.children[i];
+    if (m.position.distanceToSquared(camera.position) > 300*300){
+      m.position.set(camera.position.x + (Math.random()-0.5)*240, -120,
+                     camera.position.z + (Math.random()-0.5)*240);
+    }
+    m.material.opacity = 0.13 * (1 - smoothstep(60, 320, depth));
+  }
+}
 
 /* ============================================================
    MARINE LIFE
@@ -1033,6 +1086,7 @@ CREATURE_DEFS.forEach(function(def){
 
 /* ---- per-frame life ---- */
 var CULL_R2 = 260*260;
+var RESPAWN_R2 = 300*300;
 var _cv = new THREE.Vector3();
 var glowTimer = 0;
 
@@ -1043,6 +1097,24 @@ function updateCreatures(t, dt){
     var o = CREATURES[c];
     if (o.isSchool) continue;
     var d2 = o.mesh.position.distanceToSquared(camera.position);
+    /* Keep life around the player. Creatures used to spawn once in a fixed
+       patch of ocean, so flying anywhere meant an empty sea for the rest
+       of the dive. Now anything left far behind is recycled ahead of the
+       camera, inside its own real depth band — so there is always
+       something alive nearby, but a species never appears at a depth it
+       doesn't actually live at. */
+    if (d2 > RESPAWN_R2 && Math.abs(-camera.position.y - (-o.baseY)) < 12000){
+      var band = o.def.depthRange;
+      var camDepth = Math.max(0, -camera.position.y);
+      if (camDepth >= band[0]-260 && camDepth <= band[1]+260){
+        var ang = Math.random()*Math.PI*2;
+        var rad = 45 + Math.random()*70;
+        var ny = -Math.max(band[0], Math.min(band[1], camDepth + (Math.random()-0.5)*90));
+        o.mesh.position.set(camera.position.x + Math.cos(ang)*rad, ny, camera.position.z + Math.sin(ang)*rad);
+        o.baseY = ny;
+        d2 = o.mesh.position.distanceToSquared(camera.position);
+      }
+    }
     o.mesh.visible = d2 < CULL_R2;
     if (!o.mesh.visible) continue;
 
@@ -1083,12 +1155,21 @@ function updateCreatures(t, dt){
   /* schools drift as a body */
   for (var s2=0;s2<SCHOOLS.length;s2++){
     var sc = SCHOOLS[s2];
+    /* schools get recycled toward the player too, same depth-band rule */
+    if (sc.centre.distanceToSquared(camera.position) > RESPAWN_R2){
+      var b2 = sc.def.depthRange, cd2 = Math.max(0, -camera.position.y);
+      if (cd2 >= b2[0]-260 && cd2 <= b2[1]+260){
+        var a2 = Math.random()*Math.PI*2, r2 = 60 + Math.random()*70;
+        sc.centre.set(camera.position.x + Math.cos(a2)*r2,
+                      -Math.max(b2[0], Math.min(b2[1], cd2 + (Math.random()-0.5)*70)),
+                      camera.position.z + Math.sin(a2)*r2);
+      }
+    }
     if (sc.centre.distanceToSquared(camera.position) > CULL_R2*2){ sc.mesh.visible = false; continue; }
     sc.mesh.visible = true;
     sc.heading += (Math.random()-0.5)*0.35*dt;
     sc.centre.x += Math.sin(sc.heading)*2.2*dt;
     sc.centre.z += Math.cos(sc.heading)*2.2*dt;
-    sc.centre.y = sc.mesh.position.y || sc.centre.y;
     for (var m=0;m<sc.members.length;m++){
       var mem = sc.members[m];
       mem.off.x += (Math.random()-0.5)*0.5*dt;
@@ -1296,8 +1377,24 @@ titanicGroup.add(titanicBow);
     var zF = BOW_LEN*0.5;
     deckPanel(zF-118, zF-64, 26);   // aft of the staircase
     deckPanel(zF-58,  zF-8,  25);   // forward of the staircase, to forecastle
-    // the staircase well itself, left open between the two panels
+    /* The Grand Staircase well — the way in. This is the real ROV entry
+       point, because the wrought-iron and glass dome that covered it came
+       down in the sinking. It has to be findable: a coaming around the
+       opening catches the headlight, and the void inside is genuinely
+       black so it reads as a hole rather than a painted rectangle. */
     var wellZ = zF-61, WELL_W = 11, WELL_L = 9;
+    var coamMat = new THREE.MeshStandardMaterial({ color:0x8a6b4a, roughness:0.9, map:rustTex });
+    [[-WELL_W/2,0],[WELL_W/2,0],[0,-WELL_L/2],[0,WELL_L/2]].forEach(function(p,i){
+      var horiz = i < 2;
+      var bar = new THREE.Mesh(new THREE.BoxGeometry(horiz?0.9:WELL_W+1.6, 1.5, horiz?WELL_L+1.6:0.9), coamMat);
+      bar.position.set(p[0], 27.2, wellZ + p[1]);
+      titanicBow.add(bar);
+    });
+    var voidPlane = new THREE.Mesh(new THREE.PlaneGeometry(WELL_W, WELL_L),
+      new THREE.MeshBasicMaterial({ color:0x000000 }));
+    voidPlane.rotation.x = -Math.PI/2;
+    voidPlane.position.set(0, 26.2, wellZ);
+    titanicBow.add(voidPlane);
 
     /* forecastle: raised deck over the first ~18% of her length */
     var fc = new THREE.Mesh(new THREE.BoxGeometry(21, 2.2, 24), deckMat);
@@ -1369,12 +1466,23 @@ titanicGroup.add(titanicBow);
     house.position.set(0, 29.4, zF-47);
     titanicBow.add(house);
 
-    /* torn plating flaring out where she broke apart */
-    for (var tp=0; tp<9; tp++){
-      var plate = new THREE.Mesh(new THREE.PlaneGeometry(3+Math.random()*6, 4+Math.random()*7),
-                    new THREE.MeshStandardMaterial({ color:0x6a5238, roughness:1, side:THREE.DoubleSide, map:rustTex }));
-      plate.position.set((Math.random()-0.5)*24, 4+Math.random()*20, -BOW_LEN*0.5 + Math.random()*7);
-      plate.rotation.set(Math.random()*1.4-0.7, Math.random()*Math.PI, Math.random()*1.2-0.6);
+    /* Torn plating at the break. The first version was nine big flat
+       rectangles at random angles, which read as sheets of paper floating
+       in the water rather than steel peeled off a hull. These are small,
+       bent (a curved segment, not a flat quad), clustered tightly right at
+       the break, and anchored to the hull edge instead of drifting free. */
+    var plateMat = new THREE.MeshStandardMaterial({ color:0x6a5238, roughness:1, side:THREE.DoubleSide, map:rustTex });
+    for (var tp=0; tp<14; tp++){
+      var pw = 1.6+Math.random()*3.4, ph = 2.2+Math.random()*4;
+      // a shallow cylindrical segment gives the "peeled back" curl
+      var pg = new THREE.CylinderGeometry(pw, pw, ph, 5, 1, true, 0, 0.7+Math.random()*0.6);
+      var plate = new THREE.Mesh(pg, plateMat);
+      var ang3 = Math.random()*Math.PI*2;
+      var st3 = lerpStation(0.985);
+      plate.position.set(Math.cos(ang3)*st3.hb*(0.75+Math.random()*0.3),
+                         2 + Math.random()*22,
+                         -BOW_LEN*0.5 + 0.5 + Math.random()*3.5);
+      plate.rotation.set(Math.PI/2 + (Math.random()-0.5)*0.5, ang3, (Math.random()-0.5)*0.6);
       titanicBow.add(plate);
     }
 
@@ -1427,10 +1535,19 @@ titanicGroup.add(titanicBow);
 })();
 scene.add(titanicGroup);
 
+/* an anchor object sitting exactly over the staircase opening, so the
+   entrance gets its own marker and can be travelled to directly — without
+   it, finding a 11x9 hole on a 143m deck at 3800m is pure luck */
+var entryAnchor = new THREE.Object3D();
+entryAnchor.position.set(0, 34, BOW_LEN*0.5 - 61);
+titanicBow.add(entryAnchor);
+
 var POIS = [
   { name:'RMS Titanic', mesh:titanicGroup, radius:90, orbitDist:96, collidable:false,
     eyebrow:'Atlântico Norte · Naufrágio',
-    fact:'Seção da proa, 143 dos 269 metros originais. Afundou em 15 de abril de 1912; encontrada só em 1985, a 3.800m. As quatro chaminés se desprenderam durante o naufrágio — o que resta são as aberturas no convés.' }
+    fact:'Seção da proa, 143 dos 269 metros originais. Afundou em 15 de abril de 1912; encontrada só em 1985, a 3.800m. As quatro chaminés se desprenderam durante o naufrágio — o que resta são as aberturas no convés.' },
+  { name:'Entrada — Escadaria Grande', mesh:entryAnchor, radius:6, orbitDist:22, isEntry:true,
+    fact:'A cúpula de vidro sobre a Escadaria Grande desabou no naufrágio, deixando este vão aberto no convés dos botes. É por aqui que os veículos de exploração entram no Titanic de verdade. Desça devagar por ele.' }
 ];
 CREATURES.forEach(function(c){
   POIS.push({ name:c.name, mesh:c.mesh, radius:c.radius, fact:c.fact, isCreature:true });
@@ -2065,8 +2182,8 @@ function updateMarkers(){
     var camDist = camera.position.distanceTo(_wv);
     var proj = _wv.clone().project(camera);
     var inFront = proj.z < 1;
-    var maxDist = poi.isCreature ? 200 : (poi.interior ? 40 : 1400);
-    var visible = camDist < maxDist && camDist > (poi.isCreature||poi.interior ? 0 : poi.radius+4);
+    var maxDist = poi.isCreature ? 200 : (poi.interior ? 40 : (poi.isEntry ? 260 : 1400));
+    var visible = camDist < maxDist && camDist > (poi.isCreature||poi.interior||poi.isEntry ? 0 : poi.radius+4);
     if (!visible || !inFront || proj.x < -1.05 || proj.x > 1.05 || proj.y < -1.05 || proj.y > 1.05){
       poi._el.style.display = 'none'; poi._lbl.style.display = 'none';
       return;
@@ -2169,7 +2286,7 @@ function updateDepthZone(dt){
   subLight.intensity   = SUB_SPOT_MAX  * headlightLevel * closeQuarters;
   floodLight.intensity = SUB_FLOOD_MAX * headlightLevel * (insideWreck ? 0.06 : 1);
 
-  beamGroup.visible = depth < 250;
+  updateBeams();
 
   depthVal.textContent = fmtDepth(depth);
   zoneVal.textContent = zoneFor(depth).name;
@@ -2194,10 +2311,31 @@ function checkTitanicProximity(){
   if (revealShown) return;
   if (camera.position.distanceTo(titanicGroup.position) < 130) forceTitanicReveal();
 }
+/* the banner's action is "take me inside", not just "dismiss" — the whole
+   point of arriving is that you can go in, and hunting for an 11-metre
+   hole in the dark on your own is not a fair ask */
 document.getElementById('revealClose').addEventListener('click', function(){
   revealBanner.classList.remove('show');
   leaveOrbit();
+  goToEntry();
 });
+
+/* Two-leg approach into the wreck. The first leg has to come straight
+   DOWN onto the opening (dir 0,1,0) — the default "keep the side you came
+   from" leaves you hovering beside the hull, and dropping from there just
+   falls past the ship. The second leg lowers you through the well itself,
+   so entering never depends on the player threading an 11-metre hole by
+   hand in the dark. */
+function goToEntry(){
+  var entry = POIS.filter(function(p){ return p.isEntry; })[0];
+  if (!entry) return;
+  travelToPoi(entry, function(){
+    var w = entryAnchor.getWorldPosition(new THREE.Vector3());
+    travelToPoint(new THREE.Vector3(w.x, w.y - 24, w.z), null,
+      { k:0.9, maxSpeed:12, arriveAt:2, lookMode:'free' });
+  }, { dir: new THREE.Vector3(0, 1, 0), dist: 30, k: 1.0, maxSpeed: 45,
+       arriveAt: 2.5, noOrbit: true, lookMode: 'target' });
+}
 
 /* ============================================================
    ASSISTED DESCENT — the answer to "não achei o titanic". A staged
@@ -2298,6 +2436,122 @@ var Descent = (function(){
 })();
 
 /* ============================================================
+   AMBIENT SOUND — generated, no audio files
+   ------------------------------------------------------------
+   Synthesised with WebAudio so the room stays a single self-contained
+   file: a low pressure drone whose pitch and filter follow depth, the
+   hum of the submersible's own thrusters tied to speed, and occasional
+   distant whale-ish calls that stop once you pass the depth real whales
+   dive to. Starts muted and only ever begins after a user gesture,
+   because browsers block audio otherwise (and because sound that starts
+   itself is rude).
+   ============================================================ */
+var Sound = (function(){
+  var ctx = null, master = null, started = false;
+  var drone = [], droneFilter = null, thruster = null, thrusterGain = null;
+  var muted = true;
+  var SKEY = 'fv-oceano-som';
+  try{ var sv = localStorage.getItem(SKEY); if (sv !== null) muted = (sv === '1'); }catch(e){}
+
+  function build(){
+    if (started) return;
+    started = true;
+    try{
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      master = ctx.createGain();
+      master.gain.value = muted ? 0 : 0.5;
+      master.connect(ctx.destination);
+
+      droneFilter = ctx.createBiquadFilter();
+      droneFilter.type = 'lowpass';
+      droneFilter.frequency.value = 320;
+      droneFilter.Q.value = 0.6;
+      droneFilter.connect(master);
+
+      // three detuned low oscillators: the "weight of water" bed
+      [42, 55.5, 83].forEach(function(f, i){
+        var o = ctx.createOscillator();
+        o.type = i === 2 ? 'triangle' : 'sine';
+        o.frequency.value = f;
+        var g = ctx.createGain();
+        g.gain.value = i === 2 ? 0.05 : 0.11;
+        o.connect(g).connect(droneFilter);
+        o.start();
+        drone.push({ osc:o, gain:g, base:f });
+      });
+
+      // filtered noise for thruster wash, driven by speed
+      var bufSize = 2 * ctx.sampleRate;
+      var noiseBuf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      var d = noiseBuf.getChannelData(0);
+      for (var i2=0;i2<bufSize;i2++) d[i2] = (Math.random()*2-1) * 0.5;
+      thruster = ctx.createBufferSource();
+      thruster.buffer = noiseBuf; thruster.loop = true;
+      var tf = ctx.createBiquadFilter();
+      tf.type = 'bandpass'; tf.frequency.value = 220; tf.Q.value = 0.8;
+      thrusterGain = ctx.createGain();
+      thrusterGain.gain.value = 0;
+      thruster.connect(tf).connect(thrusterGain).connect(master);
+      thruster.start();
+    }catch(e){ /* audio is optional — never break the room over it */ }
+  }
+
+  /* sparse, slow calls; only above the depth real whales reach */
+  var callTimer = 14;
+  function maybeCall(dt, depth){
+    if (!ctx || muted || depth > 2200) return;
+    callTimer -= dt;
+    if (callTimer > 0) return;
+    callTimer = 22 + Math.random()*40;
+    try{
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine';
+      var f0 = 90 + Math.random()*120;
+      var now = ctx.currentTime;
+      o.frequency.setValueAtTime(f0, now);
+      o.frequency.exponentialRampToValueAtTime(f0*0.55, now+2.2);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.07, now+0.5);
+      g.gain.exponentialRampToValueAtTime(0.0001, now+2.6);
+      o.connect(g).connect(master);
+      o.start(now); o.stop(now+2.8);
+    }catch(e){}
+  }
+
+  function update(dt, depth, spd){
+    if (!ctx || muted) return;
+    // deeper = lower and more muffled, like real pressure
+    var t = Math.max(0, Math.min(1, depth/3800));
+    droneFilter.frequency.value = 320 - t*230;
+    for (var i=0;i<drone.length;i++) drone[i].osc.frequency.value = drone[i].base * (1 - t*0.22);
+    if (thrusterGain) thrusterGain.gain.value = Math.min(0.10, (spd/160)*0.10);
+    maybeCall(dt, depth);
+  }
+
+  function setMuted(v){
+    muted = v;
+    try{ localStorage.setItem(SKEY, v?'1':'0'); }catch(e){}
+    if (!started && !v) build();
+    if (ctx){
+      if (ctx.state === 'suspended') ctx.resume();
+      master.gain.setTargetAtTime(v ? 0 : 0.5, ctx.currentTime, 0.25);
+    }
+    var btn = document.getElementById('somBtn');
+    if (btn){
+      btn.classList.toggle('on', !v);
+      btn.setAttribute('aria-pressed', String(!v));
+      btn.setAttribute('aria-label', v ? 'Som ambiente: desligado. Toque para ativar.'
+                                       : 'Som ambiente: ligado. Toque para silenciar.');
+    }
+  }
+  return { update:update, setMuted:function(v){ setMuted(v); }, isMuted:function(){ return muted; }, build:build };
+})();
+
+var somBtn = document.getElementById('somBtn');
+if (somBtn) somBtn.addEventListener('click', function(){ Sound.setMuted(!Sound.isMuted()); });
+Sound.setMuted(Sound.isMuted());
+
+/* ============================================================
    HEADLIGHT TOGGLE — button + F key. Same pattern as /voo/'s #soundBtn:
    one function owns the class, aria state and persistence.
    ============================================================ */
@@ -2340,6 +2594,7 @@ function animate(){
   updateCreatures(t, dt);
   if (!insideWreck) updateSnow(dt);
   updateDepthZone(dt);
+  Sound.update(dt, Math.max(0, -camera.position.y), speed);
 
   frameCount++;
   if (frameCount % 3 === 0){
@@ -2356,6 +2611,10 @@ requestAnimationFrame(animate);
 var welcome = document.getElementById('welcome');
 document.getElementById('welcomeGo').addEventListener('click', function(){
   welcome.style.display = 'none';
+  /* browsers only allow audio to start from a user gesture, and this is
+     the first one there is. Respects a previously chosen mute state. */
+  Sound.build();
+  if (!Sound.isMuted()) Sound.setMuted(false);
 });
 
 /* ---------- debug hook: only with ?debug in the URL. Lets automated
