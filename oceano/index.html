@@ -200,13 +200,26 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
 }
 #wreckBadge.show{display:flex;}
 #wreckBadge .dot{width:7px;height:7px;border-radius:50%;background:var(--gold-bright);}
-#wreckExit,#eraBtn{
+#wreckExit{
   font-family:var(--mono);font-size:10.5px;color:var(--dim);background:transparent;
   border:1px solid var(--line-soft);border-radius:11px;padding:4px 10px;cursor:pointer;
 }
-#wreckExit:hover,#eraBtn:hover{color:var(--text);border-color:var(--gold-bright);}
-#eraBtn.on{color:#052018;background:var(--gold-bright);border-color:var(--gold-bright);font-weight:600;}
-#eraBtn[hidden]{display:none;}
+#wreckExit:hover{color:var(--text);border-color:var(--gold-bright);}
+/* era toggle lives in the always-visible HUD column, not buried inside a
+   badge that only appears in one room — the first version was effectively
+   undiscoverable */
+#eraBtn{
+  width:auto !important;min-width:38px;padding:0 10px;border-radius:19px !important;
+  font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.03em;
+}
+#eraBtn.on{color:#2a1a06;background:var(--gold-bright);border-color:var(--gold-bright);}
+#eraBadge{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  z-index:19;display:none;padding:8px 16px;border-radius:16px;
+  background:rgba(60,38,12,0.9);border:1px solid var(--gold-bright);
+  font-family:var(--mono);font-size:11.5px;color:#ffe9c2;letter-spacing:.04em;
+}
+#eraBadge.show{display:block;}
 
 /* ---- descent HUD (caption + depth progress) ---- */
 #descentHud{
@@ -359,6 +372,7 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
       <path class="off-slash" d="M3 3l14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
   </button>
+  <button id="eraBtn" type="button" aria-label="Alternar entre o naufrágio hoje e o navio em 1912">hoje</button>
 </div>
 
 <div id="porthole" aria-hidden="true"></div>
@@ -366,9 +380,10 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
 <div id="wreckBadge">
   <span class="dot" aria-hidden="true"></span>
   <span id="wreckRoom">dentro do naufrágio</span>
-  <button id="eraBtn" type="button" hidden>ver como era em 1912</button>
   <button id="wreckExit" type="button">sair</button>
 </div>
+
+<div id="eraBadge">1912 · antes do naufrágio</div>
 
 <div id="descentHud" aria-live="polite">
   <div id="descentHudTop">
@@ -1814,6 +1829,15 @@ function buildInterior(){
   if (interiorBuilt) return;
   interiorBuilt = true;
   try{
+    /* Everything that belongs to the RUIN lives in one group, so switching
+       eras is a single visibility flip instead of hunting individual
+       meshes. The room shells are shared between eras — only their
+       material changes — because the volumes themselves are the same
+       spaces in both. */
+    var ruinGroup = new THREE.Group();
+    interiorGroup.add(ruinGroup);
+    interiorGroup.userData.ruinGroup = ruinGroup;
+    var shellMeshes = [];
     var woodTex = (function(){
       var c = document.createElement('canvas'); c.width=c.height=128;
       var g = c.getContext('2d');
@@ -1837,11 +1861,12 @@ function buildInterior(){
       var shell = new THREE.Mesh(new THREE.BoxGeometry(s.x, s.y, s.z), wallMat);
       shell.position.copy(c);
       interiorGroup.add(shell);
+      shellMeshes.push(shell);
       // silted floor
       var fl = new THREE.Mesh(new THREE.PlaneGeometry(s.x*0.98, s.z*0.98), siltMat);
       fl.rotation.x = -Math.PI/2;
       fl.position.set(c.x, c.y - s.y/2 + 0.12, c.z);
-      interiorGroup.add(fl);
+      ruinGroup.add(fl);
     });
 
     /* Grand Staircase: the balustrade spiral survives in fragments; the
@@ -1854,10 +1879,10 @@ function buildInterior(){
       var side = (t2%2) ? 1 : -1;
       var land = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.35, 5.5), metalMat);
       land.position.set(side*5.4, 6 + t2*3.6, WELL_Z + (t2%2 ? 2 : -2));
-      interiorGroup.add(land); ruinDecor.push(land);
+      ruinGroup.add(land);
       var rail = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.9, 0.22), metalMat);
       rail.position.set(side*5.4, 6.7 + t2*3.6, WELL_Z + (t2%2 ? 4.6 : -4.6));
-      interiorGroup.add(rail); ruinDecor.push(rail);
+      ruinGroup.add(rail);
     }
 
     /* Dining Saloon: the standing columns are what you actually see in
@@ -1867,7 +1892,7 @@ function buildInterior(){
       var cz = WELL_Z + 45 + Math.floor(col/2)*6.4;
       var pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.62, 10.4, 8), metalMat);
       pillar.position.set(cx, 8.2, cz);
-      interiorGroup.add(pillar);
+      ruinGroup.add(pillar);
       INTERIOR_SOLIDS.push(wbox(cx-0.8, 3.0, cz-0.8, cx+0.8, 13.5, cz+0.8));
     }
     /* long dining tables, still in rows in the silt */
@@ -1875,14 +1900,14 @@ function buildInterior(){
       var tbl = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.3, 5.5), metalMat);
       tbl.position.set((tb%2?1:-1)*4.6, 3.9, WELL_Z + 46 + Math.floor(tb/2)*8);
       tbl.rotation.y = (Math.random()-0.5)*0.3;
-      interiorGroup.add(tbl);
+      ruinGroup.add(tbl);
     }
     /* collapsed ceiling debris */
     for (var db=0; db<16; db++){
       var d = new THREE.Mesh(new THREE.BoxGeometry(1+Math.random()*3, 0.35, 1+Math.random()*2.6), metalMat);
       d.position.set((Math.random()-0.5)*23, 3.6, WELL_Z+42+Math.random()*32);
       d.rotation.set((Math.random()-0.5)*0.6, Math.random()*Math.PI, (Math.random()-0.5)*0.6);
-      interiorGroup.add(d);
+      ruinGroup.add(d);
     }
 
     /* Reception: the light fixtures still hanging are the single most
@@ -1891,23 +1916,25 @@ function buildInterior(){
     for (var lf=0; lf<7; lf++){
       var zc = WELL_Z + 12 + lf*4.2;
       var stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,1.1,4), metalMat);
-      stem.position.set(0, 12.2, zc); interiorGroup.add(stem);
+      stem.position.set(0, 12.2, zc); ruinGroup.add(stem);
       var glass = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 6),
         new THREE.MeshStandardMaterial({ color:0xd8c9a8, emissive:0x6b5a34, emissiveIntensity:0.5, roughness:0.4 }));
-      glass.position.set(0, 11.5, zc); interiorGroup.add(glass);
+      glass.position.set(0, 11.5, zc); ruinGroup.add(glass);
       fixtures.push(glass.position.clone());
     }
     interiorGroup.userData.fixtures = fixtures;
+    interiorGroup.userData.shells = shellMeshes;
+    interiorGroup.userData.wallMat = wallMat;
 
     /* Captain's cabin: the bathtub, one of the most recognisable objects
        down there. */
     var tub = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.0, 1.4),
       new THREE.MeshStandardMaterial({ color:0xa8a094, roughness:0.6 }));
     tub.position.set(14.5, 21.4, WELL_Z+1.5);
-    interiorGroup.add(tub);
+    ruinGroup.add(tub);
     var bunk = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.5, 4.2), metalMat);
     bunk.position.set(10.5, 21.2, WELL_Z-2.5);
-    interiorGroup.add(bunk);
+    ruinGroup.add(bunk);
 
     /* rusticles hanging from every ceiling */
     var ruC = new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0), new THREE.Vector3(0.2,-0.9,0.1),
@@ -1929,14 +1956,14 @@ function buildInterior(){
       dm2.updateMatrix();
       ruI.setMatrixAt(ri2, dm2.matrix);
     }
-    interiorGroup.add(ruI);
+    ruinGroup.add(ruI);
 
     buildEra1912();
 
     /* one shared lamp, moved to whichever fixture is nearest */
     var lamp = new THREE.PointLight(0xffd9a0, 9, 18, 1.6);
     lamp.position.set(0, 8.9, WELL_Z+14);
-    interiorGroup.add(lamp);
+    ruinGroup.add(lamp);
     interiorGroup.userData.lamp = lamp;
 
     /* interior points of interest */
@@ -2112,6 +2139,116 @@ function buildEra1912(){
       era1912Group.add(lampG);
     });
   }
+
+  /* ---------- the rest of the ship, as it was ----------
+     1912 has to be somewhere you can actually swim through, not a single
+     tableau — so the reception, the dining saloon and the captain's cabin
+     get their period versions too, in the same volumes as their ruins. */
+
+  function sconce(x,y,z){
+    var s2 = new THREE.Mesh(new THREE.SphereGeometry(0.20, 7, 5),
+      new THREE.MeshStandardMaterial({ color:0xfff2d0, emissive:0xffcf87, emissiveIntensity:1.7 }));
+    s2.position.set(x,y,z); era1912Group.add(s2);
+  }
+
+  /* Reception room, D deck: panelled walls, patterned carpet, wicker
+     chairs, and the long run of light fittings whose corroded remains are
+     the ones still hanging in the wreck today. */
+  var recZ0 = WELL_Z + 8.5, recZ1 = WELL_Z + 40;
+  var carpet = new THREE.Mesh(new THREE.PlaneGeometry(16, recZ1-recZ0),
+    new THREE.MeshStandardMaterial({ color:0x7a2b2b, roughness:0.9 }));
+  carpet.rotation.x = -Math.PI/2;
+  carpet.position.set(0, baseY, (recZ0+recZ1)/2);
+  era1912Group.add(carpet);
+  var recCeil = new THREE.Mesh(new THREE.PlaneGeometry(16, recZ1-recZ0),
+    new THREE.MeshStandardMaterial({ color:0xf0e6d2, roughness:0.85, side:THREE.DoubleSide }));
+  recCeil.rotation.x = Math.PI/2;
+  recCeil.position.set(0, baseY+8.6, (recZ0+recZ1)/2);
+  era1912Group.add(recCeil);
+  [-1,1].forEach(function(sd5){
+    var wallR = new THREE.Mesh(new THREE.PlaneGeometry(recZ1-recZ0, 8.6), oak);
+    wallR.position.set(sd5*8, baseY+4.3, (recZ0+recZ1)/2);
+    wallR.rotation.y = sd5<0 ? Math.PI/2 : -Math.PI/2;
+    era1912Group.add(wallR);
+  });
+  for (var rf=0; rf<7; rf++){
+    var zf2 = recZ0 + 3 + rf*4.6;
+    sconce(0, baseY+7.9, zf2);
+    [-1,1].forEach(function(sd6){ sconce(sd6*7.4, baseY+5.4, zf2); });
+    // wicker chairs along the walls
+    [-1,1].forEach(function(sd7){
+      var ch2 = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.9), oak);
+      ch2.position.set(sd7*6.2, baseY+0.55, zf2);
+      era1912Group.add(ch2);
+    });
+  }
+  var recLight = new THREE.PointLight(0xffdcae, 140, 34, 1.6);
+  recLight.position.set(0, baseY+6.5, (recZ0+recZ1)/2);
+  era1912Group.add(recLight);
+
+  /* First Class Dining Saloon: the largest room afloat in 1912, seating
+     554. White Jacobean panelling, columns, and tables laid for service. */
+  var dinZ0 = WELL_Z + 40, dinZ1 = WELL_Z + 76;
+  var dinFloor = new THREE.Mesh(new THREE.PlaneGeometry(26, dinZ1-dinZ0),
+    new THREE.MeshStandardMaterial({ color:0x8d6a45, roughness:0.7 }));
+  dinFloor.rotation.x = -Math.PI/2; dinFloor.position.set(0, baseY, (dinZ0+dinZ1)/2);
+  era1912Group.add(dinFloor);
+  var white = new THREE.MeshStandardMaterial({ color:0xeee6d6, roughness:0.6 });
+  var dinCeil = new THREE.Mesh(new THREE.PlaneGeometry(26, dinZ1-dinZ0), new THREE.MeshStandardMaterial({ color:0xf5eede, roughness:0.85, side:THREE.DoubleSide }));
+  dinCeil.rotation.x = Math.PI/2; dinCeil.position.set(0, baseY+9.6, (dinZ0+dinZ1)/2);
+  era1912Group.add(dinCeil);
+  [-1,1].forEach(function(sd8){
+    var dw = new THREE.Mesh(new THREE.PlaneGeometry(dinZ1-dinZ0, 9.6), white);
+    dw.position.set(sd8*13, baseY+4.8, (dinZ0+dinZ1)/2);
+    dw.rotation.y = sd8<0 ? Math.PI/2 : -Math.PI/2;
+    era1912Group.add(dw);
+  });
+  for (var dc=0; dc<10; dc++){
+    var cxd = (dc%2 ? 1 : -1) * 9.4;
+    var czd = dinZ0 + 5 + Math.floor(dc/2)*6.4;
+    var colD = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.56,9.4,10), white);
+    colD.position.set(cxd, baseY+4.7, czd);
+    era1912Group.add(colD);
+    sconce(cxd, baseY+6.6, czd);
+  }
+  for (var dt=0; dt<10; dt++){
+    var txd = (dt%2?1:-1)*5.0, tzd = dinZ0 + 5 + Math.floor(dt/2)*6.4;
+    var top = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.14, 5.2),
+      new THREE.MeshStandardMaterial({ color:0xf7f3ea, roughness:0.5 })); // white linen
+    top.position.set(txd, baseY+1.0, tzd);
+    era1912Group.add(top);
+    var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.10,0.12,1.0,6), oak);
+    leg.position.set(txd, baseY+0.5, tzd); era1912Group.add(leg);
+    for (var ch3=0; ch3<4; ch3++){
+      var seat = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.9, 0.62), oak);
+      seat.position.set(txd + (ch3<2?-1.9:1.9), baseY+0.55, tzd - 1.6 + (ch3%2)*3.2);
+      era1912Group.add(seat);
+    }
+  }
+  var dinLight = new THREE.PointLight(0xfff0d2, 220, 46, 1.6);
+  dinLight.position.set(0, baseY+7.4, (dinZ0+dinZ1)/2);
+  era1912Group.add(dinLight);
+
+  /* Captain Smith's quarters */
+  var cabX = 13, cabZ = WELL_Z;
+  var cabFloor = new THREE.Mesh(new THREE.PlaneGeometry(10, 12),
+    new THREE.MeshStandardMaterial({ color:0x6d4526, roughness:0.8 }));
+  cabFloor.rotation.x = -Math.PI/2; cabFloor.position.set(cabX, 21.0, cabZ);
+  era1912Group.add(cabFloor);
+  var bunk2 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.7, 4.4), oak);
+  bunk2.position.set(cabX-2.5, 21.5, cabZ-2.5); era1912Group.add(bunk2);
+  var linen = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.2, 4.2),
+    new THREE.MeshStandardMaterial({ color:0xf2ece0, roughness:0.7 }));
+  linen.position.set(cabX-2.5, 21.95, cabZ-2.5); era1912Group.add(linen);
+  var bathtub = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.0, 1.4),
+    new THREE.MeshStandardMaterial({ color:0xf4f2ee, roughness:0.25, metalness:0.1 }));
+  bathtub.position.set(cabX+1.5, 21.5, cabZ+1.5); era1912Group.add(bathtub);
+  var desk = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.16, 1.2), oak);
+  desk.position.set(cabX+2.0, 21.9, cabZ-3.0); era1912Group.add(desk);
+  sconce(cabX, 25.0, cabZ);
+  var cabLight = new THREE.PointLight(0xffdcae, 60, 20, 1.6);
+  cabLight.position.set(cabX, 24.2, cabZ);
+  era1912Group.add(cabLight);
 }
 
 /* interior confinement: portals suspend room clamping, which is what
@@ -2160,16 +2297,29 @@ function exitWreck(){
 /* 1912 / today toggle — only offered inside the Grand Staircase, because
    that is the one space reconstructed */
 var eraBtn = document.getElementById('eraBtn');
+var eraBadge = document.getElementById('eraBadge');
 function setEra(on){
+  if (!interiorBuilt) buildInterior();
   era1912 = on;
   if (era1912Group) era1912Group.visible = on;
-  for (var i=0;i<ruinDecor.length;i++) ruinDecor[i].visible = !on;
-  if (interiorGroup.userData.ruinExtras)
-    interiorGroup.userData.ruinExtras.forEach(function(o){ o.visible = !on; });
+  var rg = interiorGroup.userData.ruinGroup;
+  if (rg) rg.visible = !on;
+  /* the shells are the same volumes in both eras — only the surface
+     changes, from bacterial decay to varnished panelling */
+  var wm = interiorGroup.userData.wallMat;
+  if (wm){
+    wm.color.set(on ? 0x6b4a2c : 0x2e2419);
+    wm.roughness = on ? 0.55 : 1;
+    wm.needsUpdate = true;
+  }
+  /* in 1912 the ship is lit, dry and above water: no headlight cone, no
+     marine snow, and the water fog has no business being indoors */
+  snowPoints.visible = !on && !insideWreck ? true : (on ? false : snowPoints.visible);
   if (eraBtn){
-    eraBtn.textContent = on ? 'ver como está hoje' : 'ver como era em 1912';
+    eraBtn.textContent = on ? '1912' : 'hoje';
     eraBtn.classList.toggle('on', on);
   }
+  if (eraBadge) eraBadge.classList.toggle('show', on);
 }
 if (eraBtn) eraBtn.addEventListener('click', function(){ setEra(!era1912); });
 
@@ -2190,11 +2340,6 @@ function updateWreckState(dt){
   resolveInterior();
   var room = roomContaining(camera.position);
   if (room && wreckRoomEl && wreckRoomEl.textContent !== room.name) wreckRoomEl.textContent = room.name;
-  /* the reconstruction only covers the Grand Staircase, so the toggle is
-     only offered there — and leaving the room drops you back to the ruin */
-  var inStair = room && room.name === 'Escadaria Grande';
-  if (eraBtn) eraBtn.hidden = !inStair;
-  if (!inStair && era1912) setEra(false);
   var lamp = interiorGroup.userData.lamp, fx = interiorGroup.userData.fixtures;
   if (lamp && fx && fx.length){
     var best = fx[0], bd = 1e9, lp = camera.position.clone().sub(titanicGroup.position);
