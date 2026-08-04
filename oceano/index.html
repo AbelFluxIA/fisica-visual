@@ -108,6 +108,12 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
 #poiCard.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);}
 #poiCard .nm{font-family:var(--serif);font-size:17px;color:var(--gold-bright);margin-bottom:4px;}
 #poiCard .fact{font-size:13px;color:var(--text);line-height:1.5;}
+#poiCard #poiPhoto{
+  display:block;width:100%;max-height:180px;object-fit:cover;
+  border-radius:10px;margin-bottom:10px;border:1px solid var(--line-soft);
+}
+#poiCard #poiPhoto[hidden]{display:none;}
+#poiCard .cred{display:block;font-size:10px;color:var(--dim);margin-top:2px;font-family:var(--mono);}
 #poiCard .close{
   position:absolute;top:8px;right:10px;background:none;border:none;color:var(--dim);
   cursor:pointer;font-family:var(--mono);font-size:14px;
@@ -345,6 +351,7 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
 
 <div id="poiCard">
   <button class="close" id="poiClose">✕</button>
+  <img id="poiPhoto" hidden alt="">
   <div class="nm" id="poiName"></div>
   <div class="fact" id="poiFact"></div>
   <button id="poiGo" type="button">ir até lá →</button>
@@ -517,6 +524,109 @@ function mergeGeos(list){
   return out;
 }
 
+/* Real archival photographs (see assets/textures/titanic/CREDITS.md for
+   source/license of each) — the only non-procedural textures in the file.
+   Loaded the same way voo/index.html loads planet textures: assign the
+   Texture straight into the material's `map`, three.js swaps it in once
+   the file actually arrives, and a plain frame with no picture is a
+   perfectly fine fallback if it doesn't. */
+var texLoader = new THREE.TextureLoader();
+function framedPhoto(path, w, h){
+  var group = new THREE.Group();
+  var frame = new THREE.Mesh(new THREE.BoxGeometry(w+0.16, h+0.16, 0.06),
+    new THREE.MeshStandardMaterial({ color:0x2a1a0d, roughness:0.5, metalness:0.2 }));
+  group.add(frame);
+  var picMat = new THREE.MeshStandardMaterial({ color:0x9a8f78, roughness:0.85 });
+  var tex = texLoader.load(path, undefined, undefined, function(){
+    console.warn('[oceano] foto indisponível, aplicando fallback:', path);
+  });
+  tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  picMat.map = tex;
+  var pic = new THREE.Mesh(new THREE.PlaneGeometry(w, h), picMat);
+  pic.position.z = 0.035;
+  group.add(pic);
+  return group;
+}
+
+/* Furniture geometry — every chair/tub/post in the interior used to be a
+   raw BoxGeometry/CylinderGeometry, which read as toy blocks ("parece
+   Minecraft"). These build ONE real merged shape each, reused via
+   InstancedMesh/shared-geometry cloning wherever the same piece repeats. */
+function chairGeo(w, d, legH, backH){
+  var parts = [];
+  var legR = Math.min(w,d)*0.08;
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(s){
+    var leg = new THREE.CylinderGeometry(legR*0.85, legR*1.15, legH, 6);
+    leg.translate(s[0]*(w/2-legR*1.5), legH/2, s[1]*(d/2-legR*1.5));
+    parts.push(leg);
+  });
+  var rc = Math.min(w,d)*0.18;
+  var shp = new THREE.Shape();
+  shp.moveTo(-w/2+rc, -d/2);
+  shp.lineTo(w/2-rc, -d/2); shp.quadraticCurveTo(w/2, -d/2, w/2, -d/2+rc);
+  shp.lineTo(w/2, d/2-rc); shp.quadraticCurveTo(w/2, d/2, w/2-rc, d/2);
+  shp.lineTo(-w/2+rc, d/2); shp.quadraticCurveTo(-w/2, d/2, -w/2, d/2-rc);
+  shp.lineTo(-w/2, -d/2+rc); shp.quadraticCurveTo(-w/2, -d/2, -w/2+rc, -d/2);
+  var seat = new THREE.ExtrudeGeometry(shp, { depth:legH*0.14, bevelEnabled:true, bevelThickness:0.02, bevelSize:0.02, bevelSegments:2, curveSegments:4 });
+  seat.rotateX(-Math.PI/2);
+  seat.translate(0, legH, d/2);
+  parts.push(seat);
+  if (backH){
+    var bw = w*0.86, br = bw*0.14;
+    var bshp = new THREE.Shape();
+    bshp.moveTo(-bw/2+br, 0);
+    bshp.lineTo(bw/2-br, 0); bshp.quadraticCurveTo(bw/2, 0, bw/2, br);
+    bshp.lineTo(bw/2, backH-br); bshp.quadraticCurveTo(bw/2, backH, bw/2-br, backH);
+    bshp.lineTo(-bw/2+br, backH); bshp.quadraticCurveTo(-bw/2, backH, -bw/2, backH-br);
+    bshp.lineTo(-bw/2, br); bshp.quadraticCurveTo(-bw/2, 0, -bw/2+br, 0);
+    var back = new THREE.ExtrudeGeometry(bshp, { depth:d*0.10, bevelEnabled:false, curveSegments:4 });
+    back.translate(0, legH, -d/2+d*0.05);
+    parts.push(back);
+  }
+  return mergeGeos(parts);
+}
+/* clawfoot tub: a lathed bowl (radially symmetric) squashed into an oval
+   footprint, plus four ball feet — cheap, but immediately reads as "tub"
+   instead of "box" from any angle */
+function clawfootTubGeo(len, wid, ht){
+  var pts = [
+    new THREE.Vector2(0, 0),
+    new THREE.Vector2(wid*0.42, 0),
+    new THREE.Vector2(wid*0.50, ht*0.10),
+    new THREE.Vector2(wid*0.50, ht*0.74),
+    new THREE.Vector2(wid*0.45, ht*0.88),
+    new THREE.Vector2(wid*0.52, ht)
+  ];
+  var bowl = new THREE.LatheGeometry(pts, 16);
+  bowl.scale(1, 1, len/wid);
+  var parts = [bowl];
+  var footR = ht*0.14;
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(s){
+    var foot = new THREE.SphereGeometry(footR, 6, 5);
+    foot.translate(s[0]*wid*0.34, -footR*0.6, s[1]*(len*0.5-footR*1.3));
+    parts.push(foot);
+  });
+  return mergeGeos(parts);
+}
+/* turned baluster/newel profile — a lathed silhouette with real bulges,
+   instead of a plain straight cylinder */
+function turnedPostGeo(h, rMax){
+  var pts = [
+    new THREE.Vector2(rMax*0.50, 0),
+    new THREE.Vector2(rMax*0.80, h*0.06),
+    new THREE.Vector2(rMax*0.45, h*0.16),
+    new THREE.Vector2(rMax*0.55, h*0.30),
+    new THREE.Vector2(rMax*0.90, h*0.42),
+    new THREE.Vector2(rMax*0.50, h*0.50),
+    new THREE.Vector2(rMax*0.90, h*0.58),
+    new THREE.Vector2(rMax*0.55, h*0.70),
+    new THREE.Vector2(rMax*0.45, h*0.84),
+    new THREE.Vector2(rMax*0.80, h*0.94),
+    new THREE.Vector2(rMax*0.50, h)
+  ];
+  return new THREE.LatheGeometry(pts, 8);
+}
+
 /* ============================================================
    RENDERER / SCENE / CAMERA
    ============================================================ */
@@ -612,6 +722,29 @@ var floorMesh = new THREE.Mesh(floorGeo, floorMat);
 floorMesh.rotation.x = -Math.PI/2;
 floorMesh.position.y = SEABED_Y;
 scene.add(floorMesh);
+
+/* sediment mound under the hull. The comment on titanicGroup's rotation
+   always claimed "bow buried in sediment", but there was no geometry
+   behind it — the keel just sat a fixed 18 units above a perfectly flat
+   floor. This is a small subdivided patch, not a resize of the 3000-unit
+   base plane, so it stays cheap; its edges are zero-displacement so it
+   seams invisibly into the flat floor around it. */
+(function buildSedimentMound(){
+  var W = 260, L = 210;
+  var mgeo = new THREE.PlaneGeometry(W, L, 46, 40);
+  var mp = mgeo.attributes.position.array;
+  for (var i=0;i<mp.length;i+=3){
+    var gx = mp[i]/(W/2), gy = mp[i+1]/(L/2);
+    var d = Math.min(1, Math.sqrt(gx*gx*0.85 + gy*gy*0.85));
+    var bump = Math.max(0, 1-d); bump = bump*bump*(3-2*bump);
+    mp[i+2] = bump*7.5 + (Math.random()-0.5)*0.5*bump;
+  }
+  mgeo.computeVertexNormals();
+  var mound = new THREE.Mesh(mgeo, floorMat);
+  mound.rotation.x = -Math.PI/2;
+  mound.position.set(0, SEABED_Y+0.02, 0);
+  scene.add(mound);
+})();
 
 /* ============================================================
    MARINE SNOW — particles drifting down, denser/slower with depth
@@ -1310,6 +1443,51 @@ var HULL_STATIONS = [
   [1.000,  0.90,   0.0,  26.8, 0.65]   // torn edge, NOT a taper
 ];
 
+/* Every procedural CanvasTexture in this file used to be flat paint: `map`
+   only, no `normalMap`. Rivets, seams and wood grain were drawn but never
+   caught light, which is a big part of why surfaces read as smooth plastic
+   ("parece Minecraft"). This derives a matching normal map from any of
+   those canvases via a 3x3 Sobel gradient on luminance — no external
+   texture, no new asset, just making the paint we already do respond to
+   the headlight. Call it AFTER building a CanvasTexture (it reads
+   colorTex.image, the source <canvas>) and it copies wrap/repeat so the
+   two stay in registration. */
+function heightToNormalMap(colorTex, strength){
+  var src = colorTex.image, w = src.width, h = src.height;
+  var sg = src.getContext('2d');
+  var data = sg.getImageData(0,0,w,h).data;
+  function lum(x,y){
+    x = (x+w)%w; y = (y+h)%h;
+    var i = (y*w+x)*4;
+    return (data[i]*0.299 + data[i+1]*0.587 + data[i+2]*0.114) / 255;
+  }
+  var out = document.createElement('canvas'); out.width = w; out.height = h;
+  var og = out.getContext('2d');
+  var img = og.createImageData(w,h);
+  var s = strength || 2.0;
+  for (var y=0;y<h;y++){
+    for (var x=0;x<w;x++){
+      var tl=lum(x-1,y-1), t=lum(x,y-1), tr=lum(x+1,y-1);
+      var l =lum(x-1,y),            r=lum(x+1,y);
+      var bl=lum(x-1,y+1), b=lum(x,y+1), br=lum(x+1,y+1);
+      var gx = (tr+2*r+br) - (tl+2*l+bl);
+      var gy = (bl+2*b+br) - (tl+2*t+tr);
+      var nx = -gx*s, ny = -gy*s, nz = 1;
+      var len = Math.sqrt(nx*nx+ny*ny+nz*nz);
+      var i = (y*w+x)*4;
+      img.data[i]   = (nx/len*0.5+0.5)*255;
+      img.data[i+1] = (ny/len*0.5+0.5)*255;
+      img.data[i+2] = (nz/len*0.5+0.5)*255;
+      img.data[i+3] = 255;
+    }
+  }
+  og.putImageData(img,0,0);
+  var t = new THREE.CanvasTexture(out);
+  t.wrapS = colorTex.wrapS; t.wrapT = colorTex.wrapT;
+  t.repeat.copy(colorTex.repeat);
+  return t;
+}
+
 /* Hull skin. The plate seams and rivet lines matter more than they look:
    they are objects whose real size the eye already knows, so they are what
    lets someone judge that the hull is enormous. A smooth rusty surface
@@ -1359,7 +1537,19 @@ var rustTex = (function(){
   return t;
 })();
 
-var hullMat = new THREE.MeshStandardMaterial({ color:0x8a6b4a, roughness:0.95, metalness:0.15, map:rustTex });
+var rustNormal = heightToNormalMap(rustTex, 2.2);
+var hullMat = new THREE.MeshStandardMaterial({ color:0x8a6b4a, roughness:0.95, metalness:0.15, map:rustTex, normalMap:rustNormal, normalScale:new THREE.Vector2(1.2,1.2) });
+/* 1912 exterior materials — setEra() swaps these in wholesale instead of
+   just recolouring, because painted steel and 90 years of bacterial
+   corrosion don't share a texture map */
+var hull1912Mat = new THREE.MeshStandardMaterial({ color:0x0e1013, roughness:0.4, metalness:0.3 });
+var house1912Mat = new THREE.MeshStandardMaterial({ color:0xdcd6c4, roughness:0.5 });
+var deck1912Mat = new THREE.MeshStandardMaterial({ color:0x9a7c50, roughness:0.75, side:THREE.DoubleSide });
+var funnelMat1912 = new THREE.MeshStandardMaterial({ color:0xc98a3a, roughness:0.6 });
+var funnelCapMat1912 = new THREE.MeshStandardMaterial({ color:0x18130f, roughness:0.7 });
+var litGlassMat = new THREE.MeshStandardMaterial({ color:0xffdfa0, emissive:0xffc766, emissiveIntensity:1.4 });
+var houseWinMatDark = new THREE.MeshStandardMaterial({ color:0x090b10, roughness:0.6 });
+var houseWinMatLit = new THREE.MeshStandardMaterial({ color:0xffdfa0, emissive:0xffc766, emissiveIntensity:1.1 });
 var darkMat = new THREE.MeshStandardMaterial({ color:0x2b2119, roughness:1 });
 
 function lerpStation(s){
@@ -1438,8 +1628,11 @@ function buildHull(){
 
 var titanicGroup = new THREE.Group();
 titanicGroup.position.set(0, -TITANIC_DEPTH, 0);
-/* bow buried in sediment and heeled very slightly, as she actually sits */
+/* bow buried in sediment and heeled very slightly, as she actually sits —
+   a small down-pitch on the bow (positive local Z) in addition to the
+   roll, backed now by the sediment mound above actually rising to meet it */
 titanicGroup.rotation.z = 0.02;
+titanicGroup.rotation.x = 0.035;
 
 var titanicBow = new THREE.Group();
 titanicGroup.add(titanicBow);
@@ -1448,17 +1641,35 @@ titanicGroup.add(titanicBow);
   try{
     var hull = new THREE.Mesh(buildHull(), hullMat);
     titanicBow.add(hull);
+    titanicBow.userData.hullMesh = hull;
+    titanicBow.userData.deckMeshes = [];
+
+    /* Everything below that only makes sense on a century-old ruin (torn
+       plating, the fallen mast, bacterial/coral colonisation) lives in one
+       group; everything that only makes sense on the intact 1912 ship
+       (upright funnels with smoke, an upright mast, lifeboats in the
+       davits) lives in the other. setEra() flips both, on top of the
+       interior toggle it already did. */
+    var wreckOnlyGroup = new THREE.Group();
+    titanicBow.add(wreckOnlyGroup);
+    titanicBow.userData.wreckOnlyGroup = wreckOnlyGroup;
+    var era1912OnlyGroup = new THREE.Group();
+    era1912OnlyGroup.visible = false;
+    titanicBow.add(era1912OnlyGroup);
+    titanicBow.userData.era1912OnlyGroup = era1912OnlyGroup;
 
     /* main deck: a flat plate closing the top of the hull, with the
        Grand Staircase opening cut into it as a gap between two panels —
        that opening is the real way ROVs get inside, because the glass
        dome over the staircase collapsed. */
-    var deckMat = new THREE.MeshStandardMaterial({ color:0x6d5942, roughness:1, map:rustTex, side:THREE.DoubleSide });
+    var deckMat = new THREE.MeshStandardMaterial({ color:0x6d5942, roughness:1, map:rustTex, normalMap:rustNormal, normalScale:new THREE.Vector2(1,1), side:THREE.DoubleSide });
+    titanicBow.userData.deckMatOrig = deckMat;
     function deckPanel(z0, z1, w){
       var p = new THREE.Mesh(new THREE.PlaneGeometry(w, z1-z0), deckMat);
       p.rotation.x = -Math.PI/2;
       p.position.set(0, 26.6, (z0+z1)*0.5);
       titanicBow.add(p);
+      titanicBow.userData.deckMeshes.push(p);
       return p;
     }
     var zF = BOW_LEN*0.5;
@@ -1470,7 +1681,7 @@ titanicGroup.add(titanicBow);
        opening catches the headlight, and the void inside is genuinely
        black so it reads as a hole rather than a painted rectangle. */
     var wellZ = zF-61, WELL_W = 17, WELL_L = 15;
-    var coamMat = new THREE.MeshStandardMaterial({ color:0x8a6b4a, roughness:0.9, map:rustTex });
+    var coamMat = new THREE.MeshStandardMaterial({ color:0x8a6b4a, roughness:0.9, map:rustTex, normalMap:rustNormal, normalScale:new THREE.Vector2(1,1) });
     [[-WELL_W/2,0],[WELL_W/2,0],[0,-WELL_L/2],[0,WELL_L/2]].forEach(function(p,i){
       var horiz = i < 2;
       var bar = new THREE.Mesh(new THREE.BoxGeometry(horiz?0.9:WELL_W+1.6, 1.5, horiz?WELL_L+1.6:0.9), coamMat);
@@ -1487,6 +1698,7 @@ titanicGroup.add(titanicBow);
     var fc = new THREE.Mesh(new THREE.BoxGeometry(21, 2.2, 24), deckMat);
     fc.position.set(0, 28.4, zF-12);
     titanicBow.add(fc);
+    titanicBow.userData.deckMeshes.push(fc);
 
     /* the bow railing — the single most recognisable thing on the wreck */
     var railMat = new THREE.MeshStandardMaterial({ color:0x4a3a2a, roughness:1 });
@@ -1499,19 +1711,60 @@ titanicGroup.add(titanicBow);
       var st2 = stanchion.clone(); st2.position.x = -xx; titanicBow.add(st2);
     }
 
-    /* four funnel uptake openings — the funnels themselves are gone */
+    /* four funnel uptake openings — in the ruin, the funnels themselves
+       are gone, torn away in the sinking; only the deck openings remain */
+    var funnelZs = [];
     for (var f=0; f<4; f++){
+      var fz = zF-52 + f*15;
+      funnelZs.push(fz);
       var ring = new THREE.Mesh(new THREE.TorusGeometry(4.1, 0.55, 6, 16), darkMat);
       ring.rotation.x = Math.PI/2;
-      ring.position.set(0, 26.7, zF-52 + f*15);
+      ring.position.set(0, 26.7, fz);
       ring.scale.set(1, 1, 0.82);
-      titanicBow.add(ring);
+      wreckOnlyGroup.add(ring);
       var hole = new THREE.Mesh(new THREE.CircleGeometry(3.8, 16), new THREE.MeshBasicMaterial({ color:0x01040a }));
       hole.rotation.x = -Math.PI/2;
-      hole.position.set(0, 26.75, zF-52 + f*15);
+      hole.position.set(0, 26.75, fz);
       hole.scale.set(1, 0.82, 1);
-      titanicBow.add(hole);
+      wreckOnlyGroup.add(hole);
+
+      /* the same funnel, standing — buff body, black-painted top few feet,
+         raked slightly aft as the real ones were. Titanic's funnels were
+         false — they vented boiler exhaust from three, and the fourth was
+         mostly for ventilation and looks — but visually all four matched. */
+      var body = new THREE.Mesh(new THREE.CylinderGeometry(3.9, 4.1, 13.5, 16), funnelMat1912);
+      body.position.set(0, 26.7+13.5/2-0.3, fz);
+      body.rotation.x = -0.05;
+      era1912OnlyGroup.add(body);
+      var cap = new THREE.Mesh(new THREE.CylinderGeometry(4.15, 3.95, 1.6, 16), funnelCapMat1912);
+      cap.position.set(0, 26.7+13.5-0.9, fz);
+      cap.rotation.x = -0.05;
+      era1912OnlyGroup.add(cap);
     }
+    titanicBow.userData.funnelZs = funnelZs;
+
+    /* funnel smoke, 1912 only. Particles are children of era1912OnlyGroup
+       so the ship's own position/rotation apply to them for free — no
+       separate world-space bookkeeping needed. They recycle at the funnel
+       mouth instead of fading, the same trick the marine-snow system uses. */
+    var SMOKE_PER_FUNNEL = 24;
+    var smokeN = SMOKE_PER_FUNNEL*4;
+    var smokePos = new Float32Array(smokeN*3);
+    var smokeAge = new Float32Array(smokeN);
+    for (var sfi=0; sfi<smokeN; sfi++){
+      var sfz = funnelZs[sfi % 4];
+      smokePos[sfi*3]   = (Math.random()-0.5)*1.4;
+      smokePos[sfi*3+1] = 26.7+13.5 + Math.random()*9;
+      smokePos[sfi*3+2] = sfz + (Math.random()-0.5)*1.4;
+      smokeAge[sfi] = Math.random();
+    }
+    var smokeGeo = new THREE.BufferGeometry();
+    smokeGeo.setAttribute('position', new THREE.BufferAttribute(smokePos, 3));
+    var smokeMat = new THREE.PointsMaterial({ color:0x55514a, size:1.5, transparent:true, opacity:0.32, depthWrite:false, sizeAttenuation:true });
+    var smokePoints = new THREE.Points(smokeGeo, smokeMat);
+    era1912OnlyGroup.add(smokePoints);
+    titanicBow.userData.smokePoints = smokePoints;
+    titanicBow.userData.smokeAge = smokeAge;
 
     /* telemotor: the ship's wheel stand, still upright on the bridge —
        one of the most photographed objects down there */
@@ -1526,10 +1779,20 @@ titanicGroup.add(titanicBow);
     var mast = new THREE.Mesh(new THREE.CylinderGeometry(0.62,0.85,30,8), railMat);
     mast.position.set(0, 31.5, zF-24);
     mast.rotation.x = -0.86;
-    titanicBow.add(mast);
+    wreckOnlyGroup.add(mast);
     var crowsNest = new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.2,1.9,10), railMat);
     crowsNest.position.set(0, 36.5, zF-36);
-    titanicBow.add(crowsNest);
+    wreckOnlyGroup.add(crowsNest);
+
+    /* the same foremast, standing, with the crow's nest at its real height
+       — where lookout Frederick Fleet spotted the iceberg */
+    var mastMat1912 = new THREE.MeshStandardMaterial({ color:0x3a3025, roughness:0.7 });
+    var mast1912 = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.85,30,8), mastMat1912);
+    mast1912.position.set(0, 30.2+15, zF-30);
+    era1912OnlyGroup.add(mast1912);
+    var crowsNest1912 = new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.0,1.7,10), mastMat1912);
+    crowsNest1912.position.set(0, 30.2+22, zF-30);
+    era1912OnlyGroup.add(crowsNest1912);
 
     /* cargo hatches + anchor windlasses on the forecastle */
     for (var h=0; h<2; h++){
@@ -1547,18 +1810,39 @@ titanicGroup.add(titanicBow);
     wellDeck.rotation.x = -Math.PI/2;
     wellDeck.position.set(0, 26.9, zF-33);
     titanicBow.add(wellDeck);
+    titanicBow.userData.deckMeshes.push(wellDeck);
 
-    /* superstructure block: officers' quarters, heavily decayed */
+    /* superstructure block: officers' quarters. Was a single blank box —
+       the single biggest reason the ship read as hollow rather than
+       inhabited from any distance. Same volume, now with a real row of
+       windows on every side, and its material swaps with the era exactly
+       like the hull does. */
     var house = new THREE.Mesh(new THREE.BoxGeometry(22, 5.5, 26), deckMat);
     house.position.set(0, 29.4, zF-47);
     titanicBow.add(house);
+    titanicBow.userData.houseMesh = house;
+    var houseWinGeo = new THREE.BoxGeometry(0.2, 0.9, 1.0);
+    var houseWinMesh = new THREE.InstancedMesh(houseWinGeo, houseWinMatDark, 34);
+    var hwd = new THREE.Object3D(); var hwi = 0;
+    for (var hw=0; hw<7; hw++){
+      var hwz = house.position.z - 11 + hw*3.6 + 1.2;
+      [1,-1].forEach(function(hs){
+        hwd.position.set(hs*11, house.position.y+1.1, hwz);
+        hwd.rotation.set(0, hs>0?Math.PI/2:-Math.PI/2, 0);
+        hwd.updateMatrix();
+        houseWinMesh.setMatrixAt(hwi++, hwd.matrix);
+      });
+    }
+    houseWinMesh.count = hwi; houseWinMesh.instanceMatrix.needsUpdate = true;
+    titanicBow.add(houseWinMesh);
+    titanicBow.userData.houseWinMesh = houseWinMesh;
 
     /* Torn plating at the break. The first version was nine big flat
        rectangles at random angles, which read as sheets of paper floating
        in the water rather than steel peeled off a hull. These are small,
        bent (a curved segment, not a flat quad), clustered tightly right at
        the break, and anchored to the hull edge instead of drifting free. */
-    var plateMat = new THREE.MeshStandardMaterial({ color:0x6a5238, roughness:1, side:THREE.DoubleSide, map:rustTex });
+    var plateMat = new THREE.MeshStandardMaterial({ color:0x6a5238, roughness:1, side:THREE.DoubleSide, map:rustTex, normalMap:rustNormal, normalScale:new THREE.Vector2(1,1) });
     for (var tp=0; tp<14; tp++){
       var pw = 1.6+Math.random()*3.4, ph = 2.2+Math.random()*4;
       // a shallow cylindrical segment gives the "peeled back" curl
@@ -1570,7 +1854,7 @@ titanicGroup.add(titanicBow);
                          2 + Math.random()*22,
                          -BOW_LEN*0.5 + 0.5 + Math.random()*3.5);
       plate.rotation.set(Math.PI/2 + (Math.random()-0.5)*0.5, ang3, (Math.random()-0.5)*0.6);
-      titanicBow.add(plate);
+      wreckOnlyGroup.add(plate);
     }
 
     /* ---- scale references ----------------------------------------
@@ -1610,6 +1894,8 @@ titanicGroup.add(titanicBow);
     portMesh.count = pi; glassMesh.count = pi;
     portMesh.instanceMatrix.needsUpdate = true; glassMesh.instanceMatrix.needsUpdate = true;
     titanicBow.add(portMesh); titanicBow.add(glassMesh);
+    titanicBow.userData.portGlassMesh = glassMesh;
+    titanicBow.userData.portGlassMatOrig = glassMesh.material;
 
     /* promenade windows: the long rectangular run on A deck */
     var promN = LOW_TIER ? 14 : 26;
@@ -1663,6 +1949,18 @@ titanicGroup.add(titanicBow);
       ]);
       var arm = new THREE.Mesh(new THREE.TubeGeometry(armCurve, 6, 0.16, 5, false), railMat);
       titanicBow.add(arm);
+
+      /* the boat itself, hanging from the falls — present in 1912, and
+         exactly why the empty davits are so haunting in the ruin: only 20
+         of the 48 boat spaces on board were actually filled with boats */
+      if (dv < 6){
+        var boatGeo = new THREE.CapsuleGeometry(0.62, 3.6, 4, 8);
+        boatGeo.rotateX(Math.PI/2);
+        boatGeo.scale(1, 0.6, 1);
+        var boat = new THREE.Mesh(boatGeo, new THREE.MeshStandardMaterial({ color:0xe4dcc8, roughness:0.7 }));
+        boat.position.set(sdv*(stdv.hb-0.9), 29.1, zdv);
+        era1912OnlyGroup.add(boat);
+      }
     }
 
     /* anchor chain running out over the forecastle */
@@ -1702,7 +2000,125 @@ titanicGroup.add(titanicBow);
       dummy.updateMatrix();
       ruMesh.setMatrixAt(ri, dummy.matrix);
     }
-    titanicBow.add(ruMesh);
+    wreckOnlyGroup.add(ruMesh);
+
+    /* ---- the wreck as a reef: what expeditions (2010/2019/2022) actually
+       filmed living ON the ship, not swimming past it. Different from
+       CREATURES below — this is fixed colonisation, same idea as the
+       rusticles above. All hidden in 1912 mode (setEra), since none of it
+       existed on the intact ship. */
+    var wreckFauna = new THREE.Group();
+    wreckOnlyGroup.add(wreckFauna);
+    titanicBow.userData.wreckFauna = wreckFauna;
+
+    /* bamboo coral (Lepidisis sp.): documented on the bow railings, the
+       anchor crane and around some cabin portholes — some colonies more
+       than doubled in size across the 24 years between the 1998 and 2022
+       surveys. Placed at those exact real locations, not scattered blindly. */
+    var coralCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0,0,0), new THREE.Vector3(0.1,0.5,0.05),
+      new THREE.Vector3(-0.06,1.0,0.1), new THREE.Vector3(0.08,1.5,0.02)
+    ]);
+    var coralGeo = new THREE.TubeGeometry(coralCurve, 6, 0.045, 4, false);
+    var coralMat = new THREE.MeshStandardMaterial({ color:0xd9c9c2, roughness:0.65, transparent:true, opacity:0.9 });
+    var coralSpots = [];
+    for (var cb=0; cb<24; cb++){                 // the bow railing stanchion line
+      var tcb = cb/23, zzc = zF-2 - tcb*17, xxc = Math.sin(tcb*Math.PI*0.5)*8.6;
+      coralSpots.push([xxc*(0.85+Math.random()*0.25), 30.7+Math.random()*0.5, zzc]);
+    }
+    for (var cw=0; cw<10; cw++)                   // the anchor windlass/chain
+      coralSpots.push([2.4+Math.random()*1.8, 29.8+Math.random()*0.7, zF-7-Math.random()*7]);
+    for (var cp=0; cp<22; cp++){                  // around scattered portholes
+      var scp = 0.15+Math.random()*0.7, stcp = lerpStation(scp), sidecp = Math.random()<0.5?-1:1;
+      coralSpots.push([sidecp*(stcp.hb-0.1), 12+Math.random()*10, zF-scp*BOW_LEN]);
+    }
+    var coralMesh = new THREE.InstancedMesh(coralGeo, coralMat, coralSpots.length);
+    var cdum = new THREE.Object3D();
+    coralSpots.forEach(function(p, i){
+      cdum.position.set(p[0], p[1], p[2]);
+      cdum.rotation.set((Math.random()-0.5)*0.6, Math.random()*Math.PI*2, (Math.random()-0.5)*0.6);
+      cdum.scale.setScalar(0.5+Math.random()*0.9);
+      cdum.updateMatrix();
+      coralMesh.setMatrixAt(i, cdum.matrix);
+    });
+    coralMesh.instanceMatrix.needsUpdate = true;
+    wreckFauna.add(coralMesh);
+
+    /* white squat lobsters (more closely related to hermit crabs than true
+       lobsters despite the name) — ghost-pale, small, common in the debris
+       field and on the wreck itself */
+    var lobParts = [ new THREE.SphereGeometry(0.11, 6, 5) ];
+    lobParts[0].scale(1, 0.7, 1.5);
+    var clawBase = new THREE.ConeGeometry(0.045, 0.13, 5); clawBase.rotateZ(Math.PI/2);
+    var clawL = clawBase.clone(); clawL.translate(0.14, 0, -0.14); lobParts.push(clawL);
+    var clawR = clawBase.clone(); clawR.translate(0.14, 0, 0.14); lobParts.push(clawR);
+    var lobGeo = mergeGeos(lobParts);
+    var lobMat = new THREE.MeshStandardMaterial({ color:0xe8e2da, roughness:0.55 });
+    var lobCount = LOW_TIER ? 20 : 45;
+    var lobMesh = new THREE.InstancedMesh(lobGeo, lobMat, lobCount);
+    var ldum = new THREE.Object3D();
+    for (var lb=0; lb<lobCount; lb++){
+      var slb = Math.random(), stlb = lerpStation(slb), sidelb = Math.random()<0.5?-1:1;
+      ldum.position.set(sidelb*stlb.hb*Math.random()*0.9, stlb.deck+0.12, zF - slb*BOW_LEN);
+      ldum.rotation.set(0, Math.random()*Math.PI*2, 0);
+      ldum.scale.setScalar(0.8+Math.random()*0.8);
+      ldum.updateMatrix();
+      lobMesh.setMatrixAt(lb, ldum.matrix);
+    }
+    lobMesh.instanceMatrix.needsUpdate = true;
+    wreckFauna.add(lobMesh);
+
+    /* brittle stars and sea stars, flattened on deck plates and the
+       seabed around the hull */
+    function starShape(r, arms){
+      var shp = new THREE.Shape();
+      for (var i=0;i<arms*2;i++){
+        var ang = (i/(arms*2))*Math.PI*2, rad = (i%2===0) ? r : r*0.32;
+        var x = Math.cos(ang)*rad, y = Math.sin(ang)*rad;
+        if (i===0) shp.moveTo(x,y); else shp.lineTo(x,y);
+      }
+      shp.closePath();
+      var geo = new THREE.ExtrudeGeometry(shp, { depth:r*0.14, bevelEnabled:false, curveSegments:3 });
+      geo.rotateX(-Math.PI/2);
+      return geo;
+    }
+    var starGeo = starShape(0.22, 5);
+    var starMat = new THREE.MeshStandardMaterial({ color:0xb08560, roughness:0.75 });
+    var starCount = LOW_TIER ? 18 : 40;
+    var starMesh = new THREE.InstancedMesh(starGeo, starMat, starCount);
+    var sdum = new THREE.Object3D();
+    for (var ss=0; ss<starCount; ss++){
+      var sst = Math.random(), stss = lerpStation(sst), sidess = Math.random()<0.5?-1:1;
+      sdum.position.set(sidess*stss.hb*Math.random()*0.85, stss.deck+0.05, zF - sst*BOW_LEN);
+      sdum.rotation.set(0, Math.random()*Math.PI*2, 0);
+      sdum.scale.setScalar(0.6+Math.random()*1.0);
+      sdum.updateMatrix();
+      starMesh.setMatrixAt(ss, sdum.matrix);
+    }
+    starMesh.instanceMatrix.needsUpdate = true;
+    wreckFauna.add(starMesh);
+
+    /* pale sea anemones, clustered near the same portholes/railings the
+       coral favours */
+    var anemPts = [
+      new THREE.Vector2(0,0), new THREE.Vector2(0.09,0.05),
+      new THREE.Vector2(0.06,0.20), new THREE.Vector2(0.10,0.28), new THREE.Vector2(0.03,0.34)
+    ];
+    var anemGeo = new THREE.LatheGeometry(anemPts, 8);
+    var anemMat = new THREE.MeshStandardMaterial({ color:0xe6e0d4, roughness:0.6, transparent:true, opacity:0.85 });
+    var anemCount = LOW_TIER ? 14 : 32;
+    var anemMesh = new THREE.InstancedMesh(anemGeo, anemMat, anemCount);
+    var adum = new THREE.Object3D();
+    for (var an=0; an<anemCount; an++){
+      var san = 0.15+Math.random()*0.7, stan = lerpStation(san), sidean = Math.random()<0.5?-1:1;
+      adum.position.set(sidean*(stan.hb-0.05), 11+Math.random()*11, zF-san*BOW_LEN);
+      adum.rotation.set((Math.random()-0.5)*0.4, 0, (Math.random()-0.5)*0.4);
+      adum.scale.setScalar(0.7+Math.random()*1.1);
+      adum.updateMatrix();
+      anemMesh.setMatrixAt(an, adum.matrix);
+    }
+    anemMesh.instanceMatrix.needsUpdate = true;
+    wreckFauna.add(anemMesh);
 
     /* A faint top-down site light. Without it the wreck simply cannot be
        seen as a whole — the headlight only ever reaches a few tens of
@@ -1737,7 +2153,8 @@ titanicBow.add(entryAnchor);
 var POIS = [
   { name:'RMS Titanic', mesh:titanicGroup, radius:90, orbitDist:96, collidable:false,
     eyebrow:'Atlântico Norte · Naufrágio',
-    fact:'Seção da proa, 143 dos 269 metros originais. Afundou em 15 de abril de 1912; encontrada só em 1985, a 3.800m. As quatro chaminés se desprenderam durante o naufrágio — o que resta são as aberturas no convés.' },
+    photo:'../assets/textures/titanic/titanic-southampton-1912.jpg',
+    fact:'Seção da proa, 143 dos 269 metros originais. Afundou em 15 de abril de 1912; encontrada só em 1985, a 3.800m. As quatro chaminés se desprenderam durante o naufrágio — o que resta são as aberturas no convés. Foto: partindo de Southampton em 10 de abril de 1912, o dia em que zarpou. O navio virou recife: em expedições de 2010 a 2022, pesquisadores documentaram coral-de-bambu crescendo nos corrimãos e no guincho da âncora — algumas colônias mais que dobraram de tamanho em 24 anos — além de lagostins-fantasma brancos e estrelas-do-mar.' },
   { name:'Entrada — Escadaria Grande', mesh:entryAnchor, radius:6, orbitDist:22, isEntry:true,
     fact:'A cúpula de vidro sobre a Escadaria Grande desabou no naufrágio, deixando este vão aberto no convés dos botes. É por aqui que os veículos de exploração entram no Titanic de verdade. Desça devagar por ele.' }
 ];
@@ -1809,13 +2226,23 @@ var ROOMS = [
   { name:'Escadaria Grande',     box: wbox(-9.5,  3.0, WELL_Z-8.5,  9.5, 28.0, WELL_Z+8.5) },
   { name:'Recepção do convés D', box: wbox(-8.5,  3.0, WELL_Z+8.5,  8.5, 13.0, WELL_Z+40) },
   { name:'Salão de Jantar',      box: wbox(-13.5, 3.0, WELL_Z+40,  13.5, 14.0, WELL_Z+76) },
-  { name:'Camarote do Capitão',  box: wbox(  8.0, 20.5, WELL_Z-6.0, 18.0, 28.0, WELL_Z+6.0) }
+  { name:'Camarote do Capitão',  box: wbox(  8.0, 20.5, WELL_Z-6.0, 18.0, 28.0, WELL_Z+6.0) },
+  /* Ponte de Comando — mirrors the Captain's Cabin across the well, same
+     deck level. Real position, real justification for the two being
+     next to each other: Smith commanded from here. */
+  { name:'Ponte de Comando',     box: wbox(-18.0, 20.5, WELL_Z-6.0, -8.0, 28.0, WELL_Z+6.0) },
+  /* Ginásio — the Boat Deck gymnasium sat directly above the Grand
+     Staircase well, which is why it caps the same shaft rather than
+     needing its own portal: the entry portal's height already spans the
+     gap between the stair top and the gym floor. */
+  { name:'Ginásio',              box: wbox(-9.0, 28.3, WELL_Z-8.0,  9.0, 33.5, WELL_Z+8.0) }
 ];
 var PORTALS = [
-  wbox(-9.5, 25.0, WELL_Z-8.5,  9.5, 31.0, WELL_Z+8.5), // deck opening (entry)
+  wbox(-9.5, 25.0, WELL_Z-8.5,  9.5, 31.0, WELL_Z+8.5), // deck opening (entry) — also bridges stair top -> gym floor
   wbox(-8.5,  3.0, WELL_Z+5.5,  8.5, 13.0, WELL_Z+12),  // well -> reception
   wbox(-8.5,  3.0, WELL_Z+36,   8.5, 13.0, WELL_Z+44),  // reception -> saloon
-  wbox( 6.5, 20.5, WELL_Z-5.0, 10.0, 28.0, WELL_Z+5.0)  // well -> cabin
+  wbox( 6.5, 20.5, WELL_Z-5.0, 10.0, 28.0, WELL_Z+5.0), // well -> cabin
+  wbox(-10.0, 20.5, WELL_Z-5.0, -6.5, 28.0, WELL_Z+5.0) // well -> bridge
 ];
 var ENTRY_PORTAL = PORTALS[0];
 var INTERIOR_SOLIDS = [];
@@ -1848,9 +2275,10 @@ function buildInterior(){
       }
       var t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(3,3); return t;
     })();
+    var woodNormal = heightToNormalMap(woodTex, 1.8);
     /* deliberately drab and dark: this is a ruin at 3.800m being eaten by
        bacteria, not a period interior. The headlight does the revealing. */
-    var wallMat = new THREE.MeshStandardMaterial({ color:0x2e2419, roughness:1, map:woodTex, side:THREE.BackSide });
+    var wallMat = new THREE.MeshStandardMaterial({ color:0x2e2419, roughness:1, map:woodTex, normalMap:woodNormal, normalScale:new THREE.Vector2(0.8,0.8), side:THREE.BackSide });
     var siltMat = new THREE.MeshStandardMaterial({ color:0x3a352c, roughness:1 });
     var metalMat = new THREE.MeshStandardMaterial({ color:0x2a231b, roughness:0.98 });
 
@@ -1890,7 +2318,7 @@ function buildInterior(){
     for (var col=0; col<10; col++){
       var cx = (col%2 ? 1 : -1) * 9.4;
       var cz = WELL_Z + 45 + Math.floor(col/2)*6.4;
-      var pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.62, 10.4, 8), metalMat);
+      var pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.62, 10.4, 16), metalMat);
       pillar.position.set(cx, 8.2, cz);
       ruinGroup.add(pillar);
       INTERIOR_SOLIDS.push(wbox(cx-0.8, 3.0, cz-0.8, cx+0.8, 13.5, cz+0.8));
@@ -1927,14 +2355,49 @@ function buildInterior(){
     interiorGroup.userData.wallMat = wallMat;
 
     /* Captain's cabin: the bathtub, one of the most recognisable objects
-       down there. */
-    var tub = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.0, 1.4),
-      new THREE.MeshStandardMaterial({ color:0xa8a094, roughness:0.6 }));
-    tub.position.set(14.5, 21.4, WELL_Z+1.5);
+       down there. Same shape as the 1912 version below — a clawfoot tub
+       does not turn into a box just because it corrodes. */
+    var tub = new THREE.Mesh(clawfootTubGeo(1.7, 0.78, 0.62),
+      new THREE.MeshStandardMaterial({ color:0x8a8478, roughness:0.85 }));
+    tub.position.set(14.5, 20.9, WELL_Z+1.5);
     ruinGroup.add(tub);
     var bunk = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.5, 4.2), metalMat);
     bunk.position.set(10.5, 21.2, WELL_Z-2.5);
     ruinGroup.add(bunk);
+
+    /* Ponte de Comando: what would survive is the metal fittings — the
+       telegraph pedestal and binnacle stand — stripped of wood and brass */
+    var bridgeX = -13.0, bridgeZ = WELL_Z;
+    var teleStand = new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.42,1.6,8), metalMat);
+    teleStand.position.set(bridgeX-2.5, 21.8, bridgeZ+2.5);
+    ruinGroup.add(teleStand);
+    var binnacleStand = new THREE.Mesh(new THREE.CylinderGeometry(0.30,0.36,1.3,8), metalMat);
+    binnacleStand.position.set(bridgeX+2.0, 21.65, bridgeZ-1.5);
+    ruinGroup.add(binnacleStand);
+    for (var brd=0; brd<8; brd++){
+      var brdd = new THREE.Mesh(new THREE.BoxGeometry(0.6+Math.random()*1.4, 0.25, 0.6+Math.random()*1.2), metalMat);
+      brdd.position.set(bridgeX+(Math.random()-0.5)*8, 21.1, bridgeZ+(Math.random()-0.5)*10);
+      brdd.rotation.y = Math.random()*Math.PI;
+      ruinGroup.add(brdd);
+    }
+
+    /* Ginásio: wood-and-leather equipment doesn't survive — what's left is
+       collapsed metal framework on the boat deck above the well */
+    var gymY = 29.0, gymZ = WELL_Z;
+    for (var gr=0; gr<7; gr++){
+      var grx = (Math.random()-0.5)*15, grz = gymZ + (Math.random()-0.5)*14;
+      var gframe = new THREE.Mesh(new THREE.BoxGeometry(0.35+Math.random()*1.2, 0.3+Math.random()*1.4, 0.35+Math.random()*0.9), metalMat);
+      gframe.position.set(grx, gymY+0.4+Math.random()*0.6, grz);
+      gframe.rotation.set((Math.random()-0.5)*0.8, Math.random()*Math.PI, (Math.random()-0.5)*0.8);
+      ruinGroup.add(gframe);
+    }
+    var gymWheelGeo = new THREE.TorusGeometry(0.55, 0.06, 5, 12);
+    for (var gw=0; gw<2; gw++){
+      var gwheel = new THREE.Mesh(gymWheelGeo, metalMat);
+      gwheel.position.set((Math.random()-0.5)*12, gymY+0.9, gymZ+(Math.random()-0.5)*10);
+      gwheel.rotation.x = Math.PI/2 + (Math.random()-0.5)*0.6;
+      ruinGroup.add(gwheel);
+    }
 
     /* rusticles hanging from every ceiling */
     var ruC = new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0), new THREE.Vector3(0.2,-0.9,0.1),
@@ -1973,12 +2436,20 @@ function buildInterior(){
       anchor.position.copy(c2);
       interiorGroup.add(anchor);
       var facts = {
-        'Escadaria Grande':'A cúpula de vidro que cobria esta escadaria desabou durante o naufrágio — é exatamente por esse buraco que os ROVs entram no navio até hoje. A madeira dos degraus foi devorada há décadas.',
-        'Recepção do convés D':'As luminárias que ainda pendem aqui são o detalhe mais fotografado do interior do Titanic.',
-        'Salão de Jantar':'O maior salão a bordo de qualquer navio em 1912: servia 554 passageiros de primeira classe de uma só vez. Hoje as colunas continuam de pé e o teto entre elas veio abaixo.',
-        'Camarote do Capitão':'A banheira do capitão Edward Smith continua reconhecível — um dos objetos mais fotografados do naufrágio.'
+        'Escadaria Grande':'A cúpula de vidro que cobria esta escadaria desabou durante o naufrágio — é exatamente por esse buraco que os ROVs entram no navio até hoje. A madeira dos degraus foi devorada há décadas. O painel esculpido na parede se chamava "Honra e Glória Coroando o Tempo", com um relógio no centro; um dos passageiros de primeira classe foi fotografado parado bem ali, poucos dias antes do naufrágio.',
+        'Recepção do convés D':'As luminárias que ainda pendem aqui são o detalhe mais fotografado do interior do Titanic. Era aqui que os passageiros de primeira classe se reuniam antes de entrar no Salão de Jantar — uma orquestra tocava enquanto esperavam.',
+        'Salão de Jantar':'O maior salão a bordo de qualquer navio em 1912: servia 554 passageiros de primeira classe de uma só vez, num estilo "Jacobino inglês" branco. Hoje as colunas continuam de pé e o teto entre elas veio abaixo — a foto mostra a mesma sala, mesada e posta, dias antes do naufrágio.',
+        'Camarote do Capitão':'A banheira do capitão Edward Smith continua reconhecível — um dos objetos mais fotografados do naufrágio. Smith comandava transatlânticos havia mais de 25 anos; o Titanic seria sua última viagem antes de se aposentar.',
+        'Ponte de Comando':'Fica ao lado do camarote do capitão de propósito: era daqui, com a mão na roda do leme e o telégrafo de máquinas, que Smith comandava o navio. Não reconstruímos a casa de máquinas nem as caldeiras — ficavam na seção da popa, que se partiu e está destruída; inventar esse pedaço seria inventar história.',
+        'Ginásio':'Ficava no convés dos botes, com o instrutor profissional T. W. McCawley (que sobreviveu ao naufrágio). A "camelo mecânico" da foto era a atração: passageiros de primeira classe foram fotografados montados nela semanas antes do naufrágio, na mesma sala em que você está agora.'
       };
-      POIS.push({ name:r.name, mesh:anchor, radius:3, interior:true, fact:facts[r.name] || '' });
+      var photos = {
+        'Escadaria Grande':'../assets/textures/titanic/grand-staircase-1912.jpg',
+        'Salão de Jantar':'../assets/textures/titanic/salao-jantar-1912.jpg',
+        'Camarote do Capitão':'../assets/textures/titanic/capitao-smith-1911.jpg',
+        'Ginásio':'../assets/textures/titanic/ginasio-1912.jpg'
+      };
+      POIS.push({ name:r.name, mesh:anchor, radius:3, interior:true, fact:facts[r.name] || '', photo:photos[r.name] });
       addMarkerFor(POIS[POIS.length-1]);
     });
   }catch(err){
@@ -2020,7 +2491,8 @@ function buildEra1912(){
     }
     var t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(2,2); return t;
   })();
-  var oak = new THREE.MeshStandardMaterial({ color:0xa9703c, roughness:0.45, map:oakTex });
+  var oakNormal = heightToNormalMap(oakTex, 1.5);
+  var oak = new THREE.MeshStandardMaterial({ color:0xa9703c, roughness:0.45, map:oakTex, normalMap:oakNormal, normalScale:new THREE.Vector2(0.55,0.55) });
   var brass = new THREE.MeshStandardMaterial({ color:0xc9a227, roughness:0.3, metalness:0.75 });
   var marble = (function(){
     var c=document.createElement('canvas'); c.width=c.height=128; var g=c.getContext('2d');
@@ -2030,7 +2502,8 @@ function buildEra1912(){
       g.fillRect(x*16,y*16,16,16);
     }
     var t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(3,3);
-    return new THREE.MeshStandardMaterial({ map:t, roughness:0.25, metalness:0.05 });
+    var tn = heightToNormalMap(t, 0.9);
+    return new THREE.MeshStandardMaterial({ map:t, normalMap:tn, normalScale:new THREE.Vector2(0.35,0.35), roughness:0.25, metalness:0.05 });
   })();
 
   var baseY = 4.2, zc = WELL_Z;
@@ -2064,10 +2537,14 @@ function buildEra1912(){
   landing.position.set(0, baseY + 0.28 + STEPS*0.42, zc + 4.4);
   era1912Group.add(landing);
 
-  /* balustrade: newel posts and turned balusters down both sides */
+  /* balustrade: newel posts and turned balusters down both sides — real
+     lathed silhouettes (a shared geometry, cloned per instance) instead of
+     plain straight cylinders */
+  var balGeo = turnedPostGeo(0.95, 0.115);
+  var newelGeo = turnedPostGeo(1.9, 0.26);
   for (var b2=0;b2<STEPS;b2+=1){
     [-1,1].forEach(function(sd){
-      var bal = new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.10,0.95,6), oak);
+      var bal = new THREE.Mesh(balGeo, oak);
       bal.position.set(sd*3.9, baseY + 0.85 + b2*0.42, zc - 3.2 + b2*0.42);
       era1912Group.add(bal);
     });
@@ -2077,7 +2554,7 @@ function buildEra1912(){
     handrail.position.set(sd*3.9, baseY + 2.6, zc + 0.6);
     handrail.rotation.x = -Math.atan2(STEPS*0.42, STEPS*0.42);
     era1912Group.add(handrail);
-    var newel = new THREE.Mesh(new THREE.CylinderGeometry(0.20,0.24,1.9,8), oak);
+    var newel = new THREE.Mesh(newelGeo, oak);
     newel.position.set(sd*3.9, baseY + 0.95, zc - 3.4);
     era1912Group.add(newel);
     /* the cherub lamp that stood on the newel post at the foot */
@@ -2140,6 +2617,13 @@ function buildEra1912(){
     });
   }
 
+  /* a real 1912 photograph of this exact room (or its identical twin on
+     the Olympic), hung where the panelling already exists to hold it */
+  var stairPhoto = framedPhoto('../assets/textures/titanic/grand-staircase-1912.jpg', 2.6, 1.9);
+  stairPhoto.position.set(-8.9, baseY+9, zc-5.5);
+  stairPhoto.rotation.y = Math.PI/2;
+  era1912Group.add(stairPhoto);
+
   /* ---------- the rest of the ship, as it was ----------
      1912 has to be somewhere you can actually swim through, not a single
      tableau — so the reception, the dining saloon and the captain's cabin
@@ -2155,8 +2639,22 @@ function buildEra1912(){
      chairs, and the long run of light fittings whose corroded remains are
      the ones still hanging in the wreck today. */
   var recZ0 = WELL_Z + 8.5, recZ1 = WELL_Z + 40;
+  var carpetTex = (function(){
+    var c=document.createElement('canvas'); c.width=c.height=128; var g=c.getContext('2d');
+    g.fillStyle='#5e1f1f'; g.fillRect(0,0,128,128);
+    g.strokeStyle='rgba(150,60,55,0.5)'; g.lineWidth=2.2;
+    for (var y=0;y<128;y+=32){
+      for (var x=0;x<128;x+=32){
+        g.beginPath(); g.arc(x+16,y+16,11,0,Math.PI*2); g.stroke();
+        g.beginPath(); g.moveTo(x+16,y+3); g.lineTo(x+16,y+29);
+        g.moveTo(x+3,y+16); g.lineTo(x+29,y+16); g.stroke();
+      }
+    }
+    var t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(3, (recZ1-recZ0)/5.3); return t;
+  })();
+  var carpetNormal = heightToNormalMap(carpetTex, 1.2);
   var carpet = new THREE.Mesh(new THREE.PlaneGeometry(16, recZ1-recZ0),
-    new THREE.MeshStandardMaterial({ color:0x7a2b2b, roughness:0.9 }));
+    new THREE.MeshStandardMaterial({ map:carpetTex, normalMap:carpetNormal, normalScale:new THREE.Vector2(0.5,0.5), color:0xcf9a9a, roughness:0.9 }));
   carpet.rotation.x = -Math.PI/2;
   carpet.position.set(0, baseY, (recZ0+recZ1)/2);
   era1912Group.add(carpet);
@@ -2171,14 +2669,17 @@ function buildEra1912(){
     wallR.rotation.y = sd5<0 ? Math.PI/2 : -Math.PI/2;
     era1912Group.add(wallR);
   });
+  var wickerGeo = chairGeo(0.85, 0.85, 0.85, 0.9);
+  var wickerMat = new THREE.MeshStandardMaterial({ color:0xc9a25c, roughness:0.75 });
   for (var rf=0; rf<7; rf++){
     var zf2 = recZ0 + 3 + rf*4.6;
     sconce(0, baseY+7.9, zf2);
     [-1,1].forEach(function(sd6){ sconce(sd6*7.4, baseY+5.4, zf2); });
-    // wicker chairs along the walls
+    // wicker chairs along the walls, backs toward the panelling
     [-1,1].forEach(function(sd7){
-      var ch2 = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.9), oak);
-      ch2.position.set(sd7*6.2, baseY+0.55, zf2);
+      var ch2 = new THREE.Mesh(wickerGeo, wickerMat);
+      ch2.position.set(sd7*6.2, baseY, zf2);
+      ch2.rotation.y = sd7>0 ? -Math.PI/2 : Math.PI/2;
       era1912Group.add(ch2);
     });
   }
@@ -2206,11 +2707,20 @@ function buildEra1912(){
   for (var dc=0; dc<10; dc++){
     var cxd = (dc%2 ? 1 : -1) * 9.4;
     var czd = dinZ0 + 5 + Math.floor(dc/2)*6.4;
-    var colD = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.56,9.4,10), white);
+    var colD = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.56,9.4,16), white);
     colD.position.set(cxd, baseY+4.7, czd);
     era1912Group.add(colD);
     sconce(cxd, baseY+6.6, czd);
   }
+  var dinChairGeo = chairGeo(0.6, 0.6, 0.9, 0.85);
+  var plateGeo = new THREE.CylinderGeometry(0.20, 0.20, 0.03, 14);
+  var plateMat2 = new THREE.MeshStandardMaterial({ color:0xf5f0e2, roughness:0.35 });
+  var cupGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.09, 8);
+  var cupMat = new THREE.MeshStandardMaterial({ color:0xffffff, roughness:0.2 });
+  var plateN = 0, cupN = 0;
+  var plateInst = new THREE.InstancedMesh(plateGeo, plateMat2, 40);
+  var cupInst = new THREE.InstancedMesh(cupGeo, cupMat, 40);
+  var pdm = new THREE.Object3D();
   for (var dt=0; dt<10; dt++){
     var txd = (dt%2?1:-1)*5.0, tzd = dinZ0 + 5 + Math.floor(dt/2)*6.4;
     var top = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.14, 5.2),
@@ -2220,14 +2730,29 @@ function buildEra1912(){
     var leg = new THREE.Mesh(new THREE.CylinderGeometry(0.10,0.12,1.0,6), oak);
     leg.position.set(txd, baseY+0.5, tzd); era1912Group.add(leg);
     for (var ch3=0; ch3<4; ch3++){
-      var seat = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.9, 0.62), oak);
-      seat.position.set(txd + (ch3<2?-1.9:1.9), baseY+0.55, tzd - 1.6 + (ch3%2)*3.2);
+      var seatX = txd + (ch3<2?-1.9:1.9), seatZ = tzd - 1.6 + (ch3%2)*3.2;
+      var seat = new THREE.Mesh(dinChairGeo, oak);
+      seat.position.set(seatX, baseY, seatZ);
+      seat.rotation.y = ch3<2 ? Math.PI/2 : -Math.PI/2;
       era1912Group.add(seat);
+      // place setting: plate + cup laid at the table's edge for each seat
+      var plX = txd + (ch3<2?-1.05:1.05), plZ = tzd - 1.6 + (ch3%2)*3.2;
+      pdm.position.set(plX, baseY+1.09, plZ); pdm.rotation.set(0,0,0); pdm.updateMatrix();
+      plateInst.setMatrixAt(plateN++, pdm.matrix);
+      pdm.position.set(plX, baseY+1.13, plZ + (ch3<2?0.28:-0.28)); pdm.updateMatrix();
+      cupInst.setMatrixAt(cupN++, pdm.matrix);
     }
   }
+  plateInst.count = plateN; plateInst.instanceMatrix.needsUpdate = true;
+  cupInst.count = cupN; cupInst.instanceMatrix.needsUpdate = true;
+  era1912Group.add(plateInst); era1912Group.add(cupInst);
   var dinLight = new THREE.PointLight(0xfff0d2, 220, 46, 1.6);
   dinLight.position.set(0, baseY+7.4, (dinZ0+dinZ1)/2);
   era1912Group.add(dinLight);
+  var dinPhoto = framedPhoto('../assets/textures/titanic/salao-jantar-1912.jpg', 2.8, 1.9);
+  dinPhoto.position.set(-12.9, baseY+5.6, dinZ0+4);
+  dinPhoto.rotation.y = Math.PI/2;
+  era1912Group.add(dinPhoto);
 
   /* Captain Smith's quarters */
   var cabX = 13, cabZ = WELL_Z;
@@ -2240,15 +2765,161 @@ function buildEra1912(){
   var linen = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.2, 4.2),
     new THREE.MeshStandardMaterial({ color:0xf2ece0, roughness:0.7 }));
   linen.position.set(cabX-2.5, 21.95, cabZ-2.5); era1912Group.add(linen);
-  var bathtub = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.0, 1.4),
+  var bathtub = new THREE.Mesh(clawfootTubGeo(1.7, 0.78, 0.62),
     new THREE.MeshStandardMaterial({ color:0xf4f2ee, roughness:0.25, metalness:0.1 }));
-  bathtub.position.set(cabX+1.5, 21.5, cabZ+1.5); era1912Group.add(bathtub);
+  bathtub.position.set(cabX+1.5, 21.0, cabZ+1.5); era1912Group.add(bathtub);
   var desk = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.16, 1.2), oak);
   desk.position.set(cabX+2.0, 21.9, cabZ-3.0); era1912Group.add(desk);
+  var deskChair = new THREE.Mesh(chairGeo(0.55,0.55,0.85,0.8), oak);
+  deskChair.position.set(cabX+2.0, 21.0, cabZ-3.9);
+  deskChair.rotation.y = Math.PI;
+  era1912Group.add(deskChair);
   sconce(cabX, 25.0, cabZ);
   var cabLight = new THREE.PointLight(0xffdcae, 60, 20, 1.6);
   cabLight.position.set(cabX, 24.2, cabZ);
   era1912Group.add(cabLight);
+  var smithPhoto = framedPhoto('../assets/textures/titanic/capitao-smith-1911.jpg', 1.5, 2.1);
+  smithPhoto.position.set(17.8, 24.0, cabZ);
+  smithPhoto.rotation.y = -Math.PI/2;
+  era1912Group.add(smithPhoto);
+
+  /* Ponte de Comando: where Smith actually gave the order. Bridges were
+     kept bright and plain — white paint, not panelling — for night
+     visibility and contrast against the dark that mattered so much on
+     14 April. The wheel, the compass binnacle, and the engine order
+     telegraph that rang orders down to a boiler room this reconstruction
+     deliberately does not include (it's in the stern section, destroyed). */
+  var bridgeX = -13.0, bridgeZ = WELL_Z;
+  var bridgeFloor = new THREE.Mesh(new THREE.PlaneGeometry(10, 12), new THREE.MeshStandardMaterial({ color:0x6d5644, roughness:0.7 }));
+  bridgeFloor.rotation.x = -Math.PI/2; bridgeFloor.position.set(bridgeX, 21.0, bridgeZ);
+  era1912Group.add(bridgeFloor);
+  var bridgeWhite = new THREE.MeshStandardMaterial({ color:0xe8e4d8, roughness:0.55 });
+  [[0,-6],[0,6]].forEach(function(p){
+    var bw = new THREE.Mesh(new THREE.PlaneGeometry(10,7), bridgeWhite);
+    bw.position.set(bridgeX+p[0], 24.5, bridgeZ+p[1]);
+    if (p[1]>0) bw.rotation.y = Math.PI;
+    era1912Group.add(bw);
+  });
+  [[-5,0],[5,0]].forEach(function(p){
+    var bw2 = new THREE.Mesh(new THREE.PlaneGeometry(12,7), bridgeWhite);
+    bw2.position.set(bridgeX+p[0], 24.5, bridgeZ);
+    bw2.rotation.y = p[0]<0 ? Math.PI/2 : -Math.PI/2;
+    era1912Group.add(bw2);
+  });
+  var glassMat1912 = new THREE.MeshStandardMaterial({ color:0x9fd0e6, emissive:0x1a3a4a, emissiveIntensity:0.4, roughness:0.1, transparent:true, opacity:0.6 });
+  for (var bwn=0; bwn<5; bwn++){
+    var bwin = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.6), glassMat1912);
+    bwin.position.set(bridgeX-4.9, 24.4, bridgeZ-4.5+bwn*2.3);
+    bwin.rotation.y = Math.PI/2;
+    era1912Group.add(bwin);
+  }
+  var wheelMat = new THREE.MeshStandardMaterial({ color:0x6b4526, roughness:0.5 });
+  var wheelRim = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.08, 8, 16), wheelMat);
+  wheelRim.position.set(bridgeX-2.5, 22.3, bridgeZ+2.5);
+  wheelRim.rotation.y = Math.PI/2;
+  era1912Group.add(wheelRim);
+  for (var wsp=0; wsp<8; wsp++){
+    var spa = wsp/8*Math.PI*2;
+    var spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.85,4), wheelMat);
+    spoke.position.set(bridgeX-2.5, 22.3+Math.sin(spa)*0.42, bridgeZ+2.5+Math.cos(spa)*0.42);
+    spoke.rotation.set(Math.PI/2, 0, spa);
+    era1912Group.add(spoke);
+  }
+  var wheelStand = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.16,1.6,8), brass);
+  wheelStand.position.set(bridgeX-2.5, 21.5, bridgeZ+2.5);
+  era1912Group.add(wheelStand);
+  /* binnacle: the compass housing every helm order was checked against */
+  var binnBody = new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.32,1.1,10), brass);
+  binnBody.position.set(bridgeX+2.0, 21.75, bridgeZ-1.5);
+  era1912Group.add(binnBody);
+  var binnTop = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), new THREE.MeshStandardMaterial({ color:0xf0ece0, roughness:0.3 }));
+  binnTop.position.set(bridgeX+2.0, 22.35, bridgeZ-1.5);
+  era1912Group.add(binnTop);
+  /* engine order telegraph — "full astern" came through one of these,
+     too late */
+  var telePost = new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.16,1.3,8), brass);
+  telePost.position.set(bridgeX+3.8, 21.65, bridgeZ+2.0);
+  era1912Group.add(telePost);
+  var teleDial = new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,0.16,16), brass);
+  teleDial.position.set(bridgeX+3.8, 22.4, bridgeZ+2.0);
+  era1912Group.add(teleDial);
+  var teleFace = new THREE.Mesh(new THREE.CircleGeometry(0.36,16), new THREE.MeshStandardMaterial({ color:0xf3ead6, roughness:0.4 }));
+  teleFace.position.set(bridgeX+3.8, 22.49, bridgeZ+2.0);
+  teleFace.rotation.x = -Math.PI/2;
+  era1912Group.add(teleFace);
+  var chartTop = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.14, 1.3), oak);
+  chartTop.position.set(bridgeX-1.0, 21.9, bridgeZ-3.6);
+  era1912Group.add(chartTop);
+  var bridgeLight = new THREE.PointLight(0xd8e8f0, 90, 24, 1.6);
+  bridgeLight.position.set(bridgeX, 24.0, bridgeZ);
+  era1912Group.add(bridgeLight);
+
+  /* Ginásio: the Boat Deck gymnasium, run by a professional instructor
+     (T. W. McCawley, who survived the sinking) — rowing machines,
+     stationary bicycles, and the mechanical camel first-class passengers
+     were photographed riding in this exact room, weeks before the
+     sinking — the photo hanging here is that room. */
+  var gymY = 29.0, gymZ = WELL_Z;
+  var gymFloor = new THREE.Mesh(new THREE.PlaneGeometry(17, 15), oak);
+  gymFloor.rotation.x = -Math.PI/2; gymFloor.position.set(0, gymY, gymZ);
+  era1912Group.add(gymFloor);
+  var gymWhite = new THREE.MeshStandardMaterial({ color:0xece6d6, roughness:0.6 });
+  [[0,-7],[0,7]].forEach(function(p){
+    var gw3 = new THREE.Mesh(new THREE.PlaneGeometry(17,4.6), gymWhite);
+    gw3.position.set(p[0], gymY+2.3, gymZ+p[1]);
+    if (p[1]>0) gw3.rotation.y = Math.PI;
+    era1912Group.add(gw3);
+  });
+  [[-8.5,0],[8.5,0]].forEach(function(p){
+    var gw4 = new THREE.Mesh(new THREE.PlaneGeometry(15,4.6), gymWhite);
+    gw4.position.set(p[0], gymY+2.3, gymZ);
+    gw4.rotation.y = p[0]<0 ? Math.PI/2 : -Math.PI/2;
+    era1912Group.add(gw4);
+  });
+  for (var gwn=0; gwn<6; gwn++){
+    var gwin = new THREE.Mesh(new THREE.PlaneGeometry(1.4,2.2), glassMat1912);
+    gwin.position.set(-8.4, gymY+2.4, gymZ-6+gwn*2.4);
+    gwin.rotation.y = Math.PI/2;
+    era1912Group.add(gwin);
+  }
+  var rowGeo = chairGeo(0.5,1.6,0.35,0);
+  for (var rm=0; rm<3; rm++){
+    var rowMachine = new THREE.Mesh(rowGeo, oak);
+    rowMachine.position.set(-5.5+rm*3.2, gymY, gymZ-5);
+    era1912Group.add(rowMachine);
+  }
+  var bikeWheelGeo = new THREE.TorusGeometry(0.42,0.05,6,14);
+  for (var bk=0; bk<2; bk++){
+    var bikeX = -3+bk*6, bikeZ = gymZ+1;
+    var bwheel = new THREE.Mesh(bikeWheelGeo, brass);
+    bwheel.position.set(bikeX, gymY+0.5, bikeZ);
+    bwheel.rotation.y = Math.PI/2;
+    era1912Group.add(bwheel);
+    var seatPost = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.6,6), brass);
+    seatPost.position.set(bikeX, gymY+0.85, bikeZ-0.3);
+    era1912Group.add(seatPost);
+    var bikeSeat = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.1,0.5), oak);
+    bikeSeat.position.set(bikeX, gymY+1.15, bikeZ-0.3);
+    era1912Group.add(bikeSeat);
+  }
+  var camelBody = new THREE.Mesh(new THREE.BoxGeometry(1.5,0.7,0.6), new THREE.MeshStandardMaterial({ color:0x8a6b4a, roughness:0.7 }));
+  camelBody.position.set(4.5, gymY+0.9, gymZ+5);
+  era1912Group.add(camelBody);
+  var camelSaddle = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.2,0.5), oak);
+  camelSaddle.position.set(4.5, gymY+1.3, gymZ+5);
+  era1912Group.add(camelSaddle);
+  [[-0.5,-0.25],[-0.5,0.25],[0.5,-0.25],[0.5,0.25]].forEach(function(lp){
+    var camelLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.9,6), brass);
+    camelLeg.position.set(4.5+lp[0], gymY+0.45, gymZ+5+lp[1]);
+    era1912Group.add(camelLeg);
+  });
+  var gymLight = new THREE.PointLight(0xfff0d2, 160, 34, 1.6);
+  gymLight.position.set(0, gymY+3.6, gymZ);
+  era1912Group.add(gymLight);
+  var gymPhoto = framedPhoto('../assets/textures/titanic/ginasio-1912.jpg', 2.6, 2.0);
+  gymPhoto.position.set(8.4, gymY+2.2, gymZ-3);
+  gymPhoto.rotation.y = -Math.PI/2;
+  era1912Group.add(gymPhoto);
 }
 
 /* interior confinement: portals suspend room clamping, which is what
@@ -2294,8 +2965,15 @@ function exitWreck(){
 /* emergency exit: with hand-rolled AABB collision and no automated
    physics tests, getting stuck is the likeliest failure — this always
    works, no matter what state the player wedged themselves into */
-/* 1912 / today toggle — only offered inside the Grand Staircase, because
-   that is the one space reconstructed */
+/* 1912 / today toggle — lives in the always-visible HUD column (#hudBtns)
+   so it works from anywhere, inside the wreck or out. Originally this only
+   swapped the interior; the hull outside always looked like the modern
+   wreck no matter what the button said, which made the toggle feel like it
+   only half-worked. It now swaps the exterior too: hull paint, a proper
+   superstructure with lit windows, upright smoking funnels, an upright
+   mast, lifeboats in the davits, lit portholes, and hides everything that
+   only exists on a century-old ruin (rusticles, coral, torn plating, the
+   fallen mast). */
 var eraBtn = document.getElementById('eraBtn');
 var eraBadge = document.getElementById('eraBadge');
 function setEra(on){
@@ -2312,6 +2990,16 @@ function setEra(on){
     wm.roughness = on ? 0.55 : 1;
     wm.needsUpdate = true;
   }
+
+  var ud = titanicBow.userData;
+  if (ud.hullMesh) ud.hullMesh.material = on ? hull1912Mat : hullMat;
+  if (ud.houseMesh) ud.houseMesh.material = on ? house1912Mat : ud.deckMatOrig;
+  if (ud.houseWinMesh) ud.houseWinMesh.material = on ? houseWinMatLit : houseWinMatDark;
+  if (ud.deckMeshes) ud.deckMeshes.forEach(function(m){ m.material = on ? deck1912Mat : ud.deckMatOrig; });
+  if (ud.portGlassMesh) ud.portGlassMesh.material = on ? litGlassMat : ud.portGlassMatOrig;
+  if (ud.wreckOnlyGroup) ud.wreckOnlyGroup.visible = !on;
+  if (ud.era1912OnlyGroup) ud.era1912OnlyGroup.visible = on;
+
   /* in 1912 the ship is lit, dry and above water: no headlight cone, no
      marine snow, and the water fog has no business being indoors */
   snowPoints.visible = !on && !insideWreck ? true : (on ? false : snowPoints.visible);
@@ -2322,6 +3010,30 @@ function setEra(on){
   if (eraBadge) eraBadge.classList.toggle('show', on);
 }
 if (eraBtn) eraBtn.addEventListener('click', function(){ setEra(!era1912); });
+
+/* funnel smoke, 1912 exterior only — recycles particles at the funnel
+   mouth instead of fading them, the same trick updateSnow() uses */
+function updateSmoke(dt){
+  if (!era1912 || insideWreck) return;
+  var sp = titanicBow.userData.smokePoints, age = titanicBow.userData.smokeAge,
+      fz = titanicBow.userData.funnelZs;
+  if (!sp || !age || !fz) return;
+  var pos = sp.geometry.attributes.position.array;
+  for (var i=0;i<age.length;i++){
+    age[i] += dt*0.15;
+    pos[i*3+1] += dt*1.6;
+    pos[i*3]   += (Math.random()-0.5)*dt*0.4;
+    pos[i*3+2] += (Math.random()-0.5)*dt*0.4;
+    if (age[i] > 1){
+      age[i] = 0;
+      var fzz = fz[i % fz.length];
+      pos[i*3]   = (Math.random()-0.5)*1.4;
+      pos[i*3+1] = 26.7+13.5 + Math.random()*2;
+      pos[i*3+2] = fzz + (Math.random()-0.5)*1.4;
+    }
+  }
+  sp.geometry.attributes.position.needsUpdate = true;
+}
 
 var wreckExitBtn = document.getElementById('wreckExit');
 if (wreckExitBtn) wreckExitBtn.addEventListener('click', function(){
@@ -2679,6 +3391,7 @@ function updateOrbit(dt){
 var poiCard = document.getElementById('poiCard');
 var poiName = document.getElementById('poiName');
 var poiFact = document.getElementById('poiFact');
+var poiPhoto = document.getElementById('poiPhoto');
 document.getElementById('poiClose').addEventListener('click', function(){ poiCard.classList.remove('show'); });
 
 var markerLayer = document.createElement('div');
@@ -2702,6 +3415,8 @@ function addMarkerFor(poi){
     activePoi = poi;
     poiName.textContent = poi.name;
     poiFact.textContent = poi.fact || '';
+    if (poi.photo){ poiPhoto.src = poi.photo; poiPhoto.hidden = false; }
+    else poiPhoto.hidden = true;
     poiGoBtn.hidden = false;
     poiGoBtn.textContent = (poi.isEntry || (poi.interior && !insideWreck))
       ? 'entrar no naufrágio →' : 'ir até lá →';
@@ -3163,6 +3878,7 @@ function animate(){
   updateWreckState(dt);
   updateCreatures(t, dt);
   if (!insideWreck) updateSnow(dt);
+  updateSmoke(dt);
   updateDepthZone(dt);
   Sound.update(dt, Math.max(0, -camera.position.y), speed);
 

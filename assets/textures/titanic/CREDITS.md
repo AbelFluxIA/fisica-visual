@@ -1,0 +1,7 @@
+Fotografias históricas de domínio público, via [Wikimedia Commons](https://commons.wikimedia.org/), redimensionadas para uso na web.
+
+- **grand-staircase-1912.jpg** — "1st Class Aft Grand Staircase", RMS Olympic (navio-irmão do Titanic, escadaria idêntica), por Robert John Welch, maio de 1911. Domínio público (autor falecido em 1936; publicada antes de 1931). [Fonte](https://commons.wikimedia.org/wiki/File:1st_Class_Aft_Grand_Staircase.jpg)
+- **salao-jantar-1912.jpg** — "Grand Dining Saloon Titanic", do livro "Wreck and Sinking of the Titanic" (Homewood Press, Chicago), 1912. Domínio público (publicada antes de 1931). [Fonte](https://commons.wikimedia.org/wiki/File:Grand_Dining_Saloon_Titanic.jpg)
+- **ginasio-1912.jpg** — "Titanic's First Class Gymnasium", por Robert John Welch, março de 1912. Domínio público (autor falecido em 1936; publicada antes de 1931). [Fonte](https://commons.wikimedia.org/wiki/File:Titanic%27s_first_class_gymnasium.jpg)
+- **capitao-smith-1911.jpg** — Retrato do Capitão Edward J. Smith a bordo do Olympic, 1911. Domínio público (mais de 70 anos). [Fonte](https://commons.wikimedia.org/wiki/File:EJ_Smith2.jpg)
+- **titanic-southampton-1912.jpg** — RMS Titanic partindo de Southampton, por Francis Godolphin Osbourne Stuart, 10 de abril de 1912. Domínio público (autor falecido em 1923; publicada antes de 1931). [Fonte](https://commons.wikimedia.org/wiki/File:RMS_Titanic_3.jpg)
