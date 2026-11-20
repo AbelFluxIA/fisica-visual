@@ -218,7 +218,9 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
   width:auto !important;min-width:38px;padding:0 10px;border-radius:19px !important;
   font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.03em;
 }
-#eraBtn.on{color:#2a1a06;background:var(--gold-bright);border-color:var(--gold-bright);}
+/* #hudBtns prefix is load-bearing: without it `#hudBtns button.on` wins on
+   specificity and paints the label gold on gold — an empty-looking pill */
+#hudBtns #eraBtn.on{color:#2a1a06;background:var(--gold-bright);border-color:var(--gold-bright);}
 #eraBadge{
   position:fixed;top:16px;left:50%;transform:translateX(-50%);
   z-index:19;display:none;padding:8px 16px;border-radius:16px;
@@ -291,45 +293,105 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
   border:none;border-radius:14px;padding:10px 20px;cursor:pointer;font-weight:600;
 }
 
-/* ---- mobile thrust/stop controls, same pattern as /voo/ ---- */
+#welcome .mission-pitch{
+  font-size:13.5px;line-height:1.5;color:var(--dim);
+  padding:11px 14px;margin:0 0 16px;border-radius:14px;
+  background:rgba(232,194,126,0.07);border:1px solid rgba(232,194,126,0.28);
+}
+#welcome .mission-pitch b{color:var(--gold-bright);}
+#welcome .ghost{
+  font-family:var(--mono);font-size:13px;color:var(--text);background:transparent;
+  border:1px solid var(--line-soft);border-radius:14px;padding:10px 16px;cursor:pointer;
+}
+#welcome .ghost:hover{border-color:var(--gold-bright);}
+#welcome .card{max-height:calc(100dvh - 24px);overflow-y:auto;}
+.only-touch{display:none;}
+
+/* ---- touch controls: a stick under the left thumb, rise/sink under the
+   right. Shown for any coarse pointer (phones AND tablets — the previous
+   max-width test left tablets with no way to move at all), and for
+   narrow windows so it can be tried on a desktop. ---- */
+#joy{
+  position:fixed;left:16px;bottom:16px;z-index:16;
+  width:124px;height:124px;border-radius:50%;display:none;
+  background:rgba(6,14,26,0.55);border:1px solid rgba(255,255,255,0.14);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  touch-action:none;-webkit-user-select:none;user-select:none;
+}
+#joy::before{
+  content:'';position:absolute;inset:26px;border-radius:50%;
+  border:1px dashed rgba(255,255,255,0.13);
+}
+#joyKnob{
+  position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;
+  border-radius:50%;background:var(--gold-bright);opacity:.82;
+  box-shadow:0 4px 14px rgba(0,0,0,0.45);pointer-events:none;
+  transition:transform .12s ease-out;
+}
+#joy.held #joyKnob{opacity:1;transition:none;}
 #mobileControls{
   position:fixed;right:16px;bottom:16px;z-index:16;
-  display:none;flex-direction:column;gap:8px;align-items:center;
+  display:none;flex-direction:column;gap:10px;align-items:center;
 }
-#thrustBtn,#stopBtn{
-  width:56px;height:56px;border-radius:50%;
-  font-family:var(--mono);font-size:10px;color:var(--text);
-  background:var(--panel);border:1px solid var(--line-soft);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+#riseBtn,#sinkBtn{
+  width:58px;height:58px;border-radius:50%;
+  font-size:17px;color:var(--text);
+  background:rgba(6,14,26,0.62);border:1px solid rgba(255,255,255,0.14);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   display:flex;align-items:center;justify-content:center;
+  touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
 }
-#thrustBtn{color:#052018;background:var(--gold-bright);border:none;font-weight:700;font-size:18px;}
-#stopBtn{color:var(--alert);}
+#riseBtn.held,#sinkBtn.held{background:var(--gold-bright);color:#052018;border-color:var(--gold-bright);}
 
-@media (max-width:640px){
+@media (pointer:coarse), (max-width:640px){
+  #joy{display:block;}
   #mobileControls{display:flex;}
-  header#hdr{top:56px;left:16px;right:16px;transform:none;padding:8px 12px;max-width:none;text-align:left;width:auto;}
+  #dock{display:none;}
+  .only-touch{display:list-item;}
+  .only-mouse{display:none;}
+  /* the bottom corners now belong to the thumbs, so everything that
+     lived there moves up */
+  #compass{left:16px;bottom:154px;font-size:10px;padding:8px 12px;}
+  #hudBtns{top:auto;bottom:158px;right:16px;}
+  #hudBtns button{width:44px;height:44px;}
+  #eraBtn{border-radius:22px !important;}
+  #descentBtn{left:50%;bottom:20px;font-size:11px;padding:10px 14px;}
+  #poiCard{bottom:206px;max-width:88vw;padding:12px 16px;}
+}
+@media (max-width:640px){
+  header#hdr{top:78px;left:16px;right:16px;transform:none;padding:8px 12px;max-width:none;text-align:left;width:auto;}
   header#hdr .eyebrow{font-size:9px;}
   header#hdr h1{font-size:15px;}
   header#hdr p{display:none;}
   #backlink{padding:7px 10px;font-size:11px;}
-  #readout{top:auto;bottom:16px;left:16px;right:auto;text-align:left;padding:8px 12px;}
+  #readout{padding:7px 11px;font-size:10.5px;}
   #readout .big{font-size:15px;}
-  #dock{display:none;}
-  #compass{bottom:96px;font-size:10px;padding:8px 12px;}
-  #poiCard{bottom:186px;max-width:88vw;padding:12px 16px;}
-  /* right edge becomes one continuous column: toggles above the thrust pad */
-  #hudBtns{top:auto;bottom:152px;right:16px;}
-  #hudBtns button{width:44px;height:44px;}
-  #descentBtn{bottom:152px;left:16px;transform:none;font-size:11px;padding:9px 14px;}
-  #descentBtn:hover{transform:none;}
+  #readout .speed{display:none;}
+  /* the long zone names used to run into the back link on a 360px screen */
+  #readout .zone{max-width:44vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #descentBtn{white-space:normal;max-width:calc(100vw - 250px);text-align:center;line-height:1.25;}
   #descentHud{top:16px;width:calc(100vw - 32px);padding:10px 14px 11px;}
   #descentCaption{font-size:12.5px;min-height:3.4em;}
+  #welcome .card{padding:20px 20px;}
+  #welcome ol{padding-left:18px;}
+  #welcome p,#welcome li{font-size:13.5px;}
+  #welcome .actions{flex-direction:column-reverse;}
+  #welcome .actions button{width:100%;padding:13px 16px;}
+}
+/* short landscape phones: shrink the thumb controls so they don't eat
+   the view */
+@media (pointer:coarse) and (max-height:460px){
+  #joy{width:104px;height:104px;}
+  #riseBtn,#sinkBtn{width:48px;height:48px;}
+  #hudBtns{bottom:auto;top:84px;flex-direction:row;}
+  #compass{bottom:auto;top:56px;left:16px;}
+  header#hdr{display:none;}
 }
 @media (prefers-reduced-motion:reduce){
   #revealBanner,#poiCard,#porthole{transition:none;}
 }
 </style>
+<link rel="stylesheet" href="expedicao.css">
 </head>
 <body>
 
@@ -404,9 +466,12 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
   </div>
 </div>
 
+<div id="joy" aria-label="Controle de movimento: arraste para mover o submersível" role="application">
+  <div id="joyKnob"></div>
+</div>
 <div id="mobileControls">
-  <button id="thrustBtn" aria-label="Acelerar">▶</button>
-  <button id="stopBtn" aria-label="Parar">■</button>
+  <button id="riseBtn" type="button" aria-label="Subir (segure)">▲</button>
+  <button id="sinkBtn" type="button" aria-label="Descer (segure)">▼</button>
 </div>
 
 <div id="revealBanner" role="status">
@@ -421,13 +486,19 @@ header#hdr p{margin:0;font-size:13px;color:var(--dim);}
     <h2 id="welcomeTitle">O oceano tem andares. Cada um é escuro à sua maneira.</h2>
     <p>A luz do sol não morre de repente na água — ela vai sendo engolida cor por cor, começando pelo vermelho. Pilote um submersível de verdade através dela.</p>
     <ol>
-      <li><b>WASD</b> (ou setas) move o submersível; arraste o <b>mouse</b> para olhar ao redor; <b>scroll</b> acelera ou freia.</li>
+      <li class="only-mouse"><b>WASD</b> (ou setas) move o submersível; arraste o <b>mouse</b> para olhar ao redor; <b>scroll</b> acelera ou freia.</li>
+      <li class="only-touch">Use o <b>controle redondo</b> à esquerda para mover; <b>arraste a tela</b> para olhar ao redor; <b>▲ ▼</b> sobem e descem.</li>
       <li>Desça e observe a cor da água mudar de verdade — física real de absorção de luz, não um efeito.</li>
-      <li>Ligue e apague o <b>farol</b> (tecla <b>F</b>) — no fundo, ele é a única luz que existe.</li>
+      <li class="only-mouse">Ligue e apague o <b>farol</b> (tecla <b>F</b>) — no fundo, ele é a única luz que existe.</li>
+      <li class="only-touch">Ligue e apague o <b>farol</b> no botão à direita — no fundo, ele é a única luz que existe.</li>
       <li>Toque nos <b>seres marinhos</b> para ver fatos reais. Sem pressa de achar o caminho: o botão <b>"descer até o Titanic"</b> leva você até lá, e dá para <b>entrar no naufrágio</b>.</li>
     </ol>
+    <div class="mission-pitch">
+      <b>Expedição Titanic</b> — uma missão guiada de uns 20 minutos: você pilota até o naufrágio resolvendo desafios de matemática, ciências e leitura, e sai com um diário de bordo.
+    </div>
     <div class="actions">
-      <button class="go" id="welcomeGo">iniciar mergulho</button>
+      <button class="ghost" id="welcomeGo" type="button">explorar livre</button>
+      <button class="go" id="welcomeMission" type="button">começar a missão →</button>
     </div>
   </div>
 </div>
@@ -637,7 +708,13 @@ try{
 }catch(e){
   renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false });
 }
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+/* Resolution is the single biggest cost on a phone: a 3x-DPR screen at
+   full resolution draws nine times the pixels of the same canvas at 1x.
+   Weak devices start lower, and Perf (below, in the main loop) steps the
+   ratio down further if the frame rate still can't hold. */
+var PIXEL_RATIO_MAX = Math.min(devicePixelRatio || 1, LOW_TIER ? 1.5 : 2);
+var pixelRatioNow = PIXEL_RATIO_MAX;
+renderer.setPixelRatio(pixelRatioNow);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 var scene = new THREE.Scene();
@@ -693,6 +770,44 @@ subLight.target.position.set(0, 0, -1);
 var floodLight = new THREE.PointLight(0xbcd8e8, 0, 60, 1.6);
 camera.add(floodLight);
 scene.add(camera);
+
+/* Expedition light rig. From more than a few dozen metres the headlight
+   alone leaves a 143 m hull as a black shape on a black screen — you can
+   be floating beside the Titanic and not see it. Real expeditions solve
+   this the same way: they bring far more light than one vehicle carries
+   (lamp towers dropped around the site, a second vehicle lighting for the
+   camera). One directional light has no per-pixel falloff cost and fog
+   still dissolves the far end of the ship into the dark. It follows the
+   headlight switch, so "apagar o farol" still gives real darkness. */
+/* Low and to the side on purpose: the hull is mostly vertical plating, so
+   a light from high overhead grazes it and spends itself on the seabed
+   instead. Calibrated by screenshot from 60 m, 110 m and 150 m. */
+var WRECK_RIG_MAX = 5.2;
+var wreckRig = new THREE.DirectionalLight(0xa9c4de, 0);
+wreckRig.position.set(170, -TITANIC_DEPTH + 80, 150);
+wreckRig.target.position.set(0, -TITANIC_DEPTH, 0);
+scene.add(wreckRig);
+scene.add(wreckRig.target);
+/* weaker fill from the opposite quarter, so the far side of the hull is
+   a dim shape instead of a hole when you circle the ship */
+var wreckRigFill = new THREE.DirectionalLight(0x6f8fb0, 0);
+wreckRigFill.position.set(-140, -TITANIC_DEPTH + 160, -120);
+wreckRigFill.target.position.set(0, -TITANIC_DEPTH, 0);
+scene.add(wreckRigFill);
+scene.add(wreckRigFill.target);
+
+/* 1912 is a different world, not a different paint job: the ship is
+   afloat in daylight. A sea surface at the real load waterline (draught
+   10.5 m) hides the lower hull exactly as the Atlantic did. */
+var SEA_1912_DRAUGHT = 10.5;
+var SKY_1912 = new THREE.Color(0xa9c9e2);
+var sea1912 = new THREE.Mesh(
+  new THREE.PlaneGeometry(6000, 6000),
+  new THREE.MeshStandardMaterial({ color:0x1d4f6e, roughness:0.38, metalness:0.25, side:THREE.DoubleSide }));
+sea1912.rotation.x = -Math.PI/2;
+sea1912.position.y = -TITANIC_DEPTH + SEA_1912_DRAUGHT;
+sea1912.visible = false;
+scene.add(sea1912);
 
 var headlightOn = true;
 var headlightLevel = 1; // smoothed version of headlightOn, drives intensity
@@ -1305,7 +1420,7 @@ function updateCreatures(t, dt){
         d2 = o.mesh.position.distanceToSquared(camera.position);
       }
     }
-    o.mesh.visible = d2 < CULL_R2;
+    o.mesh.visible = d2 < CULL_R2 && !era1912;   // no fish in the 1912 sky
     if (!o.mesh.visible) continue;
 
     o.turnRate = (Math.random()-0.5)*0.5;
@@ -1355,7 +1470,7 @@ function updateCreatures(t, dt){
                       camera.position.z + Math.sin(a2)*r2);
       }
     }
-    if (sc.centre.distanceToSquared(camera.position) > CULL_R2*2){ sc.mesh.visible = false; continue; }
+    if (era1912 || sc.centre.distanceToSquared(camera.position) > CULL_R2*2){ sc.mesh.visible = false; continue; }
     sc.mesh.visible = true;
     sc.heading += (Math.random()-0.5)*0.35*dt;
     sc.centre.x += Math.sin(sc.heading)*2.2*dt;
@@ -2441,7 +2556,7 @@ function buildInterior(){
         'Salão de Jantar':'O maior salão a bordo de qualquer navio em 1912: servia 554 passageiros de primeira classe de uma só vez, num estilo "Jacobino inglês" branco. Hoje as colunas continuam de pé e o teto entre elas veio abaixo — a foto mostra a mesma sala, mesada e posta, dias antes do naufrágio.',
         'Camarote do Capitão':'A banheira do capitão Edward Smith continua reconhecível — um dos objetos mais fotografados do naufrágio. Smith comandava transatlânticos havia mais de 25 anos; o Titanic seria sua última viagem antes de se aposentar.',
         'Ponte de Comando':'Fica ao lado do camarote do capitão de propósito: era daqui, com a mão na roda do leme e o telégrafo de máquinas, que Smith comandava o navio. Não reconstruímos a casa de máquinas nem as caldeiras — ficavam na seção da popa, que se partiu e está destruída; inventar esse pedaço seria inventar história.',
-        'Ginásio':'Ficava no convés dos botes, com o instrutor profissional T. W. McCawley (que sobreviveu ao naufrágio). A "camelo mecânico" da foto era a atração: passageiros de primeira classe foram fotografados montados nela semanas antes do naufrágio, na mesma sala em que você está agora.'
+        'Ginásio':'Ficava no convés dos botes, sob os cuidados do instrutor profissional T. W. McCawley. O "camelo mecânico" da foto era a atração: passageiros de primeira classe foram fotografados montados nela semanas antes do naufrágio, na mesma sala em que você está agora.'
       };
       var photos = {
         'Escadaria Grande':'../assets/textures/titanic/grand-staircase-1912.jpg',
@@ -3118,23 +3233,72 @@ canvas.addEventListener('wheel', function(e){
   if (orbitState) leaveOrbit();
 }, { passive:false });
 
-/* mobile: tap-incremental thrust + single stop button, same pattern as /voo/ */
-var THRUST_STEP = 12;
+/* mobile: the stick (below) replaced the old tap-to-accelerate pad; the
+   brake state it used is still what makes releasing the stick stop you */
 var brakeActive = false;
 var BRAKE_RAMP_SECONDS = 1.1;
-document.getElementById('thrustBtn').addEventListener('click', function(){
-  speed = Math.min(MAX_SPEED, speed + THRUST_STEP);
-  brakeActive = false;
-  if (typeof Descent !== 'undefined') Descent.cancel();
-  if (orbitState) leaveOrbit();
-});
-document.getElementById('stopBtn').addEventListener('click', function(){
-  brakeActive = true;
-  if (typeof Descent !== 'undefined') Descent.cancel();
-  if (orbitState) leaveOrbit();
-});
 
 var vertUp=false, vertDown=false;
+
+/* ---- touch stick + hold-to-rise / hold-to-sink ----
+   Pointer events with capture, so the stick keeps tracking when the thumb
+   slides off it, and a second finger can still drag the view: each
+   element owns its own pointer id. */
+var JOY_MAX_SPEED = 46;
+var Joy = { active:false, x:0, y:0, justReleased:false };
+(function(){
+  var base = document.getElementById('joy'), knob = document.getElementById('joyKnob');
+  if (!base || !knob) return;
+  var pid = null, R = 35;
+  function handOff(){
+    if (typeof Descent !== 'undefined') Descent.cancel();
+    if (orbitState) leaveOrbit();
+  }
+  function move(e){
+    var r = base.getBoundingClientRect();
+    R = Math.max(20, (r.width - 54)/2);     // knob stays inside the ring at any size
+    var dx = e.clientX - (r.left + r.width/2), dy = e.clientY - (r.top + r.height/2);
+    var len = Math.sqrt(dx*dx+dy*dy);
+    if (len > R){ dx *= R/len; dy *= R/len; }
+    knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+    /* small dead zone so a resting thumb doesn't creep */
+    Joy.x = Math.abs(dx) < 7 ? 0 : dx/R;
+    Joy.y = Math.abs(dy) < 7 ? 0 : dy/R;
+  }
+  function end(e){
+    if (e.pointerId !== pid) return;
+    pid = null;
+    Joy.active = false; Joy.x = 0; Joy.y = 0; Joy.justReleased = true;
+    knob.style.transform = '';
+    base.classList.remove('held');
+  }
+  base.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    pid = e.pointerId;
+    try{ base.setPointerCapture(pid); }catch(err){}
+    Joy.active = true; Joy.justReleased = false;
+    base.classList.add('held');
+    handOff();
+    move(e);
+  });
+  base.addEventListener('pointermove', function(e){ if (e.pointerId === pid) move(e); });
+  base.addEventListener('pointerup', end);
+  base.addEventListener('pointercancel', end);
+
+  function hold(id, set){
+    var b = document.getElementById(id);
+    if (!b) return;
+    function on(e){ e.preventDefault(); set(true); b.classList.add('held'); handOff();
+      try{ b.setPointerCapture(e.pointerId); }catch(err){} }
+    function off(){ set(false); b.classList.remove('held'); }
+    b.addEventListener('pointerdown', on);
+    b.addEventListener('pointerup', off);
+    b.addEventListener('pointercancel', off);
+    b.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+  }
+  hold('riseBtn', function(v){ vertUp = v; });
+  hold('sinkBtn', function(v){ vertDown = v; });
+})();
 
 var tmpForward = new THREE.Vector3();
 var tmpRight = new THREE.Vector3();
@@ -3219,12 +3383,33 @@ function updateCamera(dt){
   if (keys['KeyS']||keys['ArrowDown']) accel -= 1;
   speed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed + accel*90*dt));
 
+  /* Touch stick: direct control, not a throttle. The keyboard model
+     (speed persists until you brake) is fine with a wheel under your
+     finger, but on a phone it means the vehicle keeps going after you let
+     go — the first thing a child does is fly into the dark and get lost.
+     With the stick, pushing moves and releasing stops. */
+  if (Joy.active){
+    var fwd = -Joy.y;                       // stick up = forward
+    if (fwd > 0){
+      var want = fwd * (insideWreck ? 7 : JOY_MAX_SPEED);
+      speed += (want - speed) * Math.min(1, dt*4);
+    } else {
+      speed += (0 - speed) * Math.min(1, dt*6);
+      camera.position.addScaledVector(tmpForward, fwd*(insideWreck?5:14)*dt); // reverse
+    }
+    brakeActive = false;
+  } else if (Joy.justReleased){
+    Joy.justReleased = false;
+    brakeActive = true;
+  }
+
   camera.position.addScaledVector(tmpForward, speed*dt);
 
   var strafe = 0;
   if (keys['KeyA']||keys['ArrowLeft']) strafe -= 1;
   if (keys['KeyD']||keys['ArrowRight']) strafe += 1;
-  if (strafe) camera.position.addScaledVector(tmpRight, strafe*18*dt);
+  if (Joy.active) strafe += Joy.x;
+  if (strafe) camera.position.addScaledVector(tmpRight, strafe*(insideWreck?8:18)*dt);
 
   var vert = 0;
   if (keys['KeyQ']||vertDown) vert -= 1;
@@ -3459,7 +3644,8 @@ function updateMarkers(){
   POIS.forEach(function(poi){
     /* interior markers must not bleed through the hull, and outside
        markers must not bleed into the rooms */
-    if (poi.interior !== !!insideWreck && (poi.interior || poi.isCreature)){
+    if ((poi.interior !== !!insideWreck && (poi.interior || poi.isCreature)) ||
+        (era1912 && poi.isCreature)){
       poi._el.style.display = 'none'; poi._lbl.style.display = 'none';
       return;
     }
@@ -3545,6 +3731,38 @@ function fmtDepth(m){
 }
 function updateDepthZone(dt){
   var depth = Math.max(0, -camera.position.y);
+
+  /* 1912: daylight at sea. None of the depth physics applies — no water
+     fog, no headlight, no marine darkness. */
+  if (era1912){
+    scene.background.copy(SKY_1912);
+    scene.fog.color.copy(SKY_1912);
+    scene.fog.density = insideWreck ? 0.0006 : 0.0011;
+    /* The sun is a shadowless directional light: indoors it would pour
+       straight through the decks and bleach the panelling. Rooms keep the
+       lamp-lit look they were built for, with just enough ambient to read
+       the far corners. */
+    sunLight.intensity = insideWreck ? 0 : 1.9;
+    ambientLight.intensity = insideWreck ? 0.26 : 0.95;
+    subLight.intensity   = insideWreck ? SUB_SPOT_MAX * 0.13 : 0;
+    floodLight.intensity = insideWreck ? SUB_FLOOD_MAX * 0.06 : 0;
+    wreckRig.intensity = 0; wreckRigFill.intensity = 0;
+    sea1912.visible = !insideWreck;
+    floorMesh.visible = false;
+    /* outside, the submersible becomes a camera above the water — it must
+       not dip under a sea that is an opaque sheet */
+    if (!insideWreck && camera.position.y < sea1912.position.y + 1.5){
+      camera.position.y = sea1912.position.y + 1.5;
+    }
+    updateBeams();
+    depthVal.textContent = '1912';
+    zoneVal.textContent = 'Atlântico Norte · à tona';
+    speedVal.textContent = Math.round(travelTarget ? travelSpeedDisplay : speed) + (travelTarget ? ' m/s' : ' un/s');
+    return;
+  }
+  if (!floorMesh.visible){ floorMesh.visible = true; }
+  if (sea1912.visible){ sea1912.visible = false; }
+
   var col = colorForDepth(depth);
   var colObj = new THREE.Color(col);
   scene.background.copy(colObj);
@@ -3570,6 +3788,10 @@ function updateDepthZone(dt){
   var closeQuarters = insideWreck ? 0.13 : 1;
   subLight.intensity   = SUB_SPOT_MAX  * headlightLevel * closeQuarters;
   floodLight.intensity = SUB_FLOOD_MAX * headlightLevel * (insideWreck ? 0.06 : 1);
+  /* the rig only exists around the wreck site, and never indoors */
+  var nearWreck = 1 - smoothstep(300, 620, camera.position.distanceTo(titanicGroup.position));
+  wreckRig.intensity = insideWreck ? 0 : WRECK_RIG_MAX * nearWreck * headlightLevel;
+  wreckRigFill.intensity = wreckRig.intensity * 0.4;
 
   updateBeams();
 
@@ -3590,6 +3812,9 @@ function forceTitanicReveal(){
   if (revealShown) return;
   revealShown = true;
   titanicVisited = true;
+  /* during the guided expedition the mission itself narrates the arrival;
+     a second card on top of it would just be in the way */
+  if (window.__fvMissionOn) return;
   window.setTimeout(function(){ revealBanner.classList.add('show'); }, 300);
 }
 function checkTitanicProximity(){
@@ -3889,19 +4114,162 @@ function animate(){
   }
 
   renderer.render(scene, camera);
+  Perf.tick(dt);
   requestAnimationFrame(animate);
 }
+
+/* ---- adaptive resolution ----
+   School phones and tablets are the weak end of the market, and nobody
+   can be asked to open a settings menu. Every two seconds this looks at
+   the real frame rate: under ~26 fps it renders fewer pixels, and it only
+   ever steps back up when there is clear headroom. Capped below at 0.75 —
+   past that the picture is too soft to read the hull. */
+var Perf = (function(){
+  var acc = 0, frames = 0, calm = 0, MIN = 0.75;
+  function apply(r){
+    pixelRatioNow = r;
+    renderer.setPixelRatio(r);
+    renderer.setSize(innerWidth, innerHeight);
+  }
+  function tick(dt){
+    if (document.hidden || dt >= 0.1) return;   // tab switches are not slowness
+    acc += dt; frames++;
+    if (acc < 2) return;
+    var fps = frames/acc; acc = 0; frames = 0;
+    if (fps < 26 && pixelRatioNow > MIN){
+      apply(Math.max(MIN, pixelRatioNow - 0.25)); calm = 0;
+    } else if (fps > 52 && pixelRatioNow < PIXEL_RATIO_MAX){
+      if (++calm >= 4){ apply(Math.min(PIXEL_RATIO_MAX, pixelRatioNow + 0.25)); calm = 0; }
+    } else calm = 0;
+  }
+  return { tick:tick, ratio:function(){ return pixelRatioNow; } };
+})();
 requestAnimationFrame(animate);
 
 /* ---------- welcome modal ---------- */
 var welcome = document.getElementById('welcome');
-document.getElementById('welcomeGo').addEventListener('click', function(){
+function closeWelcome(){
   welcome.style.display = 'none';
   /* browsers only allow audio to start from a user gesture, and this is
      the first one there is. Respects a previously chosen mute state. */
   Sound.build();
   if (!Sound.isMuted()) Sound.setMuted(false);
-});
+}
+document.getElementById('welcomeGo').addEventListener('click', closeWelcome);
+
+/* ---------- bridge to the guided expedition (expedicao.js) ----------
+   The mission is a separate file on purpose: it is content (questions,
+   texts, scoring) that teachers will want changed far more often than
+   the 3D engine. It drives the room only through this small surface. */
+window.__fv = {
+  THREE: THREE, camera: camera, POIS: POIS,
+  closeWelcome: closeWelcome,
+  depth: function(){ return Math.max(0, -camera.position.y); },
+  isTravelling: function(){ return !!travelTarget; },
+  isInside: function(){ return insideWreck; },
+  isEra1912: function(){ return era1912; },
+  setEra: setEra,
+  setHeadlight: setHeadlight,
+  stop: function(){ speed = 0; brakeActive = false; },
+  cancelTravel: function(){ travelTarget = null; leaveOrbit(); Descent.cancel(); },
+  /* straight down/up to a depth, keeping x/z — the descent legs */
+  diveTo: function(depthM, onArrive){
+    leaveOrbit();
+    travelToPoint(new THREE.Vector3(camera.position.x, -depthM, camera.position.z), onArrive || null,
+      { k:1.0, maxSpeed: REDUCE_MOTION ? 460 : 150, arriveAt:8, lookMode:'free' });
+  },
+  poi: function(name){
+    for (var i=0;i<POIS.length;i++) if (POIS[i].name === name) return POIS[i];
+    return null;
+  },
+  /* nearest living thing of a species — creatures drift and respawn, so
+     the mission asks at the moment it needs one */
+  nearestCreature: function(name){
+    var best = null, bd = Infinity;
+    for (var i=0;i<POIS.length;i++){
+      var p = POIS[i];
+      /* schools are one InstancedMesh sitting at the world origin — the
+         fish are in its instance matrices, so it has no position to fly to */
+      if (!p.isCreature || p.name !== name || !p.mesh || p.mesh.isInstancedMesh) continue;
+      var d = p.mesh.getWorldPosition(new THREE.Vector3()).distanceToSquared(camera.position);
+      if (d < bd){ bd = d; best = p; }
+    }
+    return best;
+  },
+  visitCreature: function(poi, onArrive){
+    leaveOrbit();
+    /* no `noOrbit`: travel then follows the animal as it swims and hands
+       over to the orbit camera on arrival, which keeps it centred for as
+       long as the child is reading about it. Flying to where it WAS left
+       the card describing an empty patch of water. */
+    travelToPoi(poi, onArrive || null, { dist: Math.max((poi.radius||1)*4.2, 6), k:1.0,
+      maxSpeed: REDUCE_MOTION ? 400 : 60, arriveAt:2.5, lookMode:'target' });
+  },
+  approachWreck: function(onArrive){
+    leaveOrbit();
+    travelToPoi(titanicPoi, function(){ forceTitanicReveal(); if (onArrive) onArrive(); }, {
+      dir: new THREE.Vector3(0.82, 0.30, 0.48),
+      k:1.0, maxSpeed: REDUCE_MOTION ? 460 : 95, arriveAt:3, lookMode:'target' });
+  },
+  /* a fixed viewpoint beside the hull, in ship coordinates */
+  viewHull: function(off, look, onArrive, maxSpeed){
+    leaveOrbit();
+    var g = titanicGroup.position;
+    var pos = new THREE.Vector3(g.x+off[0], g.y+off[1], g.z+off[2]);
+    travelTarget = {
+      pos: pos, look: new THREE.Vector3(g.x+look[0], g.y+look[1], g.z+look[2]),
+      orbitPoi: null, k:0.9, arriveAt:2.5, lookMode:'target',
+      maxSpeed: REDUCE_MOTION ? 460 : (maxSpeed || 38),
+      onArrive: function(){ forceTitanicReveal(); if (onArrive) onArrive(); }
+    };
+  },
+  enterWreckAnd: function(roomName, onArrive){
+    leaveOrbit();
+    var go = function(){
+      var p = window.__fv.poi(roomName);
+      if (!p){ if (onArrive) onArrive(); return; }
+      travelToPoi(p, onArrive || null, { dist:7, k:1.0, maxSpeed:12, arriveAt:1.5, noOrbit:true, lookMode:'target' });
+    };
+    if (insideWreck) go(); else goToEntry(go);
+  },
+  /* a walked route through the rooms, in ship coordinates measured from
+     the Grand Staircase well ([x, y, z-from-well]). Rooms are confined
+     volumes joined by portals, so "fly straight at the room" ends with the
+     camera parked against a wall; legs that pass through the doorways are
+     what actually get you inside. */
+  routeInside: function(pts, onArrive, lookAt){
+    leaveOrbit();
+    var g = titanicGroup.position, i = 0;
+    function leg(){
+      if (i >= pts.length){ if (onArrive) onArrive(); return; }
+      var p = pts[i++];
+      var pos = new THREE.Vector3(g.x+p[0], g.y+p[1], g.z+WELL_Z+p[2]);
+      /* on the last leg, face what the stop is about rather than the spot
+         being flown to — otherwise every arrival ends staring at the floor */
+      var look = (i >= pts.length && lookAt)
+        ? new THREE.Vector3(g.x+lookAt[0], g.y+lookAt[1], g.z+WELL_Z+lookAt[2]) : pos.clone();
+      travelTarget = { pos: pos, look: look, orbitPoi: null, onArrive: leg,
+        k:1.0, maxSpeed: REDUCE_MOTION ? 60 : 11, arriveAt:1.3, lookMode:'target' };
+    }
+    if (insideWreck) leg(); else goToEntry(leg);
+  },
+  /* resume support: put the vehicle somewhere without flying there */
+  placeAt: function(x, y, z, lookX, lookY, lookZ){
+    travelTarget = null; leaveOrbit(); Descent.cancel(); speed = 0;
+    if (insideWreck) exitWreck();
+    camera.position.set(x, y, z);
+    var d = new THREE.Vector3(lookX, lookY, lookZ).sub(camera.position).normalize();
+    yaw = Math.atan2(-d.x, -d.z);
+    pitch = Math.asin(Math.max(-1, Math.min(1, d.y)));
+  },
+  leaveWreck: function(){
+    if (!insideWreck) return;
+    camera.position.set(titanicGroup.position.x, titanicGroup.position.y + 46, titanicGroup.position.z + WELL_Z);
+    speed = 0;
+    exitWreck();
+  },
+  perf: function(){ return { ratio: pixelRatioNow, lowTier: LOW_TIER }; }
+};
 
 /* ---------- debug hook: only with ?debug in the URL. Lets automated
    tests teleport instead of waiting 40s for a descent, which is the
@@ -3930,5 +4298,6 @@ if (/[?&]debug\b/.test(location.search)){
   };
 }
 </script>
+<script type="module" src="expedicao.js"></script>
 </body>
 </html>
