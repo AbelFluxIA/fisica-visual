@@ -957,6 +957,118 @@ canvas{display:block;}
   #orbitBadge{transition:none;}
   .chrome-recede{transition:none !important;}
 }
+
+/* ---------- dobra espacial ---------- */
+#warpVeil{
+  position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;
+  background:radial-gradient(ellipse at center, rgba(120,170,255,0) 30%, rgba(70,120,255,0.20) 68%, rgba(150,200,255,0.50) 100%);
+}
+#warpVeil.flash{animation:warpFlash .7s ease-out;}
+@keyframes warpFlash{0%{background-color:rgba(215,232,255,0.55);}100%{background-color:rgba(215,232,255,0);}}
+#warpChip{
+  position:fixed;left:50%;bottom:132px;transform:translateX(-50%);z-index:16;
+  display:none;align-items:center;gap:9px;white-space:nowrap;
+  padding:8px 16px;border-radius:18px;
+  background:rgba(8,14,30,0.82);border:1px solid rgba(143,195,222,0.55);
+  font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--plasma-bright);
+}
+#warpChip.show{display:flex;}
+#warpChip i{font-style:normal;color:var(--dim);letter-spacing:.04em;text-transform:none;}
+#uToast{
+  position:fixed;left:50%;bottom:132px;transform:translate(-50%,10px);z-index:17;
+  max-width:min(520px,calc(100vw - 28px));padding:11px 16px;border-radius:16px;
+  background:var(--panel-solid);border:1px solid var(--line);
+  font-size:13.5px;line-height:1.45;color:var(--text);text-align:center;
+  opacity:0;pointer-events:none;transition:opacity .35s ease, transform .35s ease;
+}
+#uToast.show{opacity:1;transform:translate(-50%,0);}
+#uToast.act.show{pointer-events:auto;}
+#uToast button{
+  display:block;margin:9px auto 0;font-family:var(--mono);font-size:11.5px;font-weight:600;color:#06121c;
+  background:var(--plasma-bright);border:none;border-radius:11px;padding:7px 14px;cursor:pointer;
+}
+#uToast b{color:var(--gold-bright);font-weight:600;}
+
+/* ---------- mistérios ---------- */
+.poi-marker.myst{border-color:var(--plasma-bright);background:rgba(111,168,199,0.25);}
+.poi-marker.myst::before{
+  content:'?';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:9px;font-weight:700;color:#eaf6ff;line-height:1;
+}
+#mystBtn{
+  display:flex;align-items:center;justify-content:center;gap:6px;width:100%;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--plasma-bright);
+  background:rgba(111,168,199,0.10);border:1px solid rgba(111,168,199,0.38);
+  border-radius:12px;padding:6px 8px;cursor:pointer;
+}
+#mystBtn:hover{background:rgba(111,168,199,0.18);}
+#mystBtn b{color:var(--text);font-weight:600;}
+#orbitPanel .actions{flex-wrap:wrap;}
+#orbitMystAll{color:var(--plasma-bright);border-color:rgba(111,168,199,0.38);flex:0 0 auto;white-space:nowrap;}
+#orbitLeave{flex:1 1 150px;}
+#orbitMystAll b{color:var(--text);font-weight:600;}
+#mystBtn.novo{animation:mystPulse 1.6s ease-in-out 4;}
+@keyframes mystPulse{50%{box-shadow:0 0 0 5px rgba(111,168,199,0.22);}}
+.mystq{
+  margin:0 0 14px;padding:12px 13px 13px;border-radius:12px;
+  background:rgba(111,168,199,0.08);border:1px solid rgba(111,168,199,0.34);
+}
+.mystq[hidden]{display:none;}
+.mystq .me{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--plasma-bright);}
+.mystq .mq{font-size:14.5px;line-height:1.45;color:var(--text);margin:6px 0 10px;}
+.mystq .mops{display:flex;flex-direction:column;gap:7px;}
+.mystq .mop{
+  text-align:left;font-size:13.5px;line-height:1.35;color:var(--text);
+  background:rgba(255,255,255,0.04);border:1px solid var(--line-soft);
+  border-radius:10px;padding:9px 11px;min-height:40px;cursor:pointer;font-family:inherit;
+}
+.mystq .mop:hover:not(:disabled){border-color:rgba(143,195,222,0.6);}
+.mystq .mop.no{color:var(--dim);text-decoration:line-through;border-color:rgba(196,87,74,0.5);cursor:default;}
+.mystq .mop.yes{border-color:#7CBF8E;background:rgba(124,191,142,0.14);font-weight:600;cursor:default;}
+.mystq .mop:disabled:not(.yes):not(.no){opacity:.45;cursor:default;}
+.mystq .mfb{display:none;margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--text);}
+.mystq .mfb.show{display:block;}
+.mystq .mfb b{color:#7CBF8E;}
+.mystq .mfb.hint b{color:var(--gold-bright);}
+.mystq.done .mq{color:var(--dim);font-size:13px;margin-bottom:4px;}
+#mystModal{
+  position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+  background:rgba(2,2,7,0.72);padding:14px;
+}
+#mystModal.open{display:flex;}
+#mystModal .card{
+  width:min(520px,100%);max-height:calc(100dvh - 28px);overflow-y:auto;
+  padding:20px 22px;border-radius:20px;background:var(--panel-solid);border:1px solid var(--line);
+}
+#mystModal .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--plasma-bright);}
+#mystModal h2{font-family:var(--serif);font-size:21px;margin:6px 0 4px;color:var(--text);}
+#mystModal .lead{font-size:13.5px;line-height:1.5;color:var(--dim);margin:0 0 14px;}
+#mystList{display:flex;flex-direction:column;gap:8px;margin:0 0 14px;}
+#mystList .row{
+  display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;
+  padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid var(--line-soft);
+}
+#mystList .mk{font-family:var(--mono);font-size:13px;color:var(--plasma-bright);text-align:center;}
+#mystList .row.ok .mk{color:#7CBF8E;}
+#mystList .tt{font-size:13.5px;line-height:1.4;color:var(--text);}
+#mystList .tt small{display:block;font-size:12px;color:var(--dim);margin-top:2px;}
+#mystList button, #mystModal .close{
+  font-family:var(--mono);font-size:11px;color:var(--text);background:transparent;
+  border:1px solid var(--line-soft);border-radius:11px;padding:7px 11px;cursor:pointer;white-space:nowrap;
+}
+#mystList button:hover, #mystModal .close:hover{border-color:var(--plasma-bright);}
+#mystModal .actions{display:flex;justify-content:flex-end;}
+@media (max-width:640px){
+  #warpChip{bottom:196px;font-size:9.5px;padding:6px 12px;}
+  #warpChip i{display:none;}
+  #uToast{bottom:196px;font-size:12.5px;padding:9px 13px;}
+  #mystBtn{font-size:9.5px;padding:5px 6px;}
+}
+@media (max-height:440px) and (orientation:landscape){
+  #warpChip{bottom:auto;top:44px;}
+  #uToast{bottom:auto;top:44px;}
+  #mystModal .card{padding:14px 16px;}
+}
 </style>
 
 <div id="topLeftBar">
@@ -1026,6 +1138,7 @@ canvas{display:block;}
     </button>
   </div>
   <canvas id="radar" width="104" height="104" aria-label="Radar: sua posição relativa ao Sol e aos planetas próximos"></canvas>
+  <button id="mystBtn" type="button" aria-label="Mistérios do sistema solar">mistérios <b id="mystCount">0/6</b></button>
 </div>
 
 <!-- Mobile flight controls, gamepad-style (item: "botões fixos na tela"):
@@ -1082,6 +1195,21 @@ canvas{display:block;}
   <button type="button" id="rotateSkip">continuar mesmo assim</button>
 </div>
 
+<div id="warpVeil" aria-hidden="true"></div>
+<div id="warpChip" role="status"><span>dobra espacial</span><i>recurso de ficção científica</i></div>
+<div id="uToast" role="status" aria-live="polite"></div>
+
+<div id="mystModal" role="dialog" aria-modal="true" aria-labelledby="mystTitle">
+  <div class="card">
+    <span class="eyebrow">Voo espacial · mistérios</span>
+    <h2 id="mystTitle">Seis perguntas espalhadas pelo sistema solar</h2>
+    <p class="lead">Cada mistério mora num lugar. Vá até lá, observe e responda. A dobra espacial leva você em segundos.</p>
+    <div id="mystList"></div>
+    <div class="mystq" id="mystQ" hidden></div>
+    <div class="actions"><button class="close" id="mystClose" type="button">fechar</button></div>
+  </div>
+</div>
+
 <div id="poiCard" class="panel" role="dialog" aria-labelledby="poiName">
   <span class="eyebrow" id="poiEyebrow">Objeto selecionado</span>
   <h3 id="poiName">—</h3>
@@ -1101,6 +1229,7 @@ canvas{display:block;}
     </button>
   </div>
   <h3 id="orbitName">—</h3>
+  <div class="mystq" id="orbitMystery" hidden></div>
   <div class="facts" id="orbitFacts"></div>
   <p class="prose" id="orbitProse"></p>
   <a class="bridge" id="orbitBridge" href="/horizonte/" hidden>
@@ -1119,6 +1248,7 @@ canvas{display:block;}
     <span class="barrow" aria-hidden="true">→</span>
   </a>
   <div class="actions">
+    <button class="close" id="orbitMystAll" type="button">mistérios <b id="mystCount2">0/6</b></button>
     <button class="close" id="orbitLeave">sair da órbita · continuar voo livre</button>
   </div>
 </div>
@@ -1170,6 +1300,9 @@ canvas{display:block;}
   <h3>Como isso é calculado</h3>
   <p class="note">As <b>texturas</b> dos planetas, do Sol, da Lua e do céu estelar são reais — mapas de superfície baseados em imagens de sondas e observatórios da NASA, redistribuídos por Solar System Scope. Os <b>tamanhos relativos</b> entre corpos (ex.: Júpiter bem maior que a Terra, que por sua vez é maior que Mercúrio) seguem as proporções reais de raio, assim como as comparações de <b>gravidade e peso</b> mostradas nos cartões de cada corpo. As <b>distâncias</b> entre órbitas, a velocidade da nave e o tempo de viagem, porém, são inteiramente artísticos: nesta simulação você atravessa o sistema solar inteiro em segundos a minutos, enquanto numa nave real, na mesma velocidade relativa exibida no velocímetro, a viagem de aqui até o planeta mais distante levaria — se as distâncias fossem as reais do sistema solar (bilhões de km) — muitos anos. O campo estelar, as nebulosas e as galáxias das camadas externas são <b>representações artísticas</b>, não um catálogo de posições reais. O número de "bilhões de anos atrás" na camada cosmológica é calculado como uma função monotônica e crescente da distância percorrida, calibrada para terminar exatamente nos <b>13,8 bilhões de anos</b> reais da idade do universo no limite máximo de voo — os números finais são cientificamente corretos, mas o mapeamento distância→tempo em si é uma escolha de design, não uma fórmula de cosmologia real.</p>
   <div class="credit">Texturas planetárias e do céu estelar: <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener">Solar System Scope</a>, baseadas em imagens da NASA, licenciadas sob <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</div>
+  <h3>Onde o visual toma liberdades</h3>
+  <p class="note"><b>Luz igual para todos.</b> Na realidade a luz do Sol enfraquece com o quadrado da distância: em Netuno ela é cerca de 900 vezes mais fraca que na Terra. Aqui todos os planetas aparecem bem iluminados, como numa foto tirada com a exposição ajustada para cada um. <b>Dobra espacial.</b> O efeito das viagens longas é ficção científica: nada viaja mais rápido que a luz, e a própria luz leva mais de 4 horas do Sol até Netuno. <b>Corpos pequenos.</b> O cometa tem órbita ilustrativa, a quantidade de rochas do cinturão de asteroides é ilustrativa, e a Estação Espacial e a Voyager 1 estão muito ampliadas e com as distâncias comprimidas, ou seriam invisíveis.</p>
+  <p class="note"><b>O que é real nesses detalhes:</b> a borda do Sol mais escura que o centro; as luzes das cidades só no lado da noite; as caudas do cometa apontando para longe do Sol e crescendo quando ele se aproxima; os anéis de Saturno no plano do equador, com a sombra do planeta sobre eles; e a Via Láctea cruzando o céu inclinada em relação ao plano dos planetas.</p>
   <h3>Sobre o som</h3>
   <p class="note">Sim, o espaço é silencioso — não existe ar para o som viajar entre os planetas. O som aqui é uma licença artística explícita, ligada e controlada por você a qualquer momento pelo botão de alto-falante. O <b>ambiente de fundo</b> é inteiramente sintetizado ao vivo no seu navegador (osciladores de áudio somados em camadas, como um órgão de tubo) — nenhum arquivo de música é carregado. Ao entrar em órbita de exploração perto de um planeta, um segundo som sutil se soma ao ambiente: <b>também é sintetizado</b>, não uma gravação — variando de timbre e densidade a cada corpo (mais grave e denso perto de Júpiter, mais agudo e esparso perto de Mercúrio) como uma sonificação artística inspirada na ideia real de que sondas como a Voyager captam emissões de rádio e ondas de plasma dos planetas, convertidas por cientistas em áudio audível. Antes de escrever qualquer código de som, verificamos se havia uma gravação real dessas emissões, de domínio público e disponível para uso direto — o resultado dessa checagem está registrado abaixo, com honestidade, porque parecia importante não fingir uma fonte que não tínhamos.</p>
   <p class="note"><b>O que tentamos:</b> buscamos no acervo público do <a href="https://archive.org" target="_blank" rel="noopener">archive.org</a> por gravações de rádio/plasma planetário atribuídas à NASA/JPL (sondas Voyager, Juno, Cassini). A coleção oficial da NASA hospedada lá contém dados sísmicos da era Apollo, não áudio planetário. O único item que aparece para "Voyager plasma wave recordings" é um vídeo único de ~2h30 enviado por um usuário privado, sem nenhuma declaração de licença/domínio público, com metadados que misturam "gravações da NASA" com tags de "vaporwave", "música para meditação" e "batidas binaurais" — sinal forte de que é uma compilação remixada, não o dado bruto, e sem marcação por planeta para recortar com segurança. Sem uma fonte clara, pública e verificável, optamos por não usar nenhum arquivo de áudio externo nesta sala — a alternativa honesta era sintetizar.</p>
@@ -1270,8 +1403,19 @@ try{
 }catch(e){
   renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false });
 }
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+/* Low-end device tier (phones, weak laptops): fewer extras and a lower
+   starting resolution. Detected once, never re-evaluated. Perf (in the
+   main loop) steps the resolution down further if the frame rate drops. */
+var LOW_TIER = matchMedia('(pointer: coarse)').matches ||
+               (navigator.hardwareConcurrency || 8) <= 4 ||
+               (navigator.deviceMemory || 8) <= 4;
+var PIXEL_RATIO_MAX = Math.min(devicePixelRatio || 1, LOW_TIER ? 1.5 : 2);
+var pixelRatioNow = PIXEL_RATIO_MAX;
+renderer.setPixelRatio(pixelRatioNow);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+/* one clock value shared by every animated shader (sun, corona, comet) */
+var uTimeShared = { value: 0 };
 
 var scene = new THREE.Scene();
 scene.background = new THREE.Color(0x020207);
@@ -1357,8 +1501,15 @@ function safeStandardMaterial(opts){
 /* ============================================================
    LIGHTING
    ============================================================ */
-scene.add(new THREE.AmbientLight(0x223344, 0.35));
-var sunLight = new THREE.PointLight(0xfff2d0, 3.4, 0, 0.4);
+/* No distance falloff, on purpose. Real sunlight at Neptune is about 900
+   times weaker than at Earth (30 AU squared); honouring that leaves every
+   outer planet a grey smudge. Every body here is lit as if photographed
+   with the exposure a probe would actually use when it gets there — an
+   artistic licence stated in the field notebook. The planets themselves
+   use PLANET shaders below; this light serves the Moon, the clouds and
+   the small bodies. */
+scene.add(new THREE.AmbientLight(0x223344, 0.22));
+var sunLight = new THREE.PointLight(0xfff4e0, 3.0, 0, 0);
 sunLight.position.set(0,0,0);
 scene.add(sunLight);
 
@@ -1372,6 +1523,69 @@ var cosmicGroup   = new THREE.Group(); // 4th layer: stylized "deep time" / earl
 scene.add(solarGroup, stellarGroup, galacticGroup, cosmicGroup);
 
 /* ============================================================
+   SKY — what you see from INSIDE the galaxy
+   ------------------------------------------------------------
+   The solar layer used to sit in a flat near-black void: the star field
+   only faded in once you had left the planets behind, so the place where
+   everyone starts was the emptiest-looking part of the whole flight.
+   This is the real Milky Way panorama wrapped around the camera, plus a
+   layer of crisp point stars over it (the panorama is 2K — soft by
+   itself). It follows the camera, so it never gets closer, and fades out
+   on the way to the galactic layer, where you are looking at the galaxy
+   from outside and this view would be a lie.
+   ============================================================ */
+var skyGroup = new THREE.Group();
+scene.add(skyGroup);
+var skyDomeMat = new THREE.MeshBasicMaterial({ color:0xb8c2d6, side:THREE.BackSide,
+  depthWrite:false, transparent:true, opacity:1 });
+skyDomeMat.map = loadTex('../assets/textures/2k_stars_milky_way.jpg', [skyDomeMat], {hide:true});
+/* the panorama is exposed for a planetarium wall, far too dim behind a
+   Sun; lift it so the band of the galaxy actually reads */
+skyDomeMat.onBeforeCompile = function(sh){
+  sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>',
+    '#include <map_fragment>\n  diffuseColor.rgb = pow(diffuseColor.rgb, vec3(0.86)) * 2.3;');
+};
+var skyDome = new THREE.Mesh(new THREE.SphereGeometry(4000, 48, 32), skyDomeMat);
+skyDome.renderOrder = -100; skyDome.frustumCulled = false;
+/* the galactic plane is tilted about 60 degrees to the plane of the
+   planets — which is why the Milky Way crosses the sky at a slant */
+skyDome.rotation.set(1.05, 0, 0.35);
+skyGroup.add(skyDome);
+
+var skyStarMats = [];
+(function(){
+  var c = document.createElement('canvas'); c.width = c.height = 64;
+  var g = c.getContext('2d'), gr = g.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(0.22,'rgba(255,255,255,0.85)');
+  gr.addColorStop(0.5,'rgba(255,255,255,0.18)'); gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0,0,64,64);
+  var dot = new THREE.CanvasTexture(c);
+  /* star colours by temperature, weighted toward the common cool ones */
+  var TINTS = [[1.0,0.82,0.66],[1.0,0.93,0.82],[1.0,1.0,1.0],[0.82,0.89,1.0],[0.70,0.80,1.0]];
+  function layer(count, px, bright){
+    var pos = new Float32Array(count*3), col = new Float32Array(count*3);
+    for (var i=0;i<count;i++){
+      var u = Math.random()*2-1, a = Math.random()*Math.PI*2, r = Math.sqrt(1-u*u);
+      pos[i*3] = r*Math.cos(a)*3500; pos[i*3+1] = u*3500; pos[i*3+2] = r*Math.sin(a)*3500;
+      var t = TINTS[Math.min(4, Math.floor(Math.pow(Math.random(),0.7)*5))];
+      var b = bright * (0.35 + 0.65*Math.pow(Math.random(), 2.2));
+      col[i*3] = t[0]*b; col[i*3+1] = t[1]*b; col[i*3+2] = t[2]*b;
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col,3));
+    var mat = new THREE.PointsMaterial({ size:px*pixelRatioNow, sizeAttenuation:false, map:dot,
+      vertexColors:true, transparent:true, opacity:1, depthWrite:false,
+      blending:THREE.AdditiveBlending });
+    var pts = new THREE.Points(geo, mat);
+    pts.renderOrder = -99; pts.frustumCulled = false;
+    skyGroup.add(pts); skyStarMats.push(mat);
+  }
+  layer(LOW_TIER ? 2200 : 4200, 2.4, 0.95);   // the many faint ones
+  layer(LOW_TIER ? 90 : 170, 5.2, 1.0);       // the few bright ones
+})();
+
+/* ============================================================
    POINTS OF INTEREST registry — filled in as bodies are built.
    Each entry: { name, mesh, radius (world units, for camera framing),
                  eyebrow, facts:[ {k,v} ], prose, realRadiusKm,
@@ -1383,10 +1597,86 @@ var POIS = [];
    SUN
    ============================================================ */
 var SUN_R = 10;
-var sunMat = new THREE.MeshBasicMaterial({ color: 0xffcc55 });
-sunMat.map = loadTex('../assets/textures/2k_sun.jpg', [sunMat]);
-var sunMesh = new THREE.Mesh(new THREE.SphereGeometry(SUN_R, 48, 48), sunMat);
+/* The Sun was a static photo wrapped on a ball. Two things make a star
+   read as a star: its surface never holds still (convection cells the size
+   of countries rise and sink in minutes), and its edge is visibly darker
+   and redder than its centre — "limb darkening", a real effect: at the
+   edge you look through the atmosphere at a slant and see only the cooler
+   upper layers. Both are here; the boiling reuses the photo itself as its
+   own noise source, so it costs three texture reads and no extra assets. */
+var SHADER_LOGDEPTH_VS = '#include <common>\n#include <logdepthbuf_pars_vertex>\n';
+var SHADER_LOGDEPTH_FS = '#include <common>\n#include <logdepthbuf_pars_fragment>\n';
+var sunMat = new THREE.ShaderMaterial({
+  uniforms:{ map:{value:null}, uTime:uTimeShared, uOpacity:{value:1}, uUseMap:{value:1} },
+  vertexShader: SHADER_LOGDEPTH_VS + [
+    'varying vec2 vUv; varying float vMu;',
+    'void main(){',
+    '  vUv = uv;',
+    '  vec4 mv = modelViewMatrix * vec4(position,1.0);',
+    '  vMu = max(dot(normalize(normalMatrix*normal), normalize(-mv.xyz)), 0.0);',
+    '  gl_Position = projectionMatrix * mv;',
+    '  #include <logdepthbuf_vertex>',
+    '}'].join('\n'),
+  fragmentShader: SHADER_LOGDEPTH_FS + [
+    'uniform sampler2D map; uniform float uTime, uOpacity, uUseMap;',
+    'varying vec2 vUv; varying float vMu;',
+    'void main(){',
+    '  #include <logdepthbuf_fragment>',
+    '  vec3 n1 = texture2D(map, vUv*1.7 + vec2(-uTime*0.0060, uTime*0.0031)).rgb;',
+    '  vec3 n2 = texture2D(map, vUv*3.1 + vec2( uTime*0.0043,-uTime*0.0052)).rgb;',
+    '  vec2 warp = (n1.rg - 0.5)*0.022 + (n2.gr - 0.5)*0.010;',
+    '  vec3 c = texture2D(map, vUv + warp + vec2(uTime*0.0016, 0.0)).rgb;',
+    '  c = mix(vec3(1.0,0.62,0.18), c, uUseMap);',
+    '  float boil = 0.62 + 0.52*n1.r + 0.34*n2.r;',
+    '  c *= boil * 1.55;',
+    '  float limb = 0.34 + 0.66*pow(vMu, 0.55);',
+    '  c *= limb * mix(vec3(1.0,0.50,0.16), vec3(1.0), pow(vMu, 0.7));',
+    '  gl_FragColor = vec4(c, uOpacity);',
+    '  #include <colorspace_fragment>',
+    '}'].join('\n')
+});
+(function(){
+  var proxy = {};
+  Object.defineProperty(proxy, 'map', { set:function(v){ if (!v) sunMat.uniforms.uUseMap.value = 0; }, get:function(){ return null; } });
+  var t = loadTex('../assets/textures/2k_sun.jpg', [proxy]);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  sunMat.uniforms.map.value = t;
+})();
+var sunMesh = new THREE.Mesh(new THREE.SphereGeometry(SUN_R, 64, 48), sunMat);
+sunMesh.onBeforeRender = function(r, sc, cam, geo, mat){ mat.uniforms.uOpacity.value = mat.opacity; };
 solarGroup.add(sunMesh);
+
+/* Corona: a camera-facing sheet through the Sun's centre. The sphere hides
+   the part inside the disc; what shows is the halo, with slow streamers
+   that sharpen with distance like the ones seen in a total eclipse. */
+var coronaMat = new THREE.ShaderMaterial({
+  uniforms:{ uTime:uTimeShared, uOpacity:{value:1} },
+  transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+  vertexShader: SHADER_LOGDEPTH_VS + [
+    'varying vec2 vUv;',
+    'void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);',
+    '  #include <logdepthbuf_vertex>',
+    '}'].join('\n'),
+  fragmentShader: SHADER_LOGDEPTH_FS + [
+    'uniform float uTime, uOpacity; varying vec2 vUv;',
+    'void main(){',
+    '  #include <logdepthbuf_fragment>',
+    '  vec2 p = (vUv - 0.5)*2.0;',
+    '  float r = length(p)*5.5;',                  // in solar radii
+    '  float a = atan(p.y, p.x);',
+    '  float rays = 0.58 + 0.22*sin(a*5.0 + uTime*0.07) + 0.13*sin(a*11.0 - uTime*0.11 + 1.3) + 0.07*sin(a*23.0 + uTime*0.19);',
+    '  float fall = exp(-(r - 1.0)*1.25);',
+    '  float streamer = pow(clamp(rays, 0.0, 1.0), 1.0 + (r - 1.0)*1.5);',
+    '  float I = smoothstep(0.90, 1.03, r) * fall * (0.30 + 0.70*streamer) * smoothstep(5.5, 3.4, r);',
+    '  vec3 col = mix(vec3(1.0,0.56,0.20), vec3(1.0,0.93,0.76), clamp(fall, 0.0, 1.0));',
+    '  gl_FragColor = vec4(col * I * 1.35 * uOpacity, 1.0);',
+    '}'].join('\n')
+});
+var coronaMesh = new THREE.Mesh(new THREE.PlaneGeometry(1,1), coronaMat);
+coronaMesh.scale.setScalar(SUN_R*11);
+coronaMesh.renderOrder = 4;
+coronaMesh.onBeforeRender = function(r, sc, cam, geo, mat){ mat.uniforms.uOpacity.value = mat.opacity; };
+solarGroup.add(coronaMesh);
 
 /* glow sprite (cheap bloom substitute — no postprocessing pipeline needed) */
 function makeGlowSprite(color, size, opacity){
@@ -1403,7 +1693,7 @@ function makeGlowSprite(color, size, opacity){
   spr.scale.set(size,size,1);
   return spr;
 }
-var sunGlow = makeGlowSprite('255,214,140', SUN_R*7, 0.9);
+var sunGlow = makeGlowSprite('255,200,120', SUN_R*9, 0.30);
 solarGroup.add(sunGlow);
 
 POIS.push({
@@ -1523,7 +1813,150 @@ var EARTH_MOON = { name:'Lua', tex:'2k_moon.jpg', fb:0xaaa79c, radius:0.55, orbi
   prose:'Estabiliza a inclinação axial da Terra ao longo de milhões de anos, o que ajuda a manter um clima relativamente estável — sem a Lua, o eixo terrestre provavelmente oscilaria de forma caótica. Ela também está se afastando da Terra a cerca de 3,8 cm por ano — daqui a bilhões de anos, eclipses solares totais deixarão de ser possíveis.'
 };
 
-var planetMeshes = []; // {mesh, orbitGroup, def, cloudMesh?, nightMesh?}
+var planetMeshes = []; // {mesh, orbitGroup, def, cloudMesh?, ringMesh?}
+
+/* ============================================================
+   PLANET SHADER
+   ------------------------------------------------------------
+   One material for every planet, lit by the Sun at the world origin.
+   What it does that the stock material could not:
+   - a soft terminator, so the day/night line reads as an atmosphere-lit
+     dawn instead of a hard cut;
+   - city lights ONLY on the night side (they used to be an additive layer
+     glowing over the whole globe, daylight included);
+   - sunlight glinting off water: Earth's oceans are found from the colour
+     of the day map itself (blue-dominant pixels), so no extra texture;
+   - a thin haze toward the limb, in each planet's own atmosphere colour;
+   - Saturn's rings casting their shadow on the planet.
+   ============================================================ */
+var DUMMY_TEX = new THREE.DataTexture(new Uint8Array([0,0,0,0]), 1, 1);
+DUMMY_TEX.needsUpdate = true;
+var PLANET_VS = SHADER_LOGDEPTH_VS + [
+  'varying vec2 vUv; varying vec3 vWN; varying vec3 vWP;',
+  'void main(){',
+  '  vUv = uv;',
+  '  vWN = normalize(mat3(modelMatrix) * normal);',
+  '  vec4 wp = modelMatrix * vec4(position,1.0);',
+  '  vWP = wp.xyz;',
+  '  gl_Position = projectionMatrix * viewMatrix * wp;',
+  '  #include <logdepthbuf_vertex>',
+  '}'].join('\n');
+var PLANET_FS = SHADER_LOGDEPTH_FS + [
+  'uniform sampler2D map, nightMap, ringMap;',
+  'uniform vec3 uFallback, uHaze, uRingN, uCenter;',
+  'uniform vec2 uRingR;',
+  'uniform float uUseMap, uOpacity, uNight, uOcean, uRingOn, uHazeAmt;',
+  'varying vec2 vUv; varying vec3 vWN; varying vec3 vWP;',
+  'void main(){',
+  '  #include <logdepthbuf_fragment>',
+  '  vec3 N = normalize(vWN);',
+  '  vec3 L = normalize(-vWP);',                       // the Sun is the origin
+  '  vec3 V = normalize(cameraPosition - vWP);',
+  '  float ndl = dot(N, L);',
+  '  float soft = smoothstep(-0.10, 0.12, ndl);',
+  '  float diff = soft * (0.10 + 0.90*pow(clamp(ndl, 0.0, 1.0), 0.80));',
+  '  vec3 base = mix(uFallback, texture2D(map, vUv).rgb, uUseMap);',
+  '  float shade = 1.0;',
+  '  if (uRingOn > 0.5){',
+  '    float dn = dot(L, uRingN);',
+  '    if (abs(dn) > 0.0001){',
+  '      float t = dot(uCenter - vWP, uRingN) / dn;',
+  '      if (t > 0.0){',
+  '        float rr = length(vWP + L*t - uCenter);',
+  '        if (rr > uRingR.x && rr < uRingR.y){',
+  '          shade = 1.0 - 0.82*texture2D(ringMap, vec2((rr - uRingR.x)/(uRingR.y - uRingR.x), 0.5)).a;',
+  '        }',
+  '      }',
+  '    }',
+  '  }',
+  '  vec3 col = base * (0.012 + 1.08*diff*shade);',
+  '  float ocean = uOcean * smoothstep(0.004, 0.030, base.b - max(base.r, base.g));',
+  '  vec3 H = normalize(L + V);',
+  '  col += vec3(1.0,0.94,0.82) * pow(max(dot(N,H), 0.0), 64.0) * ocean * soft * 0.95;',
+  '  float fres = pow(1.0 - max(dot(N,V), 0.0), 2.6);',
+  '  col += uHaze * fres * uHazeAmt * smoothstep(-0.22, 0.30, ndl);',
+  '  float dark = 1.0 - smoothstep(-0.20, 0.06, ndl);',
+  '  col += texture2D(nightMap, vUv).rgb * vec3(1.0,0.86,0.62) * uNight * dark * 2.5;',
+  '  gl_FragColor = vec4(col, uOpacity);',
+  '  #include <colorspace_fragment>',
+  '}'].join('\n');
+
+/* per-planet atmosphere: inner haze colour/amount, and the outer halo
+   (size relative to the planet, strength). Mercury has none — it has no
+   atmosphere to speak of. */
+var ATMOS = {
+  venus:  { haze:[1.00,0.86,0.60], amt:0.55, halo:1.10, glow:0.85 },
+  earth:  { haze:[0.36,0.62,1.00], amt:0.95, halo:1.105, glow:1.0 },
+  mars:   { haze:[0.95,0.62,0.44], amt:0.28, halo:1.05, glow:0.30 },
+  jupiter:{ haze:[0.96,0.84,0.68], amt:0.30, halo:1.035,glow:0.28 },
+  saturn: { haze:[0.96,0.87,0.68], amt:0.30, halo:1.035,glow:0.26 },
+  uranus: { haze:[0.62,0.92,0.96], amt:0.45, halo:1.06, glow:0.50 },
+  neptune:{ haze:[0.38,0.54,1.00], amt:0.50, halo:1.06, glow:0.55 }
+};
+
+function shaderTexture(mat, uniformName, path, flagUniform){
+  var proxy = {};
+  Object.defineProperty(proxy, 'map', { get:function(){ return null; },
+    set:function(v){ if (!v && flagUniform) mat.uniforms[flagUniform].value = 0; } });
+  mat.uniforms[uniformName].value = loadTex(path, [proxy]);
+}
+function syncOpacity(r, sc, cam, geo, mat){ mat.uniforms.uOpacity.value = mat.opacity; }
+
+function makePlanetMaterial(def){
+  var a = ATMOS[def.id];
+  var mat = new THREE.ShaderMaterial({
+    uniforms:{
+      map:{value:DUMMY_TEX}, nightMap:{value:DUMMY_TEX}, ringMap:{value:DUMMY_TEX},
+      uFallback:{value:new THREE.Color(def.fb || 0xffffff)},
+      uHaze:{value:new THREE.Vector3().fromArray(a ? a.haze : [0,0,0])},
+      uHazeAmt:{value: a ? a.amt : 0},
+      uRingN:{value:new THREE.Vector3(0,1,0)}, uCenter:{value:new THREE.Vector3()},
+      uRingR:{value:new THREE.Vector2(1,2)},
+      uUseMap:{value:1}, uOpacity:{value:1},
+      uNight:{value: def.nightTex ? 1 : 0}, uOcean:{value: def.id === 'earth' ? 1 : 0},
+      uRingOn:{value:0}
+    },
+    vertexShader: PLANET_VS, fragmentShader: PLANET_FS
+  });
+  shaderTexture(mat, 'map', '../assets/textures/' + def.tex, 'uUseMap');
+  if (def.nightTex) shaderTexture(mat, 'nightMap', '../assets/textures/' + def.nightTex, 'uNight');
+  return mat;
+}
+
+/* Outer halo: the sliver of lit air you see beyond a planet's edge. A
+   slightly larger sphere drawn inside-out, brightest right at the limb and
+   gone by its own edge, and only on the side the Sun reaches. */
+function addAtmosphereHalo(mesh, radius, a){
+  var mat = new THREE.ShaderMaterial({
+    uniforms:{ uColor:{value:new THREE.Vector3().fromArray(a.haze)}, uGlow:{value:a.glow},
+               uEdge:{value:Math.sqrt(1 - 1/(a.halo*a.halo))}, uOpacity:{value:1} },
+    side:THREE.BackSide, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+    vertexShader: SHADER_LOGDEPTH_VS + [
+      'varying vec3 vWN; varying vec3 vWP;',
+      'void main(){',
+      '  vWN = normalize(mat3(modelMatrix) * normal);',
+      '  vec4 wp = modelMatrix * vec4(position,1.0); vWP = wp.xyz;',
+      '  gl_Position = projectionMatrix * viewMatrix * wp;',
+      '  #include <logdepthbuf_vertex>',
+      '}'].join('\n'),
+    fragmentShader: SHADER_LOGDEPTH_FS + [
+      'uniform vec3 uColor; uniform float uGlow, uEdge, uOpacity;',
+      'varying vec3 vWN; varying vec3 vWP;',
+      'void main(){',
+      '  #include <logdepthbuf_fragment>',
+      '  vec3 N = normalize(vWN);',
+      '  float d = -dot(N, normalize(cameraPosition - vWP));',
+      '  float rim = pow(smoothstep(0.0, uEdge, d), 2.2);',
+      '  float sun = smoothstep(-0.30, 0.45, dot(N, normalize(-vWP)));',
+      '  gl_FragColor = vec4(uColor * rim * sun * uGlow * uOpacity, 1.0);',
+      '}'].join('\n')
+  });
+  var halo = new THREE.Mesh(new THREE.SphereGeometry(radius*a.halo, 48, 32), mat);
+  halo.renderOrder = 3;
+  halo.onBeforeRender = syncOpacity;
+  mesh.add(halo);
+  return halo;
+}
 
 PLANETS.forEach(function(def){
   var orbitGroup = new THREE.Group();
@@ -1537,35 +1970,80 @@ PLANETS.forEach(function(def){
   ringMesh.rotation.x = Math.PI/2;
   solarGroup.add(ringMesh);
 
-  var mat = safeStandardMaterial({ color: def.fb || 0xffffff, roughness:1, metalness:0 });
-  mat.map = loadTex('../assets/textures/' + def.tex, [mat]);
-  var mesh = new THREE.Mesh(new THREE.SphereGeometry(def.radius, 40, 40), mat);
+  var mat = makePlanetMaterial(def);
+  var mesh = new THREE.Mesh(new THREE.SphereGeometry(def.radius, 64, 48), mat);
   mesh.position.set(def.orbit, 0, 0);
+  /* Tilt, THEN spin. With the default XYZ order the spin was applied
+     around the world's vertical and the tilt carried round with it, so
+     every planet's axis swung in a circle once per day — Uranus rolled
+     like a dropped coin. ZYX makes rotation.y a spin about the planet's
+     own tilted axis, which holds still the way a real one does. */
+  mesh.rotation.order = 'ZYX';
   mesh.rotation.z = def.tilt || 0;
+  mesh.onBeforeRender = syncOpacity;
   orbitGroup.add(mesh);
+  if (ATMOS[def.id]) addAtmosphereHalo(mesh, def.radius, ATMOS[def.id]);
 
-  var nightMesh = null;
-  if (def.nightTex){
-    var nightMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.55, blending: THREE.AdditiveBlending });
-    nightMat.map = loadTex('../assets/textures/' + def.nightTex, [nightMat], {hide:true});
-    nightMesh = new THREE.Mesh(new THREE.SphereGeometry(def.radius*1.001, 40, 40), nightMat);
-    mesh.add(nightMesh);
-  }
+  var nightMesh = null;   // city lights now live in the planet shader
 
   var cloudMesh = null;
   if (def.cloudTex){
     var cloudMat = new THREE.MeshStandardMaterial({ color:0xffffff, transparent:true, opacity: def.id==='venus'?0.85:0.55, depthWrite:false, roughness:1 });
     cloudMat.map = loadTex('../assets/textures/' + def.cloudTex, [cloudMat], {hide:true});
-    cloudMesh = new THREE.Mesh(new THREE.SphereGeometry(def.radius*1.012, 40, 40), cloudMat);
+    cloudMesh = new THREE.Mesh(new THREE.SphereGeometry(def.radius*1.012, 48, 36), cloudMat);
+    cloudMesh.renderOrder = 1;
     mesh.add(cloudMesh);
   }
 
+  var ringMesh = null;
   if (def.ringTex){
-    var rMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, side:THREE.DoubleSide, depthWrite:false });
-    rMat.map = loadTex('../assets/textures/' + def.ringTex, [rMat], {hide:true});
-    var ringPlane = new THREE.Mesh(new THREE.RingGeometry(def.radius*1.3, def.radius*2.4, 64), rMat);
-    ringPlane.rotation.x = Math.PI/2 - 0.42;
-    mesh.add(ringPlane);
+    /* Real proportions: the main rings run from about 1.24 to 2.27 Saturn
+       radii. Two fixes over the first version: the texture is a radial
+       strip, and RingGeometry's stock UVs are a flat projection — so the
+       bands were being drawn as spokes fanning outward instead of circles.
+       UVs are rebuilt here so u = distance from the planet. And the rings
+       now lie in the equatorial plane; they were tipped 24 degrees off it
+       and wobbled as the planet turned. */
+    var rIn = def.radius*1.24, rOut = def.radius*2.27;
+    var rGeo = new THREE.RingGeometry(rIn, rOut, 160, 1);
+    var rp = rGeo.attributes.position, ruv = rGeo.attributes.uv;
+    for (var ri=0; ri<rp.count; ri++){
+      var rl = Math.sqrt(rp.getX(ri)*rp.getX(ri) + rp.getY(ri)*rp.getY(ri));
+      ruv.setXY(ri, (rl - rIn)/(rOut - rIn), 0.5);
+    }
+    var rMat = new THREE.ShaderMaterial({
+      uniforms:{ map:{value:DUMMY_TEX}, uCenter:mat.uniforms.uCenter, uPlanetR:{value:def.radius},
+                 uOpacity:{value:1}, uUseMap:{value:1} },
+      side:THREE.DoubleSide, transparent:true, depthWrite:false,
+      vertexShader: SHADER_LOGDEPTH_VS + [
+        'varying vec2 vUv; varying vec3 vWP;',
+        'void main(){ vUv = uv; vec4 wp = modelMatrix * vec4(position,1.0); vWP = wp.xyz;',
+        '  gl_Position = projectionMatrix * viewMatrix * wp;',
+        '  #include <logdepthbuf_vertex>',
+        '}'].join('\n'),
+      fragmentShader: SHADER_LOGDEPTH_FS + [
+        'uniform sampler2D map; uniform vec3 uCenter; uniform float uPlanetR, uOpacity, uUseMap;',
+        'varying vec2 vUv; varying vec3 vWP;',
+        'void main(){',
+        '  #include <logdepthbuf_fragment>',
+        '  vec4 t = texture2D(map, vec2(vUv.x, 0.5));',
+        /* does the path from this grain of ice to the Sun pass through the planet? */
+        '  vec3 L = normalize(-vWP); vec3 oc = vWP - uCenter;',
+        '  float b = dot(oc, L); float h = b*b - (dot(oc,oc) - uPlanetR*uPlanetR);',
+        '  float lit = (h > 0.0 && b < 0.0) ? 1.0 - smoothstep(0.0, uPlanetR*uPlanetR*0.05, h) : 1.0;',
+        '  gl_FragColor = vec4(t.rgb * vec3(1.06,1.0,0.90) * (0.06 + 1.55*lit), t.a * uOpacity * uUseMap);',
+        '  #include <colorspace_fragment>',
+        '}'].join('\n')
+    });
+    shaderTexture(rMat, 'map', '../assets/textures/' + def.ringTex, 'uUseMap');
+    ringMesh = new THREE.Mesh(rGeo, rMat);
+    ringMesh.rotation.x = Math.PI/2;
+    ringMesh.renderOrder = 2;
+    ringMesh.onBeforeRender = syncOpacity;
+    mesh.add(ringMesh);
+    mat.uniforms.ringMap = rMat.uniforms.map;
+    mat.uniforms.uRingR.value.set(rIn, rOut);
+    mat.uniforms.uRingOn.value = 1;
   }
 
   POIS.push({
@@ -1574,7 +2052,7 @@ PLANETS.forEach(function(def){
     isMars: def.id === 'mars', isEarth: def.id === 'earth'
   });
 
-  var entry = { mesh:mesh, orbitGroup:orbitGroup, def:def, cloudMesh:cloudMesh, nightMesh:nightMesh };
+  var entry = { mesh:mesh, orbitGroup:orbitGroup, def:def, cloudMesh:cloudMesh, nightMesh:nightMesh, ringMesh:ringMesh };
   planetMeshes.push(entry);
 });
 
@@ -1594,6 +2072,299 @@ moonMesh.position.set(EARTH_MOON.orbit, 0, 0);
 moonPivot.add(moonMesh);
 POIS.push({ name: EARTH_MOON.name, mesh: moonMesh, radius: EARTH_MOON.radius, layer:'solar',
   eyebrow: EARTH_MOON.eyebrow, facts: EARTH_MOON.facts, prose: EARTH_MOON.prose });
+
+/* ============================================================
+   SMALL BODIES AND MACHINES — things worth going to find
+   ------------------------------------------------------------
+   A comet, the asteroid belt, the Space Station and Voyager 1. Each is a
+   regular point of interest (marker, travel, orbit, radar) and each
+   carries one of the "mistérios" below. Facts were checked against NASA
+   pages on 2026-11-20 (comets, asteroids, Voyager 1, "What is
+   microgravity?"); sizes and distances are openly out of scale, which the
+   field notebook says in so many words.
+   ============================================================ */
+function lumpyRock(radius, detail){
+  var g = new THREE.IcosahedronGeometry(radius, detail || 0);
+  var a = g.attributes.position;
+  for (var i=0;i<a.count;i++){
+    var x = a.getX(i), y = a.getY(i), z = a.getZ(i);
+    /* hash of the vertex position, so the duplicated vertices of a
+       non-indexed icosahedron move together and the faces stay joined */
+    var h = Math.sin(x*12.9898 + y*78.233 + z*37.719) * 43758.5453;
+    var k = 0.74 + 0.5*(h - Math.floor(h));
+    a.setXYZ(i, x*k, y*k, z*k);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+var rockMat = new THREE.MeshStandardMaterial({ color:0x8d857b, roughness:1, metalness:0, flatShading:true });
+/* the few rocks you get close to: enough triangles and smooth, rolling
+   lumps so they read as a worn body instead of a faceted gem */
+function boulder(radius){
+  var g = new THREE.IcosahedronGeometry(radius, 5);
+  var a = g.attributes.position, v = new THREE.Vector3();
+  for (var i=0;i<a.count;i++){
+    v.fromBufferAttribute(a, i);
+    var x = v.x/radius, y = v.y/radius, z = v.z/radius;
+    var k = 1 + 0.17*Math.sin(x*2.3+1.3)*Math.sin(y*2.9+0.4)
+              + 0.11*Math.sin(z*3.7+x*2.1+2.0)
+              + 0.055*Math.sin(y*7.1+z*6.3)*Math.sin(x*6.7)
+              + 0.022*Math.sin(x*17.0+y*13.0)*Math.sin(z*15.0);
+    a.setXYZ(i, v.x*k, v.y*k*0.86, v.z*k);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+var boulderMat = new THREE.MeshStandardMaterial({ color:0x8a8279, roughness:1, metalness:0 });
+
+/* ---- asteroid belt ---- */
+var beltGroup = new THREE.Group();
+solarGroup.add(beltGroup);
+var vestaMesh;
+(function(){
+  var N = LOW_TIER ? 260 : 560;
+  var im = new THREE.InstancedMesh(lumpyRock(1, 0), rockMat, N);
+  var d = new THREE.Object3D();
+  for (var i=0;i<N;i++){
+    var r = 78 + (Math.random()+Math.random())*0.5*20;
+    var a = Math.random()*Math.PI*2;
+    d.position.set(Math.cos(a)*r, (Math.random()-0.5)*4.4, Math.sin(a)*r);
+    var sc = 0.06 + Math.pow(Math.random(), 3)*0.40;
+    d.scale.set(sc*(0.7+Math.random()*0.6), sc*(0.7+Math.random()*0.6), sc*(0.7+Math.random()*0.6));
+    d.rotation.set(Math.random()*6.3, Math.random()*6.3, Math.random()*6.3);
+    d.updateMatrix();
+    im.setMatrixAt(i, d.matrix);
+  }
+  im.instanceMatrix.needsUpdate = true;
+  im.frustumCulled = false;
+  beltGroup.add(im);
+  vestaMesh = new THREE.Mesh(boulder(0.8), boulderMat);
+  vestaMesh.position.set(88, 0.3, 0);
+  beltGroup.add(vestaMesh);
+})();
+POIS.push({
+  name:'Cinturão de asteroides', mesh:vestaMesh, radius:0.8, orbitDist:4.4, layer:'solar', approach:0.75,
+  eyebrow:'Rochas espaciais · entre Marte e Júpiter',
+  facts:[
+    {k:'onde fica', v:'entre as órbitas de Marte e de Júpiter'},
+    {k:'maior asteroide', v:'Vesta, com cerca de 530 km de diâmetro'},
+    {k:'massa total', v:'todos os asteroides juntos têm menos massa que a Lua'}
+  ],
+  prose:'Asteroides são restos rochosos da formação do sistema solar, há cerca de 4,6 bilhões de anos. A quantidade de rochas que você vê aqui é ilustrativa: serve para mostrar onde o cinturão fica, não quantas pedras ele tem.'
+});
+
+/* ---- comet ----
+   Moves by Kepler's second law (angular speed proportional to 1/r²), so it
+   crawls through the outer system and whips round the Sun — and its tails
+   only grow as it gets close, always blown away from the Sun: the gas
+   tail straight back along the Sun's direction, the dust tail lagging
+   along the orbit. The orbit itself is invented. */
+var Comet = (function(){
+  var A = 120, E = 0.78, K = 150, P = A*(1 - E*E);
+  var theta = 4.28;                        // inbound, about Mars's distance
+  var g = new THREE.Group();
+  solarGroup.add(g);
+  var nucleus = new THREE.Mesh(boulder(0.5),
+    new THREE.MeshStandardMaterial({ color:0x55504a, roughness:1 }));
+  g.add(nucleus);
+  var coma = makeGlowSprite('185,232,255', 3, 0.6);
+  g.add(coma);
+
+  function tail(color, width){
+    var geo = new THREE.ConeGeometry(1, 1, 28, 10, true);
+    geo.rotateX(Math.PI); geo.translate(0, 0.5, 0);      // tip at the nucleus, mouth at y = 1
+    var mat = new THREE.ShaderMaterial({
+      uniforms:{ uColor:{value:new THREE.Vector3().fromArray(color)}, uAmt:{value:1}, uOpacity:{value:1} },
+      side:THREE.DoubleSide, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+      vertexShader: SHADER_LOGDEPTH_VS + [
+        'varying float vT; varying vec3 vWN; varying vec3 vWP;',
+        'void main(){ vT = position.y; vWN = normalize(mat3(modelMatrix)*normal);',
+        '  vec4 wp = modelMatrix*vec4(position,1.0); vWP = wp.xyz;',
+        '  gl_Position = projectionMatrix*viewMatrix*wp;',
+        '  #include <logdepthbuf_vertex>',
+        '}'].join('\n'),
+      fragmentShader: SHADER_LOGDEPTH_FS + [
+        'uniform vec3 uColor; uniform float uAmt, uOpacity;',
+        'varying float vT; varying vec3 vWN; varying vec3 vWP;',
+        'void main(){',
+        '  #include <logdepthbuf_fragment>',
+        /* a tail is a thin cloud, not a surface: it has to vanish toward its
+           silhouette, or it reads as a solid searchlight cone */
+        '  float edge = pow(abs(dot(normalize(vWN), normalize(cameraPosition - vWP))), 2.0);',
+        '  float a = pow(1.0 - vT, 1.5) * edge * uAmt * uOpacity;',
+        '  gl_FragColor = vec4(mix(uColor, vec3(1.0), pow(1.0 - vT, 9.0)) * a * 0.52, 1.0);',
+        '}'].join('\n')
+    });
+    var m = new THREE.Mesh(geo, mat);
+    m.userData.width = width;
+    m.onBeforeRender = syncOpacity;
+    m.renderOrder = 5;
+    g.add(m);
+    return m;
+  }
+  var gasTail = tail([0.42,0.68,1.0], 1.1);
+  var dustTail = tail([1.0,0.88,0.66], 2.6);
+
+  var _y = new THREE.Vector3(0,1,0), away = new THREE.Vector3(), vel = new THREE.Vector3(),
+      prev = new THREE.Vector3(), dd = new THREE.Vector3(), tilt = new THREE.Euler(0.28, 0.9, 0);
+  function place(){
+    var r = P/(1 + E*Math.cos(theta));
+    g.position.set(r*Math.cos(theta), 0, r*Math.sin(theta)).applyEuler(tilt);
+    return r;
+  }
+  place(); prev.copy(g.position);
+  function update(dt){
+    var r0 = P/(1 + E*Math.cos(theta));
+    theta += K/(r0*r0)*dt;
+    var r = place();
+    vel.subVectors(g.position, prev); prev.copy(g.position);
+    if (vel.lengthSq() > 1e-10) vel.normalize();
+    away.copy(g.position).normalize();
+    var act = 1 - smoothstep(55, 170, r);            // activity: none far out, full near the Sun
+    gasTail.quaternion.setFromUnitVectors(_y, away);
+    gasTail.scale.set(gasTail.userData.width, 3 + 27*act, gasTail.userData.width);
+    gasTail.material.uniforms.uAmt.value = act;
+    dd.copy(away).addScaledVector(vel, -0.55).normalize();
+    dustTail.quaternion.setFromUnitVectors(_y, dd);
+    dustTail.scale.set(dustTail.userData.width, 2 + 15*act, dustTail.userData.width);
+    dustTail.material.uniforms.uAmt.value = act*0.85;
+    coma.scale.setScalar(1.5 + 2.3*act);
+    coma.material.userData._baseOpacity = 0.15 + 0.45*act;
+    nucleus.rotation.y += dt*0.4;
+  }
+  return { update:update, nucleus:nucleus };
+})();
+POIS.push({
+  name:'Cometa', mesh:Comet.nucleus, radius:0.7, orbitDist:7.5, layer:'solar', approach:1.35,
+  eyebrow:'Bola de gelo, rocha e poeira',
+  facts:[
+    {k:'do que é feito', v:'gases congelados, rocha e poeira'},
+    {k:'duas caudas', v:'uma de poeira e outra de gás'},
+    {k:'tamanho da cauda', v:'pode se estender por milhões de quilômetros'}
+  ],
+  prose:'Longe do Sol, um cometa é só um bloco escuro e congelado. Quando se aproxima, ele esquenta e solta gás e poeira, que a luz e o vento solar empurram para longe do Sol: são as caudas. Fique um tempo aqui e veja elas mudarem. A órbita deste cometa é ilustrativa.'
+});
+
+/* ---- Voyager 1 ---- */
+var voyagerMesh = (function(){
+  var g = new THREE.Group();
+  var white = new THREE.MeshStandardMaterial({ color:0xe9e9e6, roughness:0.55, metalness:0.1, side:THREE.DoubleSide });
+  var gold  = new THREE.MeshStandardMaterial({ color:0x9a7b3a, roughness:0.5, metalness:0.5 });
+  var dark  = new THREE.MeshStandardMaterial({ color:0x4a4d55, roughness:0.7, metalness:0.3 });
+  var pts = [];
+  for (var i=0;i<=10;i++){ var r = i/10; pts.push(new THREE.Vector2(r, 0.30*r*r)); }
+  var dish = new THREE.Mesh(new THREE.LatheGeometry(pts, 28), white);       // the 3.7 m antenna
+  g.add(dish);
+  var feed = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 0.42, 8), dark);
+  feed.position.y = 0.42; g.add(feed);
+  var bus = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.24, 10), gold);
+  bus.position.y = -0.16; g.add(bus);
+  function boom(len, rad, mat, x, y, z, rz, ry){
+    var b = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, len, 6), mat);
+    b.position.set(x, y, z); b.rotation.z = rz; b.rotation.y = ry || 0; g.add(b); return b;
+  }
+  boom(3.4, 0.022, dark, -1.95, -0.2, 0, Math.PI/2);            // magnetometer boom
+  boom(1.3, 0.032, dark, 0.95, -0.2, 0, Math.PI/2);             // power source boom
+  boom(0.62, 0.10, dark, 1.75, -0.2, 0, Math.PI/2);             // the power source itself
+  boom(1.1, 0.03, dark, 0.2, -0.2, 0.8, Math.PI/2, Math.PI/2);  // instrument boom
+  g.position.set(190, 62, -168);
+  /* the antenna never stops pointing home */
+  g.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), g.position.clone().multiplyScalar(-1).normalize());
+  solarGroup.add(g);
+  return g;
+})();
+POIS.push({
+  name:'Voyager 1', mesh:voyagerMesh, radius:1.0, orbitDist:5.2, layer:'solar', approach:0.5,
+  eyebrow:'Sonda espacial · NASA',
+  facts:[
+    {k:'lançamento', v:'5 de setembro de 1977'},
+    {k:'onde está', v:'no espaço interestelar desde agosto de 2012'},
+    {k:'distância', v:'mais de 25 bilhões de km — nenhum objeto feito por humanos foi tão longe'},
+    {k:'a bordo', v:'o Disco de Ouro, com um mapa gravado que mostra onde fica a Terra'}
+  ],
+  prose:'Quase cinquenta anos depois do lançamento, quatro instrumentos da Voyager 1 continuam funcionando e mandando dados. A posição dela aqui está comprimida, como todas as distâncias deste mapa: de verdade, ela está mais de cinco vezes mais longe do Sol do que Netuno. A sonda também está muito ampliada.'
+});
+
+/* ---- Space Station ---- */
+var issPivot = new THREE.Group();
+earthEntry.orbitGroup.add(issPivot);
+issPivot.position.copy(earthEntry.mesh.position);
+issPivot.rotation.z = 0.9;
+var issMesh = (function(){
+  var g = new THREE.Group();
+  var grey  = new THREE.MeshStandardMaterial({ color:0xc9ccd2, roughness:0.6, metalness:0.3 });
+  var panel = new THREE.MeshStandardMaterial({ color:0x3d68bd, roughness:0.4, metalness:0.35, side:THREE.DoubleSide, emissive:0x0e2552 });
+  var white = new THREE.MeshStandardMaterial({ color:0xf1f1ee, roughness:0.6 });
+  var truss = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.07, 0.07), grey); g.add(truss);
+  [-0.98,-0.66,0.66,0.98].forEach(function(x){
+    [-1,1].forEach(function(sd){
+      var pn = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.86), panel);
+      pn.rotation.x = Math.PI/2; pn.position.set(x, 0, sd*0.52); g.add(pn);
+    });
+  });
+  [[0,0,0.05,1.0],[0,-0.14,0.3,0.5],[0.22,0,-0.2,0.5]].forEach(function(m){
+    var c = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, m[3], 10), white);
+    c.rotation.x = Math.PI/2; c.position.set(m[0], m[1], m[2]); g.add(c);
+  });
+  [-0.3,0.3].forEach(function(x){
+    var rd = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.5), new THREE.MeshStandardMaterial({ color:0xe6e6e0, side:THREE.DoubleSide }));
+    rd.rotation.x = Math.PI/2; rd.position.set(x, 0, -0.32); g.add(rd);
+  });
+  g.scale.setScalar(0.4);
+  g.position.set(3.3, 0, 0);
+  issPivot.add(g);
+  return g;
+})();
+POIS.push({
+  name:'Estação Espacial', mesh:issMesh, radius:0.36, orbitDist:1.25, layer:'solar', approach:0.8,
+  eyebrow:'Laboratório em órbita da Terra',
+  facts:[
+    {k:'velocidade', v:'cerca de 28.000 km/h'},
+    {k:'altura', v:'cerca de 400 km acima do chão'},
+    {k:'gravidade lá em cima', v:'88,8% da gravidade na superfície'}
+  ],
+  prose:'A estação está em queda livre contínua em volta da Terra: cai o tempo todo e nunca chega ao chão, porque anda de lado depressa demais. É isso que se chama órbita. O tamanho e a distância da estação aqui estão fora de escala.'
+});
+
+/* ---- mistérios: one question per place ----
+   `poi` is the name of the point of interest that carries the question;
+   the warp one has no place, it unlocks after the first long trip. */
+var MISTERIOS = [
+  { id:'sol', poi:'Sol', titulo:'A luz do Sol', dica:'Comece pela estrela no centro.',
+    q:'Se o Sol se apagasse neste exato instante, quando a Terra ficaria no escuro?',
+    ops:['Na mesma hora','Cerca de 8 minutos depois','Cerca de 1 hora depois','Só no dia seguinte'], certa:1,
+    dica2:'A luz é muito rápida, mas não chega na hora. E o Sol está a 150 milhões de km.',
+    porque:'A luz viaja a cerca de 300 mil km por segundo e o Sol está a 150 milhões de km. Dividindo, dá 500 segundos: uns 8 minutos e 20 segundos. O Sol que você vê no céu é sempre o de 8 minutos atrás.' },
+  { id:'cometa', poi:'Cometa', titulo:'As caudas do cometa', dica:'Procure algo com cauda cruzando as órbitas dos planetas.',
+    q:'Olhe para as caudas deste cometa. Para onde elas apontam?',
+    ops:['Para trás, como a fumaça de um foguete','Na direção do Sol','Para longe do Sol','Para o planeta mais próximo'], certa:2,
+    dica2:'Ache o Sol na tela e compare com a direção das caudas.',
+    porque:'Quem manda nas caudas é o Sol: a pressão da luz e o vento solar empurram o gás e a poeira para longe dele. São duas caudas, uma de gás e outra de poeira, e elas podem se estender por milhões de quilômetros.' },
+  { id:'cinturao', poi:'Cinturão de asteroides', titulo:'O peso do cinturão', dica:'Há uma faixa de rochas entre Marte e Júpiter.',
+    q:'Se desse para juntar todos os asteroides do cinturão numa bola só, de que tamanho ela seria?',
+    ops:['Maior que a Terra','Do tamanho de Marte','Do tamanho de Júpiter','Menor que a Lua'], certa:3,
+    dica2:'São muitas rochas, mas quase todas são pequenas.',
+    porque:'Somados, todos os asteroides têm menos massa que a Lua. O maior deles, Vesta, tem cerca de 530 km de diâmetro. Parece muita pedra, mas é pouco material espalhado por um espaço enorme.' },
+  { id:'iss', poi:'Estação Espacial', titulo:'Astronautas flutuando', dica:'Tem uma construção humana girando em volta da Terra.',
+    q:'Por que os astronautas flutuam dentro da estação?',
+    ops:['Porque lá não existe gravidade','Porque estão em queda livre em volta da Terra','Porque o ar da estação empurra para cima','Porque estão longe demais da Terra'], certa:1,
+    dica2:'A estação fica a só 400 km do chão. A Lua está mil vezes mais longe e mesmo assim a gravidade da Terra a segura.',
+    porque:'A gravidade lá em cima ainda é 88,8% da que você sente no chão. Eles flutuam porque a estação inteira está caindo o tempo todo em volta da Terra, a 28.000 km/h, sem nunca chegar ao chão.' },
+  { id:'voyager', poi:'Voyager 1', titulo:'A viajante de 1977', dica:'Bem além de Netuno, uma máquina lançada em 1977 continua viajando.',
+    q:'Esta sonda foi lançada em 1977. O que aconteceu com ela?',
+    ops:['Caiu em Júpiter','Voltou para a Terra','Saiu para o espaço interestelar e ainda envia dados','Parou de funcionar ao passar por Saturno'], certa:2,
+    dica2:'Repare onde você a encontrou: fora da órbita de todos os planetas.',
+    porque:'A Voyager 1 entrou no espaço interestelar em agosto de 2012 e é o objeto feito por humanos que foi mais longe: mais de 25 bilhões de km. Quatro de seus instrumentos ainda funcionam.' },
+  { id:'dobra', poi:null, titulo:'A dobra espacial', dica:'Faça uma viagem longa até um planeta distante para liberar este.',
+    q:'A dobra espacial que levou você de um planeta a outro em segundos existe de verdade?',
+    ops:['Sim, as sondas da NASA já usam','Sim, mas só funciona perto do Sol','Não: é uma hipótese da física, nunca construída','Não: a física proíbe até de imaginar'], certa:2,
+    dica2:'A sonda mais rápida já lançada levou anos para sair do sistema solar.',
+    porque:'Em 1994 o físico Miguel Alcubierre mostrou que as equações de Einstein permitem, no papel, encolher o espaço na frente de uma nave e esticá-lo atrás. Mas isso exigiria uma matéria "exótica", de energia negativa, e ninguém sabe se ela pode existir do jeito necessário. Por enquanto, nada viaja mais rápido que a luz.' }
+];
+MISTERIOS.forEach(function(m){
+  if (!m.poi) return;
+  for (var i=0;i<POIS.length;i++) if (POIS[i].name === m.poi){ POIS[i].misterio = m; break; }
+});
 
 /* ============================================================
    STELLAR LAYER — procedural starfield + nebula sprites
@@ -2106,6 +2877,7 @@ POIS.forEach(function(poi){
   markerLayer.appendChild(m);
   markerLayer.appendChild(lbl);
   poi._el = m; poi._lbl = lbl;
+  if (poi.misterio) m.classList.add('myst');
   m.addEventListener('click', function(){ openPoi(poi); });
 });
 
@@ -2173,13 +2945,29 @@ poiCloseBtn.addEventListener('click', function(){ poiCard.classList.remove('open
    system for the tour). Arriving always leads into exploration-orbit
    mode (enterOrbit()), same as it always has; onArrive is an optional
    extra callback the tour uses to know when a leg has completed. */
+var _UP = new THREE.Vector3(0,1,0);
 function travelToPoi(poi, onArrive){
   var target = poi.mesh ? poi.mesh.getWorldPosition(new THREE.Vector3()) : poi.worldPos.clone();
   var dist = poi.orbitDist || Math.max(poi.radius*4.2, 6);
   var dir = camera.position.clone().sub(target);
   if (dir.lengthSq() < 0.0001) dir.set(0,0.3,1);
+  /* Arrive on the sunlit side. "Keep the side you came from" parked the
+     camera on whichever face happened to be nearest — and from the outer
+     system that is always the night side, so the first sight of Earth was
+     a black disc. Coming in about 35 degrees off the Sun's direction shows
+     a lit globe with the day/night line curving across it. */
+  if (poi.layer === 'solar' && poi.mesh && poi.mesh !== sunMesh){
+    var sunward = target.clone().multiplyScalar(-1); sunward.y = 0;
+    if (sunward.lengthSq() > 0.0001){
+      dir.copy(sunward.normalize()).applyAxisAngle(_UP, poi.approach || 0.62);
+      dir.y = 0.19;
+    }
+  }
   dir.normalize().multiplyScalar(dist);
-  travelTarget = { pos: target.clone().add(dir), look: target.clone(), orbitPoi: poi, onArrive: onArrive };
+  travelTarget = { pos: target.clone().add(dir), look: target.clone(), orbitPoi: poi, onArrive: onArrive, age: 0 };
+  /* trip length, taken before the first step is flown — the warp effect
+     and its arrival readout are decided by this */
+  travelTarget.d0 = camera.position.distanceTo(travelTarget.pos);
 }
 poiGoBtn.addEventListener('click', function(){
   if (!activePoi) return;
@@ -2299,9 +3087,12 @@ function enterOrbit(poi){
   // the black hole's bridge button) and would otherwise sit on top of them.
   if (typeof GuideTips !== 'undefined') GuideTips.hide();
   enterOrbitVisuals();
+  if (typeof Mysteries !== 'undefined') Mysteries.onOrbit(poi);
+  orbitPanel.scrollTop = 0;     // a new place starts at its top, not where the last one was left
 }
 function leaveOrbit(){
   orbitState = null;
+  if (typeof Mysteries !== 'undefined') Mysteries.onLeave();
   orbitPanel.classList.remove('open');
   // clear minimized state too, not just visibility -- otherwise it's only
   // enterOrbit()'s own reset saving us from a stale "minimized" leaking
@@ -2335,7 +3126,8 @@ function updateOrbit(dt){
   var poi = orbitState.poi;
   var center = poi.mesh ? poi.mesh.getWorldPosition(_orbitCenter) : poi.worldPos;
 
-  if (!REDUCE_MOTION) orbitState.angle += dt*0.12;
+  /* slow enough that the day side stays in view for most of a minute */
+  if (!REDUCE_MOTION) orbitState.angle += dt*0.065;
   var ang = orbitState.angle + orbitState.userYawOffset;
   var tilt = orbitState.tilt + orbitState.userTiltOffset;
   var horiz = Math.cos(tilt);
@@ -2749,6 +3541,7 @@ function resolveCollisions(){
 
 /* smooth assisted travel toward a POI (never an instant teleport) */
 var _travelCenter = new THREE.Vector3();
+var _travelStep = new THREE.Vector3();
 function updateTravel(dt){
   if (!travelTarget) return;
   var toPos = travelTarget.pos;
@@ -2763,10 +3556,26 @@ function updateTravel(dt){
     var offset = travelTarget.pos.clone().sub(travelTarget.look);
     toPos = center.clone().add(offset);
     lookPos = center;
+    /* Ride along with the destination. Easing toward a moving point always
+       trails it by (its speed x the easing time), and for anything quick —
+       the comet near the Sun, the Space Station — that trailing distance
+       is larger than the arrival threshold, so the trip never ended.
+       Carrying the camera by the target's own motion first leaves the
+       easing to close only the remaining gap. */
+    if (travelTarget._last) camera.position.add(_travelStep.subVectors(center, travelTarget._last));
+    else travelTarget._last = new THREE.Vector3();
+    travelTarget._last.copy(center);
   }
   var d = camera.position.distanceTo(toPos);
   var easing = REDUCE_MOTION ? 6.5 : 2.4;
   var t = 1 - Math.exp(-easing*dt);
+  /* a beat of build-up before the jump: without it the fastest moment of
+     the trip is its very first frame, which reads as a cut, not a launch */
+  if (!REDUCE_MOTION){
+    travelTarget.age = (travelTarget.age || 0) + dt;
+    var ramp = Math.min(1, travelTarget.age/0.9);
+    t *= ramp*ramp*(3 - 2*ramp);
+  }
   camera.position.lerp(toPos, t);
 
   var desiredDir = lookPos.clone().sub(camera.position).normalize();
@@ -3087,6 +3896,23 @@ function animate(){
   });
   moonPivot.rotation.y += EARTH_MOON.speed*dt*0.3;
   sunMesh.rotation.y += dt*0.02;
+  uTimeShared.value += dt;
+  Comet.update(dt);
+  beltGroup.rotation.y += 0.03*dt*0.3;
+  issPivot.rotation.y += dt*0.5;
+  coronaMesh.quaternion.copy(camera.quaternion);
+  for (var pi=0; pi<planetMeshes.length; pi++){
+    var pm = planetMeshes[pi];
+    if (!pm.ringMesh) continue;
+    /* the ring-shadow maths needs the planet's centre and pole in world space */
+    pm.mesh.getWorldPosition(pm.mesh.material.uniforms.uCenter.value);
+    pm.mesh.material.uniforms.uRingN.value.set(0,1,0).transformDirection(pm.mesh.matrixWorld);
+  }
+  skyGroup.position.copy(camera.position);
+  var skyFade = 1 - smoothstep(LAYER2_FADE_IN, LAYER2_FULL, camera.position.length());
+  skyDomeMat.opacity = skyFade;
+  for (var si=0; si<skyStarMats.length; si++) skyStarMats[si].opacity = skyFade;
+  skyGroup.visible = skyFade > 0.002;
 
   updateLayers();
   updateNebulae();
@@ -3098,10 +3924,363 @@ function animate(){
   speedValEl.textContent = Math.round(speed) + ' un/s';
   speedBarEl.style.width = Math.min(100, (speed/MAX_SPEED)*100) + '%';
 
+  Warp.update(dt);
   renderer.render(scene, camera);
+  Perf.tick(dt);
   requestAnimationFrame(animate);
 }
+
+/* adaptive resolution — same idea as the ocean room: under ~26 fps render
+   fewer pixels, and only step back up when there is clear headroom */
+var Perf = (function(){
+  var acc = 0, frames = 0, calm = 0, MIN = 0.75;
+  function apply(r){
+    pixelRatioNow = r;
+    renderer.setPixelRatio(r);
+    renderer.setSize(innerWidth, innerHeight);
+  }
+  function tick(dt){
+    if (document.hidden || dt >= 0.1) return;
+    acc += dt; frames++;
+    if (acc < 2) return;
+    var fps = frames/acc; acc = 0; frames = 0;
+    if (fps < 26 && pixelRatioNow > MIN){ apply(Math.max(MIN, pixelRatioNow - 0.25)); calm = 0; }
+    else if (fps > 52 && pixelRatioNow < PIXEL_RATIO_MAX){
+      if (++calm >= 4){ apply(Math.min(PIXEL_RATIO_MAX, pixelRatioNow + 0.25)); calm = 0; }
+    } else calm = 0;
+  }
+  return { tick:tick };
+})();
 requestAnimationFrame(animate);
+
+/* ============================================================
+   TOAST — one line of text, bottom centre, goes away by itself
+   ============================================================ */
+var Toast = (function(){
+  var el = document.getElementById('uToast'), timer = null;
+  function show(html, ms, actionLabel, action){
+    if (!el) return;
+    el.innerHTML = html;
+    el.classList.toggle('act', !!action);
+    if (action){
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = actionLabel;
+      b.addEventListener('click', function(){ el.classList.remove('show'); action(); });
+      el.appendChild(b);
+    }
+    el.classList.add('show');
+    clearTimeout(timer);
+    timer = setTimeout(function(){ el.classList.remove('show'); }, ms || 7000);
+  }
+  return { show:show };
+})();
+
+/* ============================================================
+   DOBRA ESPACIAL (warp)
+   ------------------------------------------------------------
+   Long assisted trips used to be a fast camera slide. Now they look like
+   what the child expects from a spaceship: stars stretch into lines, the
+   view widens, the edges of the screen go blue. It is driven purely by
+   how fast the camera is actually moving, so short hops stay calm and
+   nothing has to be scripted per destination.
+
+   It is labelled as fiction on screen, every time. The honest part is
+   what happens on arrival: the readout says how long LIGHT takes to make
+   the same trip — minutes to hours — which is the real speed limit.
+   ============================================================ */
+scene.add(camera);     // so that things attached to the camera get drawn
+var AU = { 'Mercúrio':0.39, 'Vênus':0.72, 'Terra':1, 'Marte':1.52, 'Júpiter':5.2,
+           'Saturno':9.5, 'Urano':19.2, 'Netuno':30.1 };   // same figures as the fact cards
+var Warp = (function(){
+  var N = LOW_TIER ? 320 : 720;
+  var pos = new Float32Array(N*6), end = new Float32Array(N*2), seed = new Float32Array(N*2);
+  for (var i=0;i<N;i++){
+    var a = Math.random()*Math.PI*2, r = 3 + Math.pow(Math.random(), 0.6)*72, z = Math.random()*260, sd = Math.random();
+    for (var k=0;k<2;k++){
+      pos[i*6+k*3] = Math.cos(a)*r; pos[i*6+k*3+1] = Math.sin(a)*r; pos[i*6+k*3+2] = z;
+      end[i*2+k] = k; seed[i*2+k] = sd;
+    }
+  }
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('aEnd', new THREE.BufferAttribute(end, 1));
+  geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
+  var mat = new THREE.ShaderMaterial({
+    uniforms:{ uAmt:{value:0}, uFlow:{value:0}, uLen:{value:4} },
+    transparent:true, depthTest:false, depthWrite:false, blending:THREE.AdditiveBlending,
+    vertexShader:[
+      'attribute float aEnd, aSeed; uniform float uFlow, uLen; varying float vA;',
+      'void main(){',
+      '  vec3 p = position;',
+      '  float z = mod(p.z + uFlow*(0.6 + aSeed*0.8), 260.0);',      // rushing toward the viewer
+      '  p.z = -260.0 + z - aEnd*uLen*(0.5 + aSeed);',               // the trail hangs behind
+      '  vA = (1.0 - aEnd*0.9) * smoothstep(0.0, 45.0, z) * (1.0 - smoothstep(225.0, 260.0, z));',
+      '  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);',
+      '}'].join('\n'),
+    fragmentShader:[
+      'uniform float uAmt; varying float vA;',
+      'void main(){ gl_FragColor = vec4(mix(vec3(0.50,0.72,1.0), vec3(1.0), vA) * vA * uAmt, 1.0); }'
+    ].join('\n')
+  });
+  var lines = new THREE.LineSegments(geo, mat);
+  lines.frustumCulled = false; lines.renderOrder = 60; lines.visible = false;
+  camera.add(lines);
+
+  var veil = document.getElementById('warpVeil'), chip = document.getElementById('warpChip');
+  var amt = 0, trip = null, tripLong = false, tripPoi = null, BASE_FOV = camera.fov;
+  var d0 = 1, strength = 1, forced = -1;
+  var _wc = new THREE.Vector3(), _wt = new THREE.Vector3();
+  /* distance still to go, to where the destination is NOW (planets move) */
+  function distLeft(){
+    if (!travelTarget) return 0;
+    var to = travelTarget.pos;
+    if (travelTarget.orbitPoi && travelTarget.orbitPoi.mesh){
+      travelTarget.orbitPoi.mesh.getWorldPosition(_wc);
+      to = _wt.subVectors(travelTarget.pos, travelTarget.look).add(_wc);
+    }
+    return camera.position.distanceTo(to);
+  }
+  var WKEY2 = 'fv-voo-dobra-vista';
+
+  function lightTime(au){
+    var s = au*499;                           // 1 AU is 499 light-seconds
+    if (s < 3600) return Math.round(s/60) + ' minutos';
+    var h = Math.floor(s/3600), m = Math.round((s - h*3600)/60);
+    return h + (h === 1 ? ' hora' : ' horas') + (m ? ' e ' + m + ' minutos' : '');
+  }
+  function arrived(poi){
+    if (veil && !REDUCE_MOTION){ veil.classList.remove('flash'); void veil.offsetWidth; veil.classList.add('flash'); }
+    var first = false;
+    try{ first = !localStorage.getItem(WKEY2); localStorage.setItem(WKEY2, '1'); }catch(e){}
+    if (typeof Mysteries !== 'undefined' && Mysteries.unlockWarp()){
+      Toast.show('<b>Novo mistério liberado.</b> Você acabou de viajar por dobra espacial. Isso existe de verdade?', 14000,
+        'responder', function(){ Mysteries.open('dobra'); });
+      return;
+    }
+    if (poi && AU[poi.name]){
+      Toast.show('Chegada a <b>' + poi.name + '</b>. A luz do Sol, a coisa mais rápida que existe, leva <b>' + lightTime(AU[poi.name]) + '</b> para chegar até aqui.', 8000);
+    }
+  }
+  function update(dt){
+    /* a trip is a "warp" if it starts far from its destination — measured
+       once, when the travel target appears, so it also holds when motion
+       is reduced and no streaks are drawn */
+    if (travelTarget !== trip){
+      if (trip && !travelTarget && tripLong) arrived(tripPoi);
+      trip = travelTarget;
+      if (trip){
+        d0 = Math.max(1, trip.d0 || distLeft());
+        tripLong = d0 > 140;
+        strength = 0.62 + 0.38*smoothstep(140, 420, d0);
+        tripPoi = trip.orbitPoi || null;
+      }
+    }
+    /* Shaped by how far along the trip is, not by camera speed: the
+       assisted travel eases in and out, so its speed peaks for an instant
+       and a speed-driven effect only flickered. This holds the streaks for
+       the whole middle of the journey and lets go on the final approach,
+       when you want to see where you have arrived. */
+    var want = 0;
+    if (travelTarget && tripLong && !REDUCE_MOTION){
+      var prog = 1 - distLeft()/d0;
+      want = strength * smoothstep(0.012, 0.13, prog) * (1 - smoothstep(0.87, 0.992, prog));
+    }
+    if (forced >= 0) want = forced;
+    amt += (want - amt) * Math.min(1, dt*(want > amt ? 6 : 3.4));
+    if (amt < 0.004){
+      if (lines.visible){
+        lines.visible = false;
+        if (veil) veil.style.opacity = 0;
+        if (chip) chip.classList.remove('show');
+        if (camera.fov !== BASE_FOV){ camera.fov = BASE_FOV; camera.updateProjectionMatrix(); }
+      }
+      return;
+    }
+    lines.visible = true;
+    mat.uniforms.uAmt.value = amt;
+    mat.uniforms.uFlow.value += dt*(240 + 980*amt);
+    mat.uniforms.uLen.value = 3 + 62*amt;
+    camera.fov = BASE_FOV + 26*amt;
+    camera.updateProjectionMatrix();
+    if (veil) veil.style.opacity = (amt*0.9).toFixed(3);
+    if (chip) chip.classList.toggle('show', amt > 0.28);
+  }
+  return { update:update, amount:function(){ return amt; },
+           _force:function(v){ forced = v; } };   // test hook only
+})();
+
+/* ============================================================
+   MISTÉRIOS — the question appears where the thing is
+   ------------------------------------------------------------
+   Reading a fact card is passive. Here the place asks something first,
+   and the answer can usually be SEEN from where you are (which way the
+   comet's tails point, where Voyager is). Progress lives in localStorage
+   on this device only.
+   ============================================================ */
+var Mysteries = (function(){
+  var KEY = 'fv-voo-misterios-v1';
+  var st = { ok:{}, dobra:false };
+  try{ var raw = JSON.parse(localStorage.getItem(KEY) || 'null'); if (raw && raw.ok) st = raw; }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
+
+  var btn = document.getElementById('mystBtn'), count = document.getElementById('mystCount');
+  var modal = document.getElementById('mystModal'), list = document.getElementById('mystList');
+  var modalQ = document.getElementById('mystQ'), orbitQ = document.getElementById('orbitMystery');
+
+  function solved(){ var n = 0; MISTERIOS.forEach(function(m){ if (st.ok[m.id]) n++; }); return n; }
+  function refresh(){
+    var txt = solved() + '/' + MISTERIOS.length;
+    if (count) count.textContent = txt;
+    var c2 = document.getElementById('mystCount2'); if (c2) c2.textContent = txt;
+    POIS.forEach(function(p){
+      if (p.misterio && p._el) p._el.classList.toggle('myst', !st.ok[p.misterio.id]);
+    });
+  }
+
+  /* draw one question into a container; used by the orbit panel and by
+     the list (for the warp question, which has no place) */
+  function render(box, m){
+    box.hidden = false;
+    box.innerHTML = '';
+    var n = MISTERIOS.indexOf(m) + 1;
+    var e = document.createElement('div'); e.className = 'me';
+    var q = document.createElement('div'); q.className = 'mq'; q.textContent = m.q;
+    box.appendChild(e); box.appendChild(q);
+    if (st.ok[m.id]){
+      box.classList.add('done');
+      e.textContent = 'mistério ' + n + ' de ' + MISTERIOS.length + ' · resolvido';
+      var a = document.createElement('div'); a.className = 'mfb show';
+      a.innerHTML = '<b>' + m.ops[m.certa] + '.</b> ';
+      a.appendChild(document.createTextNode(m.porque));
+      box.appendChild(a);
+      return;
+    }
+    box.classList.remove('done');
+    e.textContent = 'mistério ' + n + ' de ' + MISTERIOS.length;
+    var ops = document.createElement('div'); ops.className = 'mops';
+    var fb = document.createElement('div'); fb.className = 'mfb'; fb.setAttribute('aria-live', 'polite');
+    var tent = 0;
+    m.ops.forEach(function(txt, k){
+      var o = document.createElement('button');
+      o.type = 'button'; o.className = 'mop'; o.textContent = txt;
+      o.addEventListener('click', function(){
+        tent++;
+        if (k === m.certa){
+          o.classList.add('yes');
+          Array.prototype.forEach.call(ops.querySelectorAll('.mop'), function(x){ x.disabled = true; });
+          fb.className = 'mfb show';
+          fb.innerHTML = '<b>' + (tent === 1 ? 'Isso mesmo.' : 'Agora sim.') + '</b> ';
+          fb.appendChild(document.createTextNode(m.porque));
+          st.ok[m.id] = tent; save(); refresh();
+          if (solved() === MISTERIOS.length){
+            Toast.show('<b>Todos os mistérios resolvidos.</b> Você conhece o sistema solar melhor que muita gente grande.', 9000);
+          }
+        } else {
+          o.classList.add('no'); o.disabled = true;
+          fb.className = 'mfb hint show';
+          fb.innerHTML = '<b>Ainda não.</b> ';
+          fb.appendChild(document.createTextNode(m.dica2));
+        }
+      });
+      ops.appendChild(o);
+    });
+    box.appendChild(ops); box.appendChild(fb);
+  }
+
+  function onOrbit(poi){
+    if (!orbitQ) return;
+    if (poi && poi.misterio) render(orbitQ, poi.misterio);
+    else { orbitQ.hidden = true; orbitQ.innerHTML = ''; }
+  }
+  function onLeave(){ if (orbitQ){ orbitQ.hidden = true; orbitQ.innerHTML = ''; } }
+
+  function poiOf(m){ for (var i=0;i<POIS.length;i++) if (POIS[i].misterio === m) return POIS[i]; return null; }
+  function openList(directId){
+    if (!modal) return;
+    list.innerHTML = '';
+    modalQ.hidden = true;
+    MISTERIOS.forEach(function(m){
+      var row = document.createElement('div');
+      var ok = !!st.ok[m.id], locked = (m.id === 'dobra' && !st.dobra);
+      row.className = 'row' + (ok ? ' ok' : '');
+      var mk = document.createElement('span'); mk.className = 'mk'; mk.textContent = ok ? '✓' : '?';
+      var tt = document.createElement('div'); tt.className = 'tt';
+      tt.textContent = ok ? m.titulo : (locked ? 'Mistério trancado' : m.titulo);
+      var sm = document.createElement('small'); sm.textContent = ok ? 'resolvido' : m.dica;
+      tt.appendChild(sm);
+      row.appendChild(mk); row.appendChild(tt);
+      if (!ok && !locked){
+        var b = document.createElement('button'); b.type = 'button';
+        var p = poiOf(m);
+        b.textContent = p ? 'ir até lá' : 'responder';
+        b.addEventListener('click', function(){
+          if (p){
+            close();
+            if (orbitState) leaveOrbit();
+            if (typeof GuidedTour !== 'undefined') GuidedTour.cancel();
+            poiCard.classList.remove('open');
+            travelToPoi(p);
+          } else {
+            render(modalQ, m);
+            modalQ.scrollIntoView({ block:'nearest' });
+          }
+        });
+        row.appendChild(b);
+      } else row.appendChild(document.createElement('span'));
+      list.appendChild(row);
+    });
+    modal.classList.add('open');
+    if (btn) btn.classList.remove('novo');
+    if (typeof directId === 'string'){
+      var dm = MISTERIOS.filter(function(x){ return x.id === directId; })[0];
+      if (dm && !st.ok[dm.id]){ render(modalQ, dm); modalQ.scrollIntoView({ block:'nearest' }); }
+    }
+  }
+  function close(){ if (modal) modal.classList.remove('open'); }
+
+  if (btn) btn.addEventListener('click', function(){ openList(); });
+  var ob = document.getElementById('orbitMystAll');
+  if (ob) ob.addEventListener('click', function(){ openList(); });
+  var cb = document.getElementById('mystClose');
+  if (cb) cb.addEventListener('click', close);
+  if (modal) modal.addEventListener('click', function(e){ if (e.target === modal) close(); });
+  window.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
+  refresh();
+
+  return {
+    onOrbit:onOrbit, onLeave:onLeave, open:openList,
+    /* returns true the first time, so the caller can announce it */
+    unlockWarp:function(){
+      if (st.dobra) return false;
+      st.dobra = true; save();
+      if (btn) btn.classList.add('novo');
+      return true;
+    },
+    state:function(){ return st; }
+  };
+})();
+
+/* test hook, only with ?debug in the URL */
+if (/[?&]debug\b/.test(location.search)){
+  window.__voo = {
+    THREE: THREE, scene: scene, camera: camera, POIS: POIS, planetMeshes: planetMeshes,
+    mysteries: Mysteries, warp: Warp,
+    poi: function(name){ for (var i=0;i<POIS.length;i++) if (POIS[i].name === name) return POIS[i]; return null; },
+    goTo: function(name){ var p = this.poi(name); if (p) travelToPoi(p); return !!p; },
+    /* jump straight to the arrival viewpoint; orbit starts on the next frame */
+    snapTo: function(name){
+      var p = this.poi(name); if (!p) return false;
+      if (orbitState) leaveOrbit();
+      travelToPoi(p);
+      var c = p.mesh ? p.mesh.getWorldPosition(new THREE.Vector3()) : p.worldPos.clone();
+      camera.position.copy(c.add(travelTarget.pos.clone().sub(travelTarget.look)));
+      return true;
+    },
+    turnOrbit: function(rad){ if (orbitState) orbitState.userYawOffset += rad; },
+    state: function(){ return { travel: !!travelTarget, orbit: orbitState ? orbitState.poi.name : null,
+                                r: Math.round(camera.position.length()) }; }
+  };
+}
 
 /* ============================================================
    UI WIRING — info button / welcome overlay / theme sync
