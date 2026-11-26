@@ -26,6 +26,21 @@ Seis perguntas, cada uma no lugar onde a resposta pode ser vista: Sol, cometa, c
 
 As perguntas estão na lista `MISTERIOS`, em `voo/index.html`.
 
+## Céu real e constelações (21/11/2026)
+
+- **Estrelas:** as cerca de 5 mil visíveis a olho nu, cada uma na posição, no brilho e na cor do catálogo. Antes eram sorteadas.
+- **Via Láctea:** a foto de fundo foi girada para a posição certa. O centro da galáxia cai em Sagitário, com erro menor que 0,1 grau.
+- **Constelações:** botão "constelações" no radar e no painel de órbita, ou tecla C. Mostra os traços e os nomes em português das 88 constelações, e o nome de 19 estrelas famosas. Começa desligado; o aparelho lembra a escolha.
+- **Zodíaco em dourado:** as 13 constelações que o caminho do Sol atravessa. A lista é calculada a partir dos limites oficiais, não foi digitada.
+- **Eixo dos planetas:** fica parado no espaço durante a órbita. Antes o polo norte ficava virado para o Sol o ano inteiro. O da Terra aponta a 0,7 grau da Estrela Polar, que é o valor real.
+- **Mistério novo:** "A faixa dos planetas", liberado ao ligar as constelações. Agora são sete.
+
+Arquivos: `assets/data/ceu.js` (gerado por `tools/ceu-dados.mjs`; não editar à mão) e `assets/data/LICENSE-d3-celestial.txt`.
+
+Dados: projeto d3-celestial, de Olaf Frohn, licença BSD de 3 cláusulas (permite uso comercial; exige manter o aviso de licença, que está na pasta e no painel "entenda a física"). O catálogo de origem é o XHIP/Hipparcos.
+
+O OpenSpace (programa de planetário, licença MIT) serve de referência de conteúdo. Os dados de estrelas e galáxias dele vêm do museu AMNH, com licença própria ("AMNH Digital Universe") que não foi lida: nada dele foi copiado.
+
 ## Fontes dos fatos
 
 Conferidos em 20/11/2026:
@@ -37,6 +52,11 @@ Conferidos em 20/11/2026:
 - Wikipedia, *Alcubierre drive*: proposta de 1994, exige energia negativa, continua hipotética.
 - A conta dos 8 minutos e 20 segundos da luz do Sol é 150 milhões de km dividido por 300 mil km/s.
 
+- NASA Space Place, *What are constellations?*: 88 constelações oficiais; estrelas de uma mesma constelação a distâncias diferentes.
+- NASA StarChild, pergunta 64: o eixo da Terra aponta quase exatamente para Polaris.
+- NASA (Tumblr oficial, 20/9/2016), *Constellations and the Calendar*: o Sol passa por 13 constelações; Ofiúco ficou de fora dos signos.
+- Wikipedia, *Ecliptic* e *Zodiac*: planetas quase no mesmo plano, por isso perto da eclíptica; inclinação de 23,4 graus.
+
 O que não é real está escrito no painel "entenda a física": luz igual para todos os planetas, dobra, órbita do cometa, quantidade de rochas do cinturão e tamanho e distância da Estação e da Voyager.
 
 ## Pendências
@@ -44,4 +64,7 @@ O que não é real está escrito no painel "entenda a física": luz igual para t
 - **Ver em aparelho de verdade.** Os testes foram num navegador sem placa de vídeo, a 1 ou 2 quadros por segundo. A dobra em movimento só foi vista em foto parada.
 - **Tela limpa ("modo cinema")** para esconder os painéis: não foi feito.
 - **Galáxias e nebulosas** continuam desenhos estilizados.
+- **Nomes das constelações em português:** tradução nossa, falta um professor conferir.
+- **Galáxias reais:** exigem ler a licença do museu AMNH ou achar outro catálogo aberto.
+- **Direção do eixo** dos outros planetas é ilustrativa; só a da Terra é a real.
 - **Revisão** das perguntas por um professor de Ciências.

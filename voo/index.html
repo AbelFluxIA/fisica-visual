@@ -1002,6 +1002,15 @@ canvas{display:block;}
   border-radius:12px;padding:6px 8px;cursor:pointer;
 }
 #mystBtn:hover{background:rgba(111,168,199,0.18);}
+#constBtn{
+  display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:5px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--text-dim, #9fb0c0);
+  background:transparent;border:1px solid rgba(255,255,255,0.16);
+  border-radius:12px;padding:6px 8px;cursor:pointer;
+}
+#constBtn:hover{background:rgba(255,255,255,0.06);}
+#constBtn.on,#orbitConst.on{color:var(--gold-bright);border-color:rgba(230,194,122,0.55);background:rgba(230,194,122,0.10);}
+#orbitConst{flex:0 0 auto;white-space:nowrap;}
 #mystBtn b{color:var(--text);font-weight:600;}
 #orbitPanel .actions{flex-wrap:wrap;}
 #orbitMystAll{color:var(--plasma-bright);border-color:rgba(111,168,199,0.38);flex:0 0 auto;white-space:nowrap;}
@@ -1062,7 +1071,7 @@ canvas{display:block;}
   #warpChip{bottom:196px;font-size:9.5px;padding:6px 12px;}
   #warpChip i{display:none;}
   #uToast{bottom:196px;font-size:12.5px;padding:9px 13px;}
-  #mystBtn{font-size:9.5px;padding:5px 6px;}
+  #mystBtn,#constBtn{font-size:9.5px;padding:5px 6px;}
 }
 @media (max-height:440px) and (orientation:landscape){
   #warpChip{bottom:auto;top:44px;}
@@ -1138,7 +1147,8 @@ canvas{display:block;}
     </button>
   </div>
   <canvas id="radar" width="104" height="104" aria-label="Radar: sua posição relativa ao Sol e aos planetas próximos"></canvas>
-  <button id="mystBtn" type="button" aria-label="Mistérios do sistema solar">mistérios <b id="mystCount">0/6</b></button>
+  <button id="mystBtn" type="button" aria-label="Mistérios do sistema solar">mistérios <b id="mystCount">0/7</b></button>
+  <button id="constBtn" type="button" aria-pressed="false" title="tecla C">constelações</button>
 </div>
 
 <!-- Mobile flight controls, gamepad-style (item: "botões fixos na tela"):
@@ -1202,7 +1212,7 @@ canvas{display:block;}
 <div id="mystModal" role="dialog" aria-modal="true" aria-labelledby="mystTitle">
   <div class="card">
     <span class="eyebrow">Voo espacial · mistérios</span>
-    <h2 id="mystTitle">Seis perguntas espalhadas pelo sistema solar</h2>
+    <h2 id="mystTitle">Sete perguntas espalhadas pelo sistema solar</h2>
     <p class="lead">Cada mistério mora num lugar. Vá até lá, observe e responda. A dobra espacial leva você em segundos.</p>
     <div id="mystList"></div>
     <div class="mystq" id="mystQ" hidden></div>
@@ -1248,7 +1258,8 @@ canvas{display:block;}
     <span class="barrow" aria-hidden="true">→</span>
   </a>
   <div class="actions">
-    <button class="close" id="orbitMystAll" type="button">mistérios <b id="mystCount2">0/6</b></button>
+    <button class="close" id="orbitMystAll" type="button">mistérios <b id="mystCount2">0/7</b></button>
+    <button class="close" id="orbitConst" type="button" aria-pressed="false">constelações</button>
     <button class="close" id="orbitLeave">sair da órbita · continuar voo livre</button>
   </div>
 </div>
@@ -1300,6 +1311,9 @@ canvas{display:block;}
   <h3>Como isso é calculado</h3>
   <p class="note">As <b>texturas</b> dos planetas, do Sol, da Lua e do céu estelar são reais — mapas de superfície baseados em imagens de sondas e observatórios da NASA, redistribuídos por Solar System Scope. Os <b>tamanhos relativos</b> entre corpos (ex.: Júpiter bem maior que a Terra, que por sua vez é maior que Mercúrio) seguem as proporções reais de raio, assim como as comparações de <b>gravidade e peso</b> mostradas nos cartões de cada corpo. As <b>distâncias</b> entre órbitas, a velocidade da nave e o tempo de viagem, porém, são inteiramente artísticos: nesta simulação você atravessa o sistema solar inteiro em segundos a minutos, enquanto numa nave real, na mesma velocidade relativa exibida no velocímetro, a viagem de aqui até o planeta mais distante levaria — se as distâncias fossem as reais do sistema solar (bilhões de km) — muitos anos. O campo estelar, as nebulosas e as galáxias das camadas externas são <b>representações artísticas</b>, não um catálogo de posições reais. O número de "bilhões de anos atrás" na camada cosmológica é calculado como uma função monotônica e crescente da distância percorrida, calibrada para terminar exatamente nos <b>13,8 bilhões de anos</b> reais da idade do universo no limite máximo de voo — os números finais são cientificamente corretos, mas o mapeamento distância→tempo em si é uma escolha de design, não uma fórmula de cosmologia real.</p>
   <div class="credit">Texturas planetárias e do céu estelar: <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener">Solar System Scope</a>, baseadas em imagens da NASA, licenciadas sob <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</div>
+  <h3>O céu é o de verdade</h3>
+  <p class="note">As estrelas em volta do sistema solar não são sorteadas: são as cerca de 5 mil que se enxergam a olho nu, cada uma na posição, no brilho e na cor que o catálogo registra. Com <b>constelações</b> ligado (botão no radar ou tecla C) aparecem os traços e os nomes das 88 constelações oficiais. Em dourado ficam as 13 que o caminho do Sol atravessa, o zodíaco: elas formam um anel no mesmo plano das órbitas, porque os planetas giram em volta do Sol quase no mesmo plano. O <b>eixo da Terra</b> aponta para a Estrela Polar e continua apontando para ela durante a volta inteira em torno do Sol. A direção do eixo dos outros planetas é ilustrativa.</p>
+  <div class="credit">Estrelas e constelações: dados do projeto <a href="https://github.com/ofrohn/d3-celestial" target="_blank" rel="noopener">d3-celestial</a> (Olaf Frohn, licença BSD de 3 cláusulas), a partir do catálogo XHIP/Hipparcos. Nomes em português das constelações: tradução nossa.</div>
   <h3>Onde o visual toma liberdades</h3>
   <p class="note"><b>Luz igual para todos.</b> Na realidade a luz do Sol enfraquece com o quadrado da distância: em Netuno ela é cerca de 900 vezes mais fraca que na Terra. Aqui todos os planetas aparecem bem iluminados, como numa foto tirada com a exposição ajustada para cada um. <b>Dobra espacial.</b> O efeito das viagens longas é ficção científica: nada viaja mais rápido que a luz, e a própria luz leva mais de 4 horas do Sol até Netuno. <b>Corpos pequenos.</b> O cometa tem órbita ilustrativa, a quantidade de rochas do cinturão de asteroides é ilustrativa, e a Estação Espacial e a Voyager 1 estão muito ampliadas e com as distâncias comprimidas, ou seriam invisíveis.</p>
   <p class="note"><b>O que é real nesses detalhes:</b> a borda do Sol mais escura que o centro; as luzes das cidades só no lado da noite; as caudas do cometa apontando para longe do Sol e crescendo quando ele se aproxima; os anéis de Saturno no plano do equador, com a sombra do planeta sobre eles; e a Via Láctea cruzando o céu inclinada em relação ao plano dos planetas.</p>
@@ -1335,6 +1349,7 @@ canvas{display:block;}
   </div>
 </div>
 
+<script src="../assets/data/ceu.js"></script>
 <script type="importmap">
 {
   "imports": {
@@ -1547,9 +1562,43 @@ skyDomeMat.onBeforeCompile = function(sh){
 };
 var skyDome = new THREE.Mesh(new THREE.SphereGeometry(4000, 48, 32), skyDomeMat);
 skyDome.renderOrder = -100; skyDome.frustumCulled = false;
-/* the galactic plane is tilted about 60 degrees to the plane of the
-   planets — which is why the Milky Way crosses the sky at a slant */
-skyDome.rotation.set(1.05, 0, 0.35);
+/* THE SKY IS THE REAL ONE. Everything up here is placed from catalogue
+   coordinates (right ascension / declination, J2000), turned into the
+   scene's frame in two steps:
+     equatorial -> ecliptic   (a turn of 23.44 degrees about the equinox line)
+     ecliptic   -> scene      (the planets' plane is XZ, ecliptic north is +Y)
+   The one free choice, the turn about +Y, is made so the north celestial
+   pole lands exactly on Earth's drawn axis, which leans toward -X: fly to
+   Earth and its north pole points at Polaris, as it does. */
+var SkyFrame = (function(){
+  var EPS = 23.4393*Math.PI/180, ce = Math.cos(EPS), se = Math.sin(EPS);
+  function vec(x, y, z, r, out){
+    var ey = ce*y + se*z, ez = -se*y + ce*z;      // ecliptic y and z; x is shared
+    return out.set(-ey*r, ez*r, -x*r);
+  }
+  return {
+    vec: vec,
+    /* ra, dec in degrees */
+    dir: function(ra, dec, r, out){
+      var a = ra*Math.PI/180, d = dec*Math.PI/180, cd = Math.cos(d);
+      return vec(cd*Math.cos(a), cd*Math.sin(a), Math.sin(d), r, out);
+    }
+  };
+})();
+/* The panorama is a galactic-coordinates map (checked against the star
+   catalogue: its bright stars sit on the catalogue positions). On this
+   sphere, local +X is the galactic centre, +Z is galactic longitude 90
+   and +Y the SOUTH galactic pole; those three directions, written in
+   equatorial coordinates, are the rows of the standard J2000
+   equatorial-to-galactic matrix. Result: the Milky Way crosses the sky
+   at its true 60-degree slant to the planets' plane, with the galactic
+   centre in Sagittarius. */
+(function(){
+  var bx = SkyFrame.vec(-0.0548755604, -0.8734370902, -0.4838350155, 1, new THREE.Vector3());
+  var bz = SkyFrame.vec( 0.4941094279, -0.4448296300,  0.7469822445, 1, new THREE.Vector3());
+  var by = SkyFrame.vec( 0.8676661490,  0.1980763734, -0.4559837762, 1, new THREE.Vector3());
+  skyDome.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(bx, by, bz));
+})();
 skyGroup.add(skyDome);
 
 var skyStarMats = [];
@@ -1581,8 +1630,152 @@ var skyStarMats = [];
     pts.renderOrder = -99; pts.frustumCulled = false;
     skyGroup.add(pts); skyStarMats.push(mat);
   }
-  layer(LOW_TIER ? 2200 : 4200, 2.4, 0.95);   // the many faint ones
-  layer(LOW_TIER ? 90 : 170, 5.2, 1.0);       // the few bright ones
+  /* real stars: every one the naked eye can see (to magnitude 6), at its
+     catalogue position, brightness and colour. They sit exactly on top of
+     the same stars in the panorama and sharpen them. */
+  function bvTint(bv){
+    var S = [[-0.4,0.61,0.71,1.0],[0.0,0.80,0.87,1.0],[0.4,1.0,0.97,0.93],[0.8,1.0,0.90,0.74],[1.2,1.0,0.80,0.56],[1.8,1.0,0.66,0.40]];
+    if (bv <= S[0][0]) return S[0];
+    for (var i=1;i<S.length;i++) if (bv <= S[i][0]){
+      var a = S[i-1], b = S[i], t = (bv - a[0])/(b[0] - a[0]);
+      return [0, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t, a[3]+(b[3]-a[3])*t];
+    }
+    return S[S.length-1];
+  }
+  function realLayer(E, from, to, px){
+    var n = (to - from)/4, pos = new Float32Array(n*3), col = new Float32Array(n*3), v = new THREE.Vector3();
+    for (var i=0;i<n;i++){
+      var k = from + i*4, mag = E[k+2]/100, t = bvTint(E[k+3]/100);
+      SkyFrame.dir(E[k]/100, E[k+1]/100, 3500, v);
+      pos[i*3] = v.x; pos[i*3+1] = v.y; pos[i*3+2] = v.z;
+      var b = Math.max(0.3, Math.min(1, 1.05 - (mag + 1.5)*0.105));
+      col[i*3] = t[1]*b; col[i*3+1] = t[2]*b; col[i*3+2] = t[3]*b;
+    }
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col,3));
+    var mat = new THREE.PointsMaterial({ size:px*pixelRatioNow, sizeAttenuation:false, map:dot,
+      vertexColors:true, transparent:true, opacity:1, depthWrite:false,
+      blending:THREE.AdditiveBlending });
+    var pts = new THREE.Points(geo, mat);
+    pts.renderOrder = -99; pts.frustumCulled = false;
+    skyGroup.add(pts); skyStarMats.push(mat);
+  }
+  var CEU = window.FV_CEU;
+  if (CEU && CEU.estrelas && CEU.estrelas.length){
+    /* the list is sorted from brightest to faintest: cut it into size bands */
+    var E = CEU.estrelas, cuts = [150, 300, 450, LOW_TIER ? 520 : 9999], sizes = [6.4, 4.4, 3.1, 2.2], from = 0;
+    for (var c=0;c<cuts.length;c++){
+      var to = from;
+      while (to < E.length && E[to+2] < cuts[c]) to += 4;
+      if (to > from) realLayer(E, from, to, sizes[c]);
+      from = to;
+    }
+  } else {
+    /* data file missing: fall back to a made-up field rather than a bare sky */
+    layer(LOW_TIER ? 2200 : 4200, 2.4, 0.95);
+    layer(LOW_TIER ? 90 : 170, 5.2, 1.0);
+  }
+})();
+
+/* ============================================================
+   CONSTELLATIONS — the 88 official figures, drawn over the real stars
+   ------------------------------------------------------------
+   Off by default (the plain sky is the prettier one). Lines and names
+   come from the same catalogue as the stars. In gold: the 13
+   constellations the ecliptic crosses (worked out from the official
+   boundaries when the data file is built, not typed in by hand) — they
+   ring the sky in the very plane the planets move in.
+   ============================================================ */
+var Constel = (function(){
+  var CEU = window.FV_CEU, KEY = 'fv-voo-constelacoes';
+  var group = new THREE.Group(); group.visible = false; skyGroup.add(group);
+  var R = 3400, on = false, level = 0, built = false, fading = [];
+  var COL = 0x86b8d8, GOLD = 0xe9c67c;
+
+  function lineSet(list, color, base){
+    var pos = [], a = new THREE.Vector3(), b = new THREE.Vector3();
+    list.forEach(function(c){
+      c.l.forEach(function(seg){
+        for (var i=0;i+3<seg.length;i+=2){
+          SkyFrame.dir(seg[i]/100, seg[i+1]/100, R, a); SkyFrame.dir(seg[i+2]/100, seg[i+3]/100, R, b);
+          pos.push(a.x,a.y,a.z, b.x,b.y,b.z);
+        }
+      });
+    });
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    var mat = new THREE.LineBasicMaterial({ color:color, transparent:true, opacity:0, depthWrite:false });
+    var ln = new THREE.LineSegments(geo, mat);
+    ln.renderOrder = -98; ln.frustumCulled = false;
+    group.add(ln); fading.push([mat, base]);
+  }
+  function label(text, ra, dec, color, base, px, below){
+    var dpr = 2, c = document.createElement('canvas'), g = c.getContext('2d');
+    var font = '600 ' + (px*dpr) + 'px system-ui, -apple-system, "Segoe UI", sans-serif';
+    g.font = font;
+    c.width = Math.ceil(g.measureText(text).width) + 16*dpr; c.height = Math.ceil(px*dpr*1.5);
+    g = c.getContext('2d'); g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.shadowColor = 'rgba(0,0,0,0.9)'; g.shadowBlur = 5*dpr;
+    g.fillStyle = color; g.fillText(text, c.width/2, c.height/2);
+    var tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+    var mat = new THREE.SpriteMaterial({ map:tex, transparent:true, opacity:0, depthWrite:false });
+    var sp = new THREE.Sprite(mat);
+    /* constant size on screen whatever the window: about `px` CSS pixels tall */
+    var h = R * 2*Math.tan(camera.fov*Math.PI/360) * (c.height/dpr) / Math.max(320, innerHeight);
+    sp.scale.set(h*c.width/c.height, h, 1);
+    if (below) sp.center.set(0.5, 1.25);
+    SkyFrame.dir(ra, dec, R, sp.position);
+    sp.renderOrder = -97; sp.frustumCulled = false;
+    group.add(sp); fading.push([mat, base]);
+  }
+  function build(){
+    built = true;
+    if (!CEU || !CEU.constelacoes) return;
+    var small = Math.min(innerWidth, innerHeight) < 520;
+    lineSet(CEU.constelacoes.filter(function(c){ return !c.z; }), COL, 0.40);
+    lineSet(CEU.constelacoes.filter(function(c){ return c.z; }), GOLD, 0.70);
+    CEU.constelacoes.forEach(function(c){
+      if (small && c.r === 3 && !c.z) return;      // phones: skip the faintest figures' names
+      label(c.n, c.p[0]/100, c.p[1]/100, c.z ? '#f0d08a' : '#a9cde6', c.z ? 0.95 : (c.r === 3 ? 0.6 : 0.82), small ? 12 : 13.5, false);
+    });
+    (CEU.nomes || []).forEach(function(s){
+      label(s[2], s[0]/100, s[1]/100, '#ffffff', 0.78, small ? 10.5 : 11.5, true);
+    });
+  }
+  var btns = [document.getElementById('constBtn'), document.getElementById('orbitConst')];
+  function paint(){
+    btns.forEach(function(b){ if (b){ b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); } });
+  }
+  function set(v, quiet){
+    on = !!v;
+    if (on && !built) build();
+    paint();
+    try{ localStorage.setItem(KEY, on ? '1' : '0'); }catch(e){}
+    if (on && !quiet && typeof Mysteries !== 'undefined' && Mysteries.unlock('ceu')){
+      Toast.show('<b>Este é o céu de verdade.</b> Cada estrela está onde o catálogo diz. Em dourado, o zodíaco: a faixa por onde passam o Sol e os planetas. Novo mistério liberado.', 15000,
+        'responder', function(){ Mysteries.open('ceu'); });
+    }
+  }
+  btns.forEach(function(b){ if (b) b.addEventListener('click', function(){ set(!on); b.blur(); }); });
+  window.addEventListener('keydown', function(e){
+    if (e.code !== 'KeyC' || e.ctrlKey || e.metaKey || e.altKey) return;
+    var t = e.target && e.target.tagName; if (t === 'INPUT' || t === 'TEXTAREA') return;
+    set(!on);
+  });
+  if (!CEU) btns.forEach(function(b){ if (b) b.hidden = true; });
+  return {
+    set:set, isOn:function(){ return on; }, group:group,
+    restore:function(){ try{ if (localStorage.getItem(KEY) === '1') set(true, true); }catch(e){} },
+    update:function(dt, skyFade){
+      var target = on ? 1 : 0;
+      if (level !== target) level = target > level ? Math.min(1, level + dt*2.2) : Math.max(0, level - dt*3);
+      var k = level*skyFade;
+      group.visible = k > 0.002;
+      if (!group.visible) return;
+      for (var i=0;i<fading.length;i++) fading[i][0].opacity = fading[i][1]*k;
+    }
+  };
 })();
 
 /* ============================================================
@@ -2052,7 +2245,9 @@ PLANETS.forEach(function(def){
     isMars: def.id === 'mars', isEarth: def.id === 'earth'
   });
 
-  var entry = { mesh:mesh, orbitGroup:orbitGroup, def:def, cloudMesh:cloudMesh, nightMesh:nightMesh, ringMesh:ringMesh };
+  var entry = { mesh:mesh, orbitGroup:orbitGroup, def:def, cloudMesh:cloudMesh, nightMesh:nightMesh, ringMesh:ringMesh,
+    spin: Math.random()*Math.PI*2,
+    qTilt: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), def.tilt || 0) };
   planetMeshes.push(entry);
 });
 
@@ -2355,7 +2550,12 @@ var MISTERIOS = [
     ops:['Caiu em Júpiter','Voltou para a Terra','Saiu para o espaço interestelar e ainda envia dados','Parou de funcionar ao passar por Saturno'], certa:2,
     dica2:'Repare onde você a encontrou: fora da órbita de todos os planetas.',
     porque:'A Voyager 1 entrou no espaço interestelar em agosto de 2012 e é o objeto feito por humanos que foi mais longe: mais de 25 bilhões de km. Quatro de seus instrumentos ainda funcionam.' },
-  { id:'dobra', poi:null, titulo:'A dobra espacial', dica:'Faça uma viagem longa até um planeta distante para liberar este.',
+  { id:'ceu', poi:null, trava:'ceu', titulo:'A faixa dos planetas', dica:'Ligue as constelações para liberar este.',
+    q:'As constelações douradas formam um anel no céu, bem no plano em que os planetas giram. Vistos da Terra, o Sol e os planetas sempre aparecem na frente delas. Por quê?',
+    ops:['Porque essas estrelas ficam mais perto de nós','Porque os planetas giram em volta do Sol quase no mesmo plano','Porque as constelações douradas são as maiores','É coincidência: no ano que vem estarão em outro lugar'], certa:1,
+    dica2:'Olhe o sistema solar de lado: as órbitas formam quase um disco achatado.',
+    porque:'Os planetas giram em volta do Sol quase no mesmo plano, como bolinhas rolando num mesmo prato. Por isso, vistos da Terra, o Sol e os planetas passam sempre pela mesma faixa do céu: o zodíaco. O Sol atravessa 13 constelações ao longo do ano; uma delas, Ofiúco, ficou de fora dos 12 signos. E as estrelas de uma constelação só parecem vizinhas: umas estão perto, outras muito mais longe.' },
+  { id:'dobra', poi:null, trava:'dobra', titulo:'A dobra espacial', dica:'Faça uma viagem longa até um planeta distante para liberar este.',
     q:'A dobra espacial que levou você de um planeta a outro em segundos existe de verdade?',
     ops:['Sim, as sondas da NASA já usam','Sim, mas só funciona perto do Sol','Não: é uma hipótese da física, nunca construída','Não: a física proíbe até de imaginar'], certa:2,
     dica2:'A sonda mais rápida já lançada levou anos para sair do sistema solar.',
@@ -3891,7 +4091,13 @@ function animate(){
   // planetary motion
   planetMeshes.forEach(function(p){
     p.orbitGroup.rotation.y += p.def.speed*dt*0.3;
-    p.mesh.rotation.y += dt*0.15;
+    /* A real planet's axis keeps pointing at the same spot among the stars
+       all the way round its orbit (Earth's at Polaris). The mesh rides
+       inside the turning orbit group, so undo that turn first, then tilt,
+       then spin. Before this the tilt was carried round with the orbit and
+       the north pole leaned toward the Sun all year. */
+    p.spin += dt*0.15;
+    p.mesh.quaternion.setFromAxisAngle(_axisY, -p.orbitGroup.rotation.y).multiply(p.qTilt).multiply(_qSpin.setFromAxisAngle(_axisY, p.spin));
     if (p.cloudMesh) p.cloudMesh.rotation.y += dt*0.05;
   });
   moonPivot.rotation.y += EARTH_MOON.speed*dt*0.3;
@@ -3913,6 +4119,7 @@ function animate(){
   skyDomeMat.opacity = skyFade;
   for (var si=0; si<skyStarMats.length; si++) skyStarMats[si].opacity = skyFade;
   skyGroup.visible = skyFade > 0.002;
+  Constel.update(dt, skyFade);
 
   updateLayers();
   updateNebulae();
@@ -3932,6 +4139,7 @@ function animate(){
 
 /* adaptive resolution — same idea as the ocean room: under ~26 fps render
    fewer pixels, and only step back up when there is clear headroom */
+var _axisY = new THREE.Vector3(0,1,0), _qSpin = new THREE.Quaternion();
 var Perf = (function(){
   var acc = 0, frames = 0, calm = 0, MIN = 0.75;
   function apply(r){
@@ -4201,7 +4409,7 @@ var Mysteries = (function(){
     modalQ.hidden = true;
     MISTERIOS.forEach(function(m){
       var row = document.createElement('div');
-      var ok = !!st.ok[m.id], locked = (m.id === 'dobra' && !st.dobra);
+      var ok = !!st.ok[m.id], locked = !!(m.trava && !st[m.trava]);
       row.className = 'row' + (ok ? ' ok' : '');
       var mk = document.createElement('span'); mk.className = 'mk'; mk.textContent = ok ? '✓' : '?';
       var tt = document.createElement('div'); tt.className = 'tt';
@@ -4237,6 +4445,13 @@ var Mysteries = (function(){
     }
   }
   function close(){ if (modal) modal.classList.remove('open'); }
+  /* opens a question that has no place of its own; true only the first time */
+  function unlock(key){
+    if (st[key]) return false;
+    st[key] = true; save();
+    if (btn) btn.classList.add('novo');
+    return true;
+  }
 
   if (btn) btn.addEventListener('click', function(){ openList(); });
   var ob = document.getElementById('orbitMystAll');
@@ -4250,21 +4465,18 @@ var Mysteries = (function(){
   return {
     onOrbit:onOrbit, onLeave:onLeave, open:openList,
     /* returns true the first time, so the caller can announce it */
-    unlockWarp:function(){
-      if (st.dobra) return false;
-      st.dobra = true; save();
-      if (btn) btn.classList.add('novo');
-      return true;
-    },
+    unlock:unlock,
+    unlockWarp:function(){ return unlock('dobra'); },
     state:function(){ return st; }
   };
 })();
+Constel.restore();
 
 /* test hook, only with ?debug in the URL */
 if (/[?&]debug\b/.test(location.search)){
   window.__voo = {
     THREE: THREE, scene: scene, camera: camera, POIS: POIS, planetMeshes: planetMeshes,
-    mysteries: Mysteries, warp: Warp,
+    mysteries: Mysteries, warp: Warp, constel: Constel, skyFrame: SkyFrame, skyGroup: skyGroup,
     poi: function(name){ for (var i=0;i<POIS.length;i++) if (POIS[i].name === name) return POIS[i]; return null; },
     goTo: function(name){ var p = this.poi(name); if (p) travelToPoi(p); return !!p; },
     /* jump straight to the arrival viewpoint; orbit starts on the next frame */
@@ -4277,6 +4489,11 @@ if (/[?&]debug\b/.test(location.search)){
       return true;
     },
     turnOrbit: function(rad){ if (orbitState) orbitState.userYawOffset += rad; },
+    /* point the free-flight camera at a place in the sky (degrees) */
+    lookSky: function(ra, dec){
+      var d = SkyFrame.dir(ra, dec, 1, new THREE.Vector3());
+      yaw = Math.atan2(-d.x, -d.z); pitch = Math.asin(d.y);
+    },
     state: function(){ return { travel: !!travelTarget, orbit: orbitState ? orbitState.poi.name : null,
                                 r: Math.round(camera.position.length()) }; }
   };
